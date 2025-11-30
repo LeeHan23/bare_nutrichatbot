@@ -1,0 +1,44 @@
+#--- FastAPI and Server ---
+fastapi
+uvicorn[standard]
+gunicorn
+python-dotenv
+python-multipart
+argparse
+requests
+redis
+werkzeug
+psycopg2-binary
+SQLAlchemy
+pytest
+libmagic 
+
+#--- Web UI ---
+streamlit
+
+#--- AI and Language Model ---
+#--- AI and Language Model ---
+langchain>=0.1.0
+langchain-community>=0.0.10
+langchain-core>=0.1.10
+langchain-openai>=0.0.5
+openai>=1.0.0
+tiktoken
+
+# Force rebuild v4 - Using langchain 0.0.354 with ConversationalRetrievalChain
+
+#--- Vector Store ---
+pysqlite3-binary ; sys_platform == 'linux'
+chromadb
+
+#--- Document Processing ---
+python-docx
+pypdf
+docx2txt
+aiofiles
+pymupdf
+unstructured[pdf,docx]>=0.11.0
+pdfminer.six
+
+#--- WhatsApp & Session Management ---
+redis

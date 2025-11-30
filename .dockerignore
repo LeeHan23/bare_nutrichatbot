@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS metadata files (can cause Docker build errors)
+._*
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+
+# Secrets - Never include these in the image
+.env
+
+# Data and knowledge bases - These should not be in the image
+data/vectorstore_base/
+data/vectorstores_user/
+# data/users.db
+temp_uploads/
+
+# Docker specific
+Dockerfile
+docker-compose.yml
