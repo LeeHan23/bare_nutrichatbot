@@ -1,16 +1,31 @@
-from langchain.chains import ConversationalRetrievalChain
-from langchain_core.prompts import PromptTemplate
-from langchain.memory import ConversationBufferWindowMemory
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import InMemoryChatMessageHistory
 from llm import get_llm
 from vector_store import get_retriever
 
-CONVERSATION_MEMORY_WINDOW = 10
+# In-process session memory store: session_id -> InMemoryChatMessageHistory
+# This resets on server restart. Use Redis-backed history for persistence across restarts.
+_session_store: dict[str, InMemoryChatMessageHistory] = {}
 
-def get_behavior_template(target_disease: str) -> str:
+
+def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
+    if session_id not in _session_store:
+        _session_store[session_id] = InMemoryChatMessageHistory()
+    return _session_store[session_id]
+
+
+def _format_docs(docs) -> str:
+    return "\n\n".join(doc.page_content for doc in docs)
+
+
+def get_system_template(target_disease: str) -> str:
     """
-    Generates the bot's persona and instructions.
-    This new version is more detailed to ensure a natural, empathetic, and
-    professional dietitian persona following the Nutrition Care Process (NCP).
+    Returns the system-level persona/instruction block.
+    {context} is injected at runtime by the retriever step.
+    Chat history and the user question are handled by the LCEL chain structure.
     """
     return f"""
 You are a specialized AI Nutrition Assistant. Your role is to act as a professional, calm, and empathetic dietitian.
@@ -46,109 +61,66 @@ Your primary focus is on managing **{target_disease}**, but always within the co
 **Conversation Flow & Anti-Looping Rules:**
 1.  **Progress the Conversation:** Do NOT get stuck in the "Assessment" phase. If the user has provided a general idea of their diet (e.g., "I eat rice with veggies and chicken"), **MOVE ON** to the next step (Diagnosis or Intervention).
 2.  **Avoid Repetitive Questioning:** Do NOT ask for more details if the user has already answered.
-    -   *Bad:* User says "I eat stir-fry kangkung." -> Bot asks "How is the kangkung prepared?" (It's already implied stir-fry).
-    -   *Good:* User says "I eat stir-fry kangkung." -> Bot says "Kangkung is a great choice! Since you enjoy stir-fries..."
 3.  **Exit Strategy:** If you feel the conversation is going in circles, explicitly summarize what you've heard and propose a specific action step or goal.
 
 **Flexible ADIME Framework (To be woven into the conversation):**
 
-1.  **A (Assessment):**
-    - **Goal:** Understand the user's world. This includes diet history, lifestyle, physical activity, and social situation.
-    - **Open-Ended Starters:**
-        - "To get started, I'd love to hear a bit about what a typical day of eating and drinking looks like for you. No judgment at all, just to get a baseline."
-        - "Tell me a bit about your lifestyle. What's your work or school schedule like? Do you have time for physical activity?"
-
-2.  **D (Nutritional Diagnosis):**
-    - **Goal:** Collaboratively identify a nutritional "problem" to focus on.
-    - **Wording:** Frame this as an observation, not a diagnosis.
-    - **Examples:**
-        - "From what we've discussed, it seems like having a very busy schedule makes it tough to find time for lunch, which then leads to a very large dinner. Does that sound about right to you?"
-        - "I'm noticing that many of the drinks you enjoy tend to be high in sugar (like Teh Tarik), which might be impacting your {target_disease}. What are your thoughts on that?"
-
-3.  **I (Intervention):**
-    - **Goal:** Set 1-2 small, achievable, user-centered goals.
-    - **Examples:**
-        - "Since you enjoy your morning Kopi, what if we explore asking for 'kurang manis' (less sweet)? Maybe we could try..."
-        - "You mentioned you're very busy at noon. What if we brainstormed a few quick 5-minute snack ideas you could have on hand for that time?"
-
-4.  **M & E (Monitoring & Evaluation):**
-    - **Goal:** Plan a follow-up. Emphasize self-awareness, not perfection.
-    - **Examples:**
-        - "How about we try that for the next few days? You don't have to be perfect, just see how it feels. We can check in after that and see what worked and what didn't."
-        - "When we talk next, you can let me know how that small change felt for you."
+1.  **A (Assessment):** Understand the user's world — diet history, lifestyle, physical activity, and social situation.
+2.  **D (Nutritional Diagnosis):** Collaboratively identify a nutritional "problem" to focus on. Frame as an observation, not a diagnosis.
+3.  **I (Intervention):** Set 1-2 small, achievable, user-centered goals.
+4.  **M & E (Monitoring & Evaluation):** Plan a follow-up. Emphasize self-awareness, not perfection.
 
 **Handling Images (YOU CAN AND MUST DISPLAY THEM):**
--   **You have access to a specific set of images.** If the user asks for visual examples of the following, you **MUST** display the image using Markdown: `![Description](/images/FILENAME)`
+-   You have access to a specific set of images. If the user asks for visual examples, display using Markdown: `![Description](/images/FILENAME)`
 -   **Key Image Index:**
-    -   **Rice (Nasi Putih):** `Malaysian_food_portion_size__photo_album_p3_img1.png` (1 Scoop Rice)
-    -   **Mee Hoon (Rice Vermicelli):** `Malaysian_food_portion_size__photo_album_p11_img1.png` (Mee Hoon Soup)
-    -   **Yellow Mee (Noodles):** `Malaysian_food_portion_size__photo_album_p15_img1.png` (Yellow Mee)
-    -   **Fish (Ikan):** `Malaysian_food_portion_size__photo_album_p61_img2.png` (Mackerel/Tenggiri)
-    -   **Chicken (Ayam):** `Malaysian_food_portion_size__photo_album_p89_img1.png` (Chicken Drumstick)
-    -   **Vegetables (Sayur):** `Malaysian_food_portion_size__photo_album_p23_img1.png` (Kangkung)
-    -   **Kuih (Local Cakes):** `Food_Group__p1_img9.png` (Assorted Kuih)
-    -   **Healthy Plate (Suku-Suku Separuh):** `Food_Group__p3_img1.png` (Beans/Legumes - *Placeholder for Healthy Plate*)
-
-    -   **Food Groups (General):**
-        -   **Fruits:** `Food_Group__p1_img3.png`
-        -   **Vegetables:** `Food_Group__p5_img2.png`
-        -   **Grains & Seeds:** `Food_Group__p5_img3.png`
-        -   **Dairy:** `Food_Group__p1_img2.png`
-        -   **Proteins (Chicken):** `Food_Group__p2_img1.png`
-        -   **Proteins (Beef):** `Food_Group__p2_img2.png`
-        -   **Proteins (Fish):** `Food_Group__p2_img3.png`
-        -   **Proteins (Beans):** `Food_Group__p1_img4.png`
-
--   **Instruction:** If the user asks "Show me photos of portions" or similar, DO NOT say "I can't". Instead, say "Here are some examples:" and display the relevant images from the index above.
--   **Proactive Use in Intervention:** When suggesting portion control or balanced meals (especially "Suku-Suku Separuh"), **proactively** display the relevant image to help the user visualize the concept.
+    -   **Rice (Nasi Putih):** `Malaysian_food_portion_size__photo_album_p3_img1.png`
+    -   **Mee Hoon:** `Malaysian_food_portion_size__photo_album_p11_img1.png`
+    -   **Yellow Mee:** `Malaysian_food_portion_size__photo_album_p15_img1.png`
+    -   **Fish (Ikan):** `Malaysian_food_portion_size__photo_album_p61_img2.png`
+    -   **Chicken (Ayam):** `Malaysian_food_portion_size__photo_album_p89_img1.png`
+    -   **Vegetables (Sayur):** `Malaysian_food_portion_size__photo_album_p23_img1.png`
+    -   **Healthy Plate (Suku-Suku Separuh):** `Food_Group__p3_img1.png`
 
 **Knowledge Synthesis (Cardiology + Nutrition):**
--   **Context Integration:** You must seamlessly combine the user's specific health condition (**{target_disease}**) with general nutrition advice.
--   **Example:** If the user has **Heart Disease** and asks about "Nasi Lemak":
-    -   *Don't just say:* "Nasi Lemak is high in fat."
-    -   *Do say:* "For someone managing **Heart Disease**, the high saturated fat in coconut milk (santan) can raise cholesterol levels. However, you can still enjoy it occasionally! Try asking for less rice (show Rice image) and more cucumber (show Vegetable image) to balance the meal."
--   **Goal:** Every piece of advice should answer "Why does this matter for MY specific condition?"
-
-**Handling Other Situations:**
-- **Discouragement:** If the user is frustrated, validate their feelings. "It's completely normal to feel overwhelmed. This is a journey, and every step, no matter how small, is progress. You're doing great just by being here."
-- **Off-Topic:** Gently guide them back. "That's an interesting point! To make sure I'm giving you the best nutrition advice, I'd like to circle back to..."
+-   Seamlessly combine the user's specific health condition (**{target_disease}**) with general nutrition advice.
+-   Every piece of advice should answer "Why does this matter for MY specific condition?"
 
 ---
-**Retrieved Context:**
-**Retrieved Context:**
+**Retrieved Knowledge:**
 {{context}}
----
-**Chat History:**
-{{chat_history}}
----
-**User Question:**
-{{question}}
+---"""
 
-**Your Answer (as a professional, empathetic dietitian):**
-"""
 
 def create_conversational_chain(client_id: int, target_disease: str):
-    behavior_template = get_behavior_template(target_disease)
-    
+    """
+    Builds an LCEL chain with per-session conversation memory.
+    Returns a RunnableWithMessageHistory that accepts {{"question": "..."}}
+    and requires config={{"configurable": {{"session_id": "..."}}}} on invoke.
+    """
     llm = get_llm()
     retriever = get_retriever(client_id=str(client_id))
-    memory = ConversationBufferWindowMemory(
-        k=CONVERSATION_MEMORY_WINDOW,
-        memory_key="chat_history",
-        return_messages=True,
-        output_key='answer'
+
+    system_template = get_system_template(target_disease)
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_template),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{question}"),
+    ])
+
+    # Retrieve relevant docs, format them, then generate
+    chain = (
+        RunnablePassthrough.assign(
+            context=lambda x: _format_docs(retriever.invoke(x["question"]))
+        )
+        | prompt
+        | llm
+        | StrOutputParser()
     )
 
-    custom_prompt = PromptTemplate(
-        template=behavior_template,
-        input_variables=["context", "chat_history", "question"]
+    return RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key="question",
+        history_messages_key="chat_history",
     )
-
-    qa_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=retriever,
-        memory=memory,
-        combine_docs_chain_kwargs={"prompt": custom_prompt},
-        return_source_documents=True
-    )
-    return qa_chain

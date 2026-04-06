@@ -1,47 +1,53 @@
 import os
-from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 
-# --- Load Environment Variables ---
 load_dotenv()
 
-# --- Validate Environment Variable ---
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise EnvironmentError("OPENAI_API_KEY environment variable not found. Please set it in your .env file.")
+# --- Feature flag ---
+USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("true", "1", "yes")
 
-# --- Language Model Initialization ---
+# --- OpenAI config (used when USE_OLLAMA=false) ---
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4-turbo")
+
+# --- Ollama config (used when USE_OLLAMA=true) ---
+OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL", "nutribot-lora")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+if not USE_OLLAMA and not OPENAI_API_KEY:
+    raise EnvironmentError(
+        "OPENAI_API_KEY is not set. Either set it or add USE_OLLAMA=true to .env to use the local Ollama model."
+    )
+
+
 def get_llm():
     """
-    Initializes and returns the ChatOpenAI model instance.
+    Returns the configured LLM instance.
 
-    This function is configured to use a more powerful model (gpt-4-turbo)
-    for enhanced reasoning and interpretation, which is crucial for handling
-    complex patient scenarios.
-    
-    Returns:
-        An instance of ChatOpenAI configured with the upgraded model.
+    Controlled by the USE_OLLAMA environment variable:
+      USE_OLLAMA=false (default) — ChatOpenAI (gpt-4-turbo or OPENAI_MODEL)
+      USE_OLLAMA=true            — ChatOllama pointing to localhost Ollama server
     """
-    try:
-        # UPGRADE: Using gpt-4-turbo for superior reasoning, synthesis,
-        # and ability to follow complex instructions. This is key for
-        # providing dietitian-level interpretations.
-        llm = ChatOpenAI(
-            model_name="gpt-4-turbo",
-            temperature=0.5, # Lower temperature for more factual, less creative responses
-            max_tokens=1500, # Increased token limit for more detailed analysis
-            openai_api_key=OPENAI_API_KEY
+    if USE_OLLAMA:
+        from langchain_community.chat_models import ChatOllama
+        return ChatOllama(
+            model=OLLAMA_MODEL,
+            base_url=OLLAMA_BASE_URL,
+            temperature=0.5,
+            num_predict=1500,
         )
-        return llm
-    except Exception as e:
-        print(f"Error initializing ChatOpenAI model: {e}")
-        # This will prevent the application from starting if the LLM can't be initialized
-        raise
+    else:
+        from langchain_openai import ChatOpenAI
+        return ChatOpenAI(
+            model_name=OPENAI_MODEL,
+            temperature=0.5,
+            max_tokens=1500,
+            openai_api_key=OPENAI_API_KEY,
+        )
+
 
 def get_direct_llm_response(question: str) -> str:
-    """
-    Gets a direct response from the LLM wihtout RAG
-    """
+    """Gets a direct response from the LLM without RAG."""
     llm = get_llm()
-    response = llm.predict(question)
-    return response
+    response = llm.invoke(question)
+    return response.content
