@@ -40,9 +40,10 @@ except Exception as e:
 @app.on_event("startup")
 async def startup_event():
     """
-    On startup, check if the persistent volume is empty.
-    If so, seed it with the data from the Docker image.
+    On startup: create DB tables, then seed from Docker image if needed.
     """
+    db.create_db_and_tables()
+
     data_dir = "data"
     seed_dir = "/app/data_seed" # Absolute path in Docker container
     
@@ -275,11 +276,6 @@ async def delete_document(
         "vector_store_deleted": vector_deleted,
         "chunks_removed": doc.chunk_count
     }
-
-# --- Root Endpoint ---
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the Nutrition Chatbot API"}
 
 # --- Main Entry Point ---
 if __name__ == "__main__":

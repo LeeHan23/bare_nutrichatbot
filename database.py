@@ -166,5 +166,5 @@ def delete_document_metadata(db_session, document_id: int, client_id: int = None
         return True
     return False
 
-# --- Initial Database Creation ---
-create_db_and_tables()
+# Tables are created at app startup (see app.py startup_event).
+# Call create_db_and_tables() explicitly in scripts that need it.

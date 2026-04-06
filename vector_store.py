@@ -1,58 +1,68 @@
 import os
+from typing import List
 from dotenv import load_dotenv
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain.retrievers import MergerRetriever # <- New Import
+from langchain_community.vectorstores import PGVector
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.documents import Document
+from langchain_core.callbacks.manager import CallbackManagerForRetrieverRun
+from embeddings import get_embedding_function
 
-# --- Load environment variables ---
 load_dotenv()
 
-# --- UNIFIED PATH CONFIGURATION ---
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-LOCAL_DATA_PATH = os.path.join(APP_DIR, "data")
-PERSISTENT_DISK_PATH = os.environ.get("PERSISTENT_DISK_PATH", LOCAL_DATA_PATH)
+PGVECTOR_URL = os.environ.get(
+    "PGVECTOR_URL",
+    os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/nutribot"),
+)
 
-# --- Vector Store Paths ---
-BASE_INDEX_DIR = os.path.join(PERSISTENT_DISK_PATH, "vectorstore_base")
-CLIENT_STORES_DIR = os.path.join(PERSISTENT_DISK_PATH, "vectorstores_client")
 
-# --- Embedding Model ---
-EMBEDDING_MODEL = "text-embedding-3-small"
+def get_connection_string() -> str:
+    url = PGVECTOR_URL
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    return url
 
-def get_retriever(client_id: str):
+
+class MergedRetriever(BaseRetriever):
+    """Combines results from multiple retrievers, deduplicating by page_content."""
+
+    retrievers: List[BaseRetriever]
+
+    def _get_relevant_documents(
+        self, query: str, *, run_manager: CallbackManagerForRetrieverRun
+    ) -> List[Document]:
+        seen = set()
+        results = []
+        for retriever in self.retrievers:
+            for doc in retriever.invoke(query):
+                if doc.page_content not in seen:
+                    seen.add(doc.page_content)
+                    results.append(doc)
+        return results
+
+
+def get_retriever(client_id: str) -> BaseRetriever:
     """
-    Creates a hybrid retriever that searches both the base knowledge base
-    and the specific client's private knowledge base.
-    
-    Args:
-        client_id: The ID of the B2B client (from ApiClient.id)
+    Returns a hybrid retriever combining the shared base knowledge collection
+    and the client-specific collection from pgvector.
     """
-    embedding_function = OpenAIEmbeddings(model=EMBEDDING_MODEL)
-    
-    # 1. Load the foundational knowledge base retriever
-    base_db = Chroma(
-        persist_directory=BASE_INDEX_DIR,
+    connection_string = get_connection_string()
+    embedding_function = get_embedding_function()
+
+    base_db = PGVector(
+        connection_string=connection_string,
         embedding_function=embedding_function,
-        collection_name="base_knowledge"
+        collection_name="base_knowledge",
+        use_jsonb=True,
     )
-    base_retriever = base_db.as_retriever(search_kwargs={"k": 3})
+    base_retriever = base_db.as_retriever(search_kwargs={"k": 5})
 
-    # 2. Load the client-specific knowledge base if it exists
-    client_index_dir = os.path.join(CLIENT_STORES_DIR, f"client_{client_id}")
-    
-    if os.path.exists(client_index_dir):
-        print(f"Loading custom knowledge base for client_id: {client_id}")
-        client_db = Chroma(
-            persist_directory=client_index_dir,
-            embedding_function=embedding_function,
-            collection_name=f"client_{client_id}_knowledge"
-        )
-        client_retriever = client_db.as_retriever(search_kwargs={"k": 3})
-        
-        # 3. Create a MergerRetriever to search both simultaneously
-        hybrid_retriever = MergerRetriever(retrievers=[base_retriever, client_retriever])
-        return hybrid_retriever
-    else:
-        # If the client has no custom knowledge, return only the base retriever
-        print(f"No custom knowledge base found for client_id: {client_id}. Using base knowledge only.")
-        return base_retriever
+    client_db = PGVector(
+        connection_string=connection_string,
+        embedding_function=embedding_function,
+        collection_name=f"client_{client_id}_knowledge",
+        use_jsonb=True,
+    )
+    client_retriever = client_db.as_retriever(search_kwargs={"k": 5})
+
+    print(f"[VectorStore] Using hybrid retriever for client_id: {client_id}")
+    return MergedRetriever(retrievers=[base_retriever, client_retriever])

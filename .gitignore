@@ -1,3 +1,9 @@
+# macOS resource forks and metadata
+._*
+.DS_Store
+.AppleDouble
+.LSOverride
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -37,14 +43,30 @@ venv.bak/
 
 # --- DATA AND KNOWLEDGE BASES ---
 # Ignore generated databases and vector stores
-# You can also explicitly ignore sub-folders if you prefer,
-# though ignoring the parent 'data/' directory covers these:
 data/vectorstore_base/
+data/vectorstores_base/
 data/vectorstores_user/
+data/vectorstores_client/
 data/users.db
+data/file_tracker.json
 temp_uploads/
 data/base_docs/
 data/images/
+data/*.sqlite3
+data/*.db
+
+# Source documents to ingest (large PDFs, not for version control)
+documents_to_ingest/
+
+# Local model weights
+models/*
+!models/.gitkeep
+
+# Eval / test outputs (not needed for deployment)
+eval_output*.log
+eval_results*.json
+eval_dataset.json
+rag_evaluation_report.csv
 
 # Ignore large PDFs in the root
 Food Group .pdf
