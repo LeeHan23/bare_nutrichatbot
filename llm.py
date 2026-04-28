@@ -7,8 +7,11 @@ load_dotenv()
 USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("true", "1", "yes")
 
 # --- OpenAI config (used when USE_OLLAMA=false) ---
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4-turbo")
+OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL    = os.getenv("OPENAI_MODEL", "gpt-4-turbo")
+# Optional: point at the Agent Gateway LLM proxy (e.g. http://localhost:3200)
+# so all GPT calls are rate-limited centrally. Leave unset to call OpenAI directly.
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 
 # --- Ollama config (used when USE_OLLAMA=true) ---
 OLLAMA_MODEL    = os.getenv("OLLAMA_MODEL", "nutribot-lora")
@@ -38,12 +41,15 @@ def get_llm():
         )
     else:
         from langchain_openai import ChatOpenAI
-        return ChatOpenAI(
+        kwargs = dict(
             model_name=OPENAI_MODEL,
             temperature=0.5,
             max_tokens=1500,
             openai_api_key=OPENAI_API_KEY,
         )
+        if OPENAI_BASE_URL:
+            kwargs["openai_api_base"] = OPENAI_BASE_URL
+        return ChatOpenAI(**kwargs)
 
 
 def get_direct_llm_response(question: str) -> str:

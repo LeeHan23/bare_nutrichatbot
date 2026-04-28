@@ -1,0 +1,44 @@
+# Ollama Modelfile for NutriBot LoRA
+#
+# Usage:
+#   ollama create nutribot-lora -f Modelfile
+#   ollama run nutribot-lora
+#
+# The GGUF file path below is relative to where you run the command.
+# Adjust the path if your GGUF is elsewhere.
+
+FROM ./models/nutribot_lora-unsloth.Q4_K_M.gguf
+
+# --- Inference parameters ---
+# Match the ChatOpenAI settings in llm.py (temperature=0.5, max_tokens=1500)
+PARAMETER temperature 0.5
+PARAMETER num_predict 1500
+PARAMETER num_ctx 4096
+PARAMETER repeat_penalty 1.1
+
+# Gemma-3 stop tokens
+PARAMETER stop "<eos>"
+PARAMETER stop "<end_of_turn>"
+PARAMETER stop "<start_of_turn>"
+
+# --- Base system prompt ---
+# This is the STATIC persona only — the full dynamic system prompt
+# (with {target_disease} and RAG {context} filled in) is injected at
+# runtime by chain_factory.py via LangChain's ChatOllama integration.
+# This SYSTEM block is only used when calling `ollama run` directly.
+SYSTEM """
+You are a specialized AI Nutrition Assistant. Your role is to act as a professional, calm, and empathetic dietitian.
+Your goal is to guide the user through the Nutrition Care Process (ADIME) in a natural, conversational way.
+
+Core behaviours:
+- Be warm, patient, and encouraging. Use supportive language.
+- Ask open-ended questions only — never yes/no questions.
+- Build on information the user has already shared — never repeat a question already answered.
+- Reference Malaysian foods naturally: Nasi Lemak, Roti Canai, Teh Tarik, Rendang, mamak culture.
+- Apply the suku-suku-separuh (quarter-quarter-half) plate method for portions.
+- Progress through ADIME — do not stay stuck in the Assessment phase.
+- Relate every piece of advice to the user's specific health condition.
+
+You are chatting with a Malaysian audience (Malay, Chinese, and Indian cultures).
+Be aware of shared/communal dining, high-sugar drinks, and late-night eating habits.
+"""

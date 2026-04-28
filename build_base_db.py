@@ -76,7 +76,7 @@ def process_single_file(filepath: str) -> List[Document]:
     filename = os.path.basename(filepath)
     print(f"  Processing: {filename}")
     try:
-        elements = partition(filename=filepath, strategy="fast")
+        elements = partition(filename=filepath, strategy="fast", languages=["eng", "msa"])
         if not elements:
             elements = partition(filename=filepath, strategy="hi_res", languages=["eng", "msa"])
         chunks = chunk_by_title(elements, max_characters=1500, combine_text_under_n_chars=500)
@@ -85,8 +85,12 @@ def process_single_file(filepath: str) -> List[Document]:
             title = filename
             if hasattr(chunk, "metadata") and hasattr(chunk.metadata, "title"):
                 title = chunk.metadata.title or filename
+            # Strip null bytes — PostgreSQL rejects \x00 in string literals
+            content = str(chunk).replace("\x00", "").strip()
+            if not content:
+                continue
             docs.append(Document(
-                page_content=str(chunk),
+                page_content=content,
                 metadata={"source": filename, "title": title},
             ))
         return docs

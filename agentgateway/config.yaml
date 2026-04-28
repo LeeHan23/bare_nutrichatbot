@@ -1,0 +1,113 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+#
+# NutriChatbot — Agent Gateway Configuration
+#
+# Two services in one gateway process:
+#
+#   Port 3100  MCP Gateway
+#              AI agents (Claude, GPT-agents, etc.) connect here to use NutriBot tools.
+#              Wraps mcp_server.py via stdio subprocess (local) or HTTP/SSE (Docker).
+#
+#   Port 3200  LLM Proxy (OpenAI-compatible)
+#              The FastAPI app points OPENAI_BASE_URL=http://localhost:3200 here.
+#              All GPT calls flow through this port so token/request limits are enforced.
+#
+# Rate limits configured below:
+#   - GPT token budget : 500,000 tokens / 24 h  (tune to your OpenAI plan)
+#   - GPT request cap  : 60 requests / minute
+#   - MCP request cap  : 200 requests / minute   (protects the MCP server)
+#
+# Quick start (local dev):
+#   1. Download the agentgateway binary from https://github.com/agentgateway/agentgateway/releases
+#   2. ./agentgateway --config agentgateway/config.yaml
+#
+# Docker (see docker-compose.yml):
+#   The MCP target uses the SSE backend pointing to the nutribot container.
+
+# ─────────────────────────────────────────────
+# MCP Gateway  (port 3100)
+# ─────────────────────────────────────────────
+binds:
+  - port: 3100
+    listeners:
+      - routes:
+          - policies:
+              cors:
+                allowOrigins:
+                  - "*"
+                allowHeaders:
+                  - mcp-protocol-version
+                  - content-type
+                  - cache-control
+                  - x-api-key
+                exposeHeaders:
+                  - Mcp-Session-Id
+              # Protect the MCP server from request floods
+              localRateLimit:
+                - maxTokens: 200
+                  tokensPerFill: 200
+                  fillInterval: 1m
+                  type: requests
+            backends:
+              - mcp:
+                  targets:
+                    # ── DOCKER (HTTP/SSE) — default ───────────────────────
+                    # mcp_server.py runs inside the nutribot container with
+                    # --transport sse --port 3101 (see docker-compose.yml).
+                    - name: nutribot
+                      sse:
+                        host: nutribot
+                        port: 3101
+                        path: /sse
+                    # ── LOCAL DEV (stdio subprocess) ──────────────────────
+                    # Agent Gateway spawns mcp_server.py as a child process.
+                    # Swap this in (and remove the sse block above) when
+                    # running without Docker from the project root directory.
+                    #
+                    # - name: nutribot
+                    #   stdio:
+                    #     cmd: python
+                    #     args:
+                    #       - mcp_server.py
+
+# ─────────────────────────────────────────────
+# LLM Proxy / Rate Limiter  (port 3200)
+# ─────────────────────────────────────────────
+# Exposes an OpenAI-compatible endpoint. The FastAPI app sets:
+#   OPENAI_BASE_URL=http://localhost:3200
+# and all GPT calls are automatically rate-limited here.
+#
+# Agent Gateway forwards them to OpenAI using the API key below.
+# Set OPENAI_API_KEY in your environment — it is NOT hardcoded here.
+llm:
+  bind:
+    port: 3200
+  policies:
+    localRateLimit:
+      # ── Daily token budget ────────────────────────────────────────────
+      # 500 000 tokens refreshes every 24 hours.
+      # Adjust to match your OpenAI tier (e.g. 1 000 000 for Tier 2).
+      - maxTokens: 500000
+        tokensPerFill: 500000
+        fillInterval: 24h
+        type: tokens
+      # ── Per-minute request cap ────────────────────────────────────────
+      # 60 requests/min ≈ 1 req/sec; safe for gpt-4-turbo Tier 1.
+      - maxTokens: 60
+        tokensPerFill: 60
+        fillInterval: 1m
+        type: requests
+  models:
+    # Route gpt-4-turbo (and any other model) through OpenAI
+    - name: "gpt-4-turbo"
+      provider: openAI
+      params:
+        apiKey: "$OPENAI_API_KEY"
+        # Pre-count tokens before the request to block over-budget calls
+        tokenize: true
+    # Wildcard catches any other model name the app might request
+    - name: "*"
+      provider: openAI
+      params:
+        apiKey: "$OPENAI_API_KEY"
+        tokenize: true

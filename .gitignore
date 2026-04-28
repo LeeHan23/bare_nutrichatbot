@@ -65,8 +65,34 @@ models/*
 # Eval / test outputs (not needed for deployment)
 eval_output*.log
 eval_results*.json
+eval_results*.csv
 eval_dataset.json
 rag_evaluation_report.csv
+results_baseline.json
+
+# Evaluation & fine-tuning scripts (not needed for deployment)
+evaluate_rag.py
+eval_ragas.py
+test_bot_accuracy.py
+test_bot_culture.py
+generate_training_data.py
+generate_embedding_training_data.py
+export_pairs_csv.py
+finetune_embeddings.py
+colab_finetune.ipynb
+
+# Audit / inventory docs (internal use only)
+EVAL_DATASET_WITH_SOURCES.md
+KNOWLEDGE_BASE_INVENTORY.md
+KNOWLEDGE_BASE_QUALITY_AUDIT.md
+
+# Debug / scratch utilities
+check_langchain.py
+clean_annotations.py
+
+# Local dev tools (machine-specific, not for version control)
+cloudflared
+.mcp.json
 
 # Ignore large PDFs in the root
 Food Group .pdf
