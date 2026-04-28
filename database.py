@@ -1,6 +1,6 @@
 import os
 import secrets
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, JSON, Float
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -31,8 +31,9 @@ class ApiClient(Base):
     client_name = Column(String, unique=True, index=True) # e.g., "HealthTechCo"
     hashed_api_key = Column(String, unique=True, index=True)
     
-    # Relationship to documents
+    # Relationship to documents and patients
     documents = relationship("DocumentMetadata", back_populates="client", cascade="all, delete-orphan")
+    patients  = relationship("Patient", back_populates="client", cascade="all, delete-orphan")
 
 # --- NEW: Document Metadata Model ---
 class DocumentMetadata(Base):
@@ -48,6 +49,38 @@ class DocumentMetadata(Base):
     
     # Relationship to client
     client = relationship("ApiClient", back_populates="documents")
+
+# --- Patient Model ---
+class Patient(Base):
+    __tablename__ = "patients"
+    id       = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("api_clients.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Demographics
+    name      = Column(String, nullable=False)
+    ic_number = Column(String, index=True)   # Malaysian IC: YYMMDD-SS-XXXX
+    age       = Column(Integer)
+    gender    = Column(String)        # "Male" / "Female"
+    ethnicity = Column(String)        # "Malay" / "Chinese" / "Indian"
+    weight_kg = Column(Float)
+    height_cm = Column(Float)
+
+    # Clinical (stored as JSON lists)
+    conditions           = Column(JSON, default=list)
+    medications          = Column(JSON, default=list)
+    dietary_restrictions = Column(JSON, default=list)
+    allergies            = Column(JSON, default=list)
+
+    # Free-text clinical notes
+    notes = Column(String, default="")
+
+    # Demo auth
+    username        = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+
+    # Relationship back to the B2B client
+    client = relationship("ApiClient", back_populates="patients")
+
 
 # --- Database Creation ---
 def create_db_and_tables():
@@ -168,3 +201,96 @@ def delete_document_metadata(db_session, document_id: int, client_id: int = None
 
 # Tables are created at app startup (see app.py startup_event).
 # Call create_db_and_tables() explicitly in scripts that need it.
+
+
+# --- Patient Management Functions ---
+
+def add_patient(db_session, client_id: int, name: str, age: int, gender: str,
+                ethnicity: str, weight_kg: float, height_cm: float,
+                conditions: list, medications: list, dietary_restrictions: list,
+                allergies: list, notes: str, username: str, password: str,
+                ic_number: str = None):
+    """Create a new patient record with a hashed password."""
+    hashed_pw = generate_password_hash(password)
+    patient = Patient(
+        client_id=client_id, name=name, ic_number=ic_number, age=age, gender=gender,
+        ethnicity=ethnicity, weight_kg=weight_kg, height_cm=height_cm,
+        conditions=conditions, medications=medications,
+        dietary_restrictions=dietary_restrictions, allergies=allergies,
+        notes=notes, username=username, hashed_password=hashed_pw,
+    )
+    db_session.add(patient)
+    db_session.commit()
+    db_session.refresh(patient)
+    return patient
+
+
+def get_patient(db_session, patient_id: int):
+    """Fetch a single patient by primary key."""
+    return db_session.query(Patient).filter(Patient.id == patient_id).first()
+
+
+def get_patient_by_username(db_session, username: str):
+    """Fetch a patient by username."""
+    return db_session.query(Patient).filter(Patient.username == username).first()
+
+
+def get_patients_by_name(db_session, name: str, client_id: int):
+    """Case-insensitive name search within a client's patients.
+    Tries exact match first; falls back to contains if no exact match found."""
+    exact = db_session.query(Patient).filter(
+        Patient.client_id == client_id,
+        Patient.name.ilike(name.strip())
+    ).all()
+    if exact:
+        return exact
+    return db_session.query(Patient).filter(
+        Patient.client_id == client_id,
+        Patient.name.ilike(f"%{name.strip()}%")
+    ).all()
+
+
+def get_patient_by_ic(db_session, ic_number: str, client_id: int):
+    """Look up a patient by exact IC number (normalised — strips dashes and spaces)."""
+    normalised = ic_number.replace("-", "").replace(" ", "")
+    patients = db_session.query(Patient).filter(
+        Patient.client_id == client_id,
+        Patient.ic_number.isnot(None)
+    ).all()
+    for p in patients:
+        if p.ic_number and p.ic_number.replace("-", "").replace(" ", "") == normalised:
+            return p
+    return None
+
+
+def get_patients_by_client(db_session, client_id: int):
+    """List all patients belonging to a specific B2B client."""
+    return db_session.query(Patient).filter(Patient.client_id == client_id).all()
+
+
+def check_patient_login(db_session, username: str, password: str):
+    """Returns the Patient if credentials are valid, else None."""
+    patient = get_patient_by_username(db_session, username)
+    if patient and check_password_hash(patient.hashed_password, password):
+        return patient
+    return None
+
+
+def patient_to_profile_dict(patient) -> dict:
+    """
+    Convert a Patient ORM object to the profile dict consumed by rag.get_rag_response().
+    Key 'condition' (not 'conditions') matches the existing rag.py dict schema.
+    """
+    return {
+        "condition":             patient.conditions           or [],
+        "medications":           patient.medications          or [],
+        "dietary_restrictions":  patient.dietary_restrictions or [],
+        "name":                  patient.name,
+        "age":                   patient.age,
+        "gender":                patient.gender,
+        "ethnicity":             patient.ethnicity,
+        "weight_kg":             patient.weight_kg,
+        "height_cm":             patient.height_cm,
+        "allergies":             patient.allergies            or [],
+        "notes":                 patient.notes                or "",
+    }

@@ -21,16 +21,34 @@ def _format_docs(docs) -> str:
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-def get_system_template(target_disease: str) -> str:
+def get_system_template(target_disease: str, patient_context: str = "") -> str:
     """
     Returns the system-level persona/instruction block.
     {context} is injected at runtime by the retriever step.
     Chat history and the user question are handled by the LCEL chain structure.
+
+    patient_context: optional pre-formatted string with patient demographics and clinical
+    details (name, age, ethnicity, BMI, conditions, medications, allergies, notes).
+    When provided it is injected as a dedicated "Current Patient Profile" section so the
+    LLM can personalise every response without re-identifying the disease from the question.
     """
+    patient_block = ""
+    if patient_context:
+        patient_block = f"""
+**Current Patient Profile:**
+{patient_context}
+
+Use this profile to personalise ALL advice. Address the patient by name where appropriate.
+Tailor every food suggestion to their ethnicity and cultural eating context.
+Respect ALL listed dietary restrictions and allergies without exception — never suggest
+foods that conflict with them.
+"""
+
     return f"""
 You are a specialized AI Nutrition Assistant. Your role is to act as a professional, calm, and empathetic dietitian.
 Your goal is to guide the user through the Nutrition Care Process (ADIME) in a **natural, conversational way**.
 Your primary focus is on managing **{target_disease}**, but always within the context of the user's overall well-being.
+{patient_block}
 
 **Core Persona & Tone:**
 - **Professional & Empathetic:** Be warm, patient, and encouraging. Use supportive language like "That's a great observation," "It's completely normal to feel that way," or "Let's explore that together."
@@ -91,16 +109,19 @@ Your primary focus is on managing **{target_disease}**, but always within the co
 ---"""
 
 
-def create_conversational_chain(client_id: int, target_disease: str):
+def create_conversational_chain(client_id: int, target_disease: str, patient_context: str = ""):
     """
     Builds an LCEL chain with per-session conversation memory.
     Returns a RunnableWithMessageHistory that accepts {{"question": "..."}}
     and requires config={{"configurable": {{"session_id": "..."}}}} on invoke.
+
+    patient_context: optional string injected into the system prompt (see get_system_template).
+    Defaults to "" so existing callers (eval_ragas.py, evaluate_rag.py) are unaffected.
     """
     llm = get_llm()
     retriever = get_retriever(client_id=str(client_id))
 
-    system_template = get_system_template(target_disease)
+    system_template = get_system_template(target_disease, patient_context)
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_template),

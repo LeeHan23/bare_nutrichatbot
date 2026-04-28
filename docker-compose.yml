@@ -1,0 +1,61 @@
+services:
+
+  # ── PostgreSQL + pgvector ──────────────────────────────────────────────
+  pgvector:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector-nutribot
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nutribot
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nutribot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── NutriChatbot FastAPI app + MCP server ─────────────────────────────
+  nutribot:
+    build: .
+    container_name: nutribot
+    environment:
+      PORT: "8000"
+      DATABASE_URL: postgresql://postgres:postgres@pgvector:5432/nutribot
+      PGVECTOR_URL: postgresql://postgres:postgres@pgvector:5432/nutribot
+      # Route all OpenAI calls through the Agent Gateway LLM proxy
+      OPENAI_BASE_URL: http://agentgateway:3200
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-4-turbo}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+    ports:
+      - "8000:8000"   # FastAPI app
+      - "3101:3101"   # MCP server (SSE transport for Agent Gateway)
+    depends_on:
+      pgvector:
+        condition: service_healthy
+    command: >
+      sh -c "
+        python mcp_server.py --transport sse --port 3101 &
+        gunicorn -w 1 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:8000
+      "
+
+  # ── Agent Gateway (MCP gateway + LLM proxy) ───────────────────────────
+  agentgateway:
+    image: ghcr.io/agentgateway/agentgateway:latest
+    container_name: agentgateway
+    environment:
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+    ports:
+      - "3100:3100"   # MCP endpoint (agents connect here)
+      - "3200:3200"   # LLM proxy (nutribot routes GPT calls here)
+    volumes:
+      - ./agentgateway/config.yaml:/etc/agentgateway/config.yaml:ro
+    command: ["--config", "/etc/agentgateway/config.yaml"]
+    depends_on:
+      - nutribot
+
+volumes:
+  pgvector_data:
