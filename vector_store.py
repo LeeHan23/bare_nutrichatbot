@@ -54,7 +54,7 @@ def get_retriever(client_id: str) -> BaseRetriever:
         collection_name="base_knowledge",
         use_jsonb=True,
     )
-    base_retriever = base_db.as_retriever(search_kwargs={"k": 8})
+    base_retriever = base_db.as_retriever(search_kwargs={"k": 5})
 
     client_db = PGVector(
         connection_string=connection_string,
@@ -62,7 +62,7 @@ def get_retriever(client_id: str) -> BaseRetriever:
         collection_name=f"client_{client_id}_knowledge",
         use_jsonb=True,
     )
-    client_retriever = client_db.as_retriever(search_kwargs={"k": 8})
+    client_retriever = client_db.as_retriever(search_kwargs={"k": 5})
 
     print(f"[VectorStore] Using hybrid retriever for client_id: {client_id}")
     return MergedRetriever(retrievers=[base_retriever, client_retriever])
