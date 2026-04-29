@@ -3,11 +3,9 @@ from image_handler import parse_response_for_image
 from chain_factory import create_conversational_chain
 from vector_store import get_retriever
 
-RAG_FAILURE_PHRASES = ["i don't know", "i am not sure", "i cannot answer"]
-
 
 def identify_target_disease(question: str) -> str:
-    """Uses the LLM to identify the primary health condition in the user's query."""
+    """Uses the orchestration LLM (Ollama) to identify the primary health condition."""
     prompt = f"""
 Analyze the following user question and identify the primary health condition or disease mentioned.
 If a specific condition like 'Type 2 Diabetes', 'hypertension', 'CKD', or 'high cholesterol' is mentioned, return that name.
@@ -51,39 +49,41 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         target_disease = identify_target_disease(question)
 
     # ============================================================
-    # NEW: CLaRa branch — retrieve docs, then send to CLaRa
+    # CLaRa primary path — main RAG generation on Mac Studio
     # ============================================================
     if USE_CLARA:
         print("[DEBUG] Using CLaRa for generation")
-        try:
-            # Use existing hybrid retriever to fetch relevant docs from ChromaDB
-            retriever = get_retriever(str(client_id))
-            retrieved_docs = retriever.invoke(question)
-            doc_texts = [doc.page_content for doc in retrieved_docs]
-            print(f"[DEBUG] Retrieved {len(doc_texts)} docs for CLaRa")
+        retriever = get_retriever(str(client_id))
+        retrieved_docs = retriever.invoke(question)
+        doc_texts = [doc.page_content for doc in retrieved_docs]
+        print(f"[DEBUG] Retrieved {len(doc_texts)} docs for CLaRa")
 
-            # Build a prompt that includes patient context + question
-            if patient_context:
-                clara_prompt = (
-                    f"Patient Profile:\n{patient_context}\n\n"
-                    f"Question: {question}\n\nAnswer:"
-                )
-            else:
-                clara_prompt = f"Question: {question}\n\nAnswer:"
+        # Show preview of each retrieved doc to verify relevance
+        for i, doc in enumerate(doc_texts):
+            preview = doc[:150].replace('\n', ' ')
+            print(f"  [Doc {i+1}]: {preview}...")
 
-            answer = call_clara_api(clara_prompt, documents=doc_texts)
+        # Build the prompt with optional patient context
+        if patient_context:
+            clara_prompt = (
+                f"Patient Profile:\n{patient_context}\n\n"
+                f"Question: {question}\n\nAnswer:"
+            )
+        else:
+            clara_prompt = f"Question: {question}\n\nAnswer:"
 
-            if not answer or any(phrase in answer.lower() for phrase in RAG_FAILURE_PHRASES):
-                print("CLaRa response insufficient. Falling back to direct LLM.")
-                answer = get_direct_llm_response(question)
+        answer = call_clara_api(clara_prompt, documents=doc_texts)
 
-            return parse_response_for_image(answer)
-        except Exception as e:
-            print(f"[CLaRa pipeline error] {e}. Falling back to standard chain.")
-            # Fall through to the existing OpenAI/Ollama path below
+        if not answer:
+            answer = (
+                "I'm sorry, I couldn't generate a response right now. "
+                "The nutrition assistant may be temporarily unavailable. Please try again shortly."
+            )
+
+        return parse_response_for_image(answer)
 
     # ============================================================
-    # Existing OpenAI/Ollama path (unchanged)
+    # Legacy LangChain path (only used if USE_CLARA=false)
     # ============================================================
     qa_chain = create_conversational_chain(client_id, target_disease, patient_context)
     answer = qa_chain.invoke(
@@ -91,8 +91,7 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         config={"configurable": {"session_id": chat_session_id}},
     )
 
-    if not answer or any(phrase.lower() in answer.lower() for phrase in RAG_FAILURE_PHRASES):
-        print("RAG response insufficient. Falling back to direct LLM.")
-        answer = get_direct_llm_response(question)
+    if not answer:
+        answer = "I'm sorry, I couldn't generate a response right now. Please try again."
 
     return parse_response_for_image(answer)

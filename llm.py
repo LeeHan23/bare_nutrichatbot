@@ -4,47 +4,48 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Feature flags ---
-USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("true", "1", "yes")
 USE_CLARA = os.getenv("USE_CLARA", "false").lower() in ("true", "1", "yes")
+USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("true", "1", "yes")
 
-# --- OpenAI config (used when USE_OLLAMA=false and USE_CLARA=false) ---
+# --- CLaRa config (main RAG model on Mac Studio) ---
+CLARA_BASE_URL = os.getenv("CLARA_BASE_URL", "http://localhost:8001")
+
+# --- Ollama config (small orchestration tasks on local GPU) ---
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+# --- OpenAI config (kept as optional emergency fallback only) ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4-turbo")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 
-# --- Ollama config (used when USE_OLLAMA=true) ---
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "nutribot-lora")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-
-# --- CLaRa config (used when USE_CLARA=true) ---
-CLARA_BASE_URL = os.getenv("CLARA_BASE_URL", "http://localhost:8001")
-
-if not USE_OLLAMA and not USE_CLARA and not OPENAI_API_KEY:
+if not USE_OLLAMA and not OPENAI_API_KEY:
     raise EnvironmentError(
-        "OPENAI_API_KEY is not set. Either set it, or add USE_OLLAMA=true / USE_CLARA=true to .env."
+        "No orchestration LLM configured. Set USE_OLLAMA=true (recommended) "
+        "or provide OPENAI_API_KEY in .env."
     )
 
 
 def get_llm():
     """
-    Returns the configured LLM instance for LangChain chains.
-    Note: When USE_CLARA=true, LangChain chains still need a fallback LLM
-    for tasks like identify_target_disease(). We use OpenAI/Ollama for those.
+    Returns the orchestration LLM (used by LangChain chains for small tasks
+    like identify_target_disease, NOT for the main RAG response).
+    Defaults to Ollama, falls back to OpenAI if Ollama is not enabled.
     """
     if USE_OLLAMA:
         from langchain_community.chat_models import ChatOllama
         return ChatOllama(
             model=OLLAMA_MODEL,
             base_url=OLLAMA_BASE_URL,
-            temperature=0.5,
-            num_predict=1500,
+            temperature=0.3,
+            num_predict=512,
         )
     else:
         from langchain_openai import ChatOpenAI
         kwargs = dict(
             model_name=OPENAI_MODEL,
-            temperature=0.5,
-            max_tokens=1500,
+            temperature=0.3,
+            max_tokens=512,
             openai_api_key=OPENAI_API_KEY,
         )
         if OPENAI_BASE_URL:
@@ -53,14 +54,15 @@ def get_llm():
 
 
 def get_direct_llm_response(question: str) -> str:
-    """Gets a direct response from the fallback LLM without RAG."""
+    """Direct response from the orchestration LLM, no RAG.
+    Used for small auxiliary tasks like disease identification."""
     llm = get_llm()
     response = llm.invoke(question)
     return response.content
 
 
 def call_clara_api(prompt: str, documents: list = None) -> str:
-    """Calls the remote CLaRa inference server with a prompt + retrieved docs."""
+    """Calls the remote CLaRa inference server (Mac Studio) for main RAG generation."""
     import requests
     payload = {
         "prompt": prompt,
