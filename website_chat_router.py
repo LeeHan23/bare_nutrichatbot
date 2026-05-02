@@ -64,3 +64,33 @@ async def get_chat_response(
         stream_rag_response(request.question, client.id, request.session_id, resolved_profile),
         media_type="text/event-stream"
     )
+
+
+@chat_router.post("/get_response_sync")
+async def get_chat_response_sync(
+    request: ChatRequest,
+    client = Depends(get_api_client),
+    database: Session = Depends(get_db),
+):
+    """
+    Non-streaming version of get_response. Returns the full answer as plain JSON.
+    Easier to integrate for mobile apps and partner websites that don't handle SSE.
+
+    Request body: same as /get_response
+    Response: {"answer": "...", "session_id": "..."}
+    """
+    resolved_profile = request.profile
+
+    if request.patient_id is not None and resolved_profile is None:
+        patient = db.get_patient(database, request.patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {request.patient_id} not found")
+        if patient.client_id != client.id:
+            raise HTTPException(status_code=403, detail="Patient does not belong to this client")
+        resolved_profile = db.patient_to_profile_dict(patient)
+
+    full_response = ""
+    async for chunk in stream_rag_response(request.question, client.id, request.session_id, resolved_profile):
+        full_response += chunk
+
+    return {"answer": full_response, "session_id": request.session_id}
