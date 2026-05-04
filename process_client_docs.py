@@ -63,9 +63,21 @@ def is_junk_chunk(text: str) -> bool:
         return True
     if 'isbn' in text.lower()[:200] and len(text) < 600:
         return True
+    # Catch author-year citations: (2019), et al.
     citation_pattern = re.findall(r'\([12]\d{3}\)|et al\.?', text)
     if len(citation_pattern) > 8 and len(text) < 1500:
         return True
+
+    # Catch numbered bibliography entries: "153. Piepoli MF..." or "1. Smith J..."
+    numbered_refs = re.findall(r'^\d+\.\s+[A-Z][a-z]+', text, re.MULTILINE)
+    if len(numbered_refs) > 3 and len(text) < 2000:
+        return True
+
+    # Catch TOC lines with page numbers at end: "Introduction 1"
+    toc_lines = re.findall(r'^.{10,60}\s+\d{1,3}\s*$', text, re.MULTILINE)
+    if len(toc_lines) > 4:
+        return True
+
     return False
 
 
