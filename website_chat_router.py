@@ -1,39 +1,124 @@
+import asyncio
+import logging
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 import database as db
 import rag
-from fastapi.responses import StreamingResponse
-import asyncio
-from sqlalchemy.orm import Session
 from dependencies import get_api_client, get_db
+from extractor import extract_from_message
+from local_patient_store import LocalPatientStore
+
+logger = logging.getLogger(__name__)
 
 # --- Router Initialization ---
 chat_router = APIRouter()
+
+# --- Single PatientStore instance — swap to RemotePatientStore for production ---
+patient_store = LocalPatientStore()
+
 
 # --- Pydantic Model ---
 class ChatRequest(BaseModel):
     question: str
     session_id: str
-    profile: dict | None = None     # Optional explicit profile dict (existing path)
+    profile: dict | None = None     # Optional explicit profile dict (legacy path)
     patient_id: int | None = None   # Optional: auto-load profile from DB by patient ID
 
-async def stream_rag_response(question: str, client_id: int, session_id: str, profile: dict | None = None):
-    """
-    Streams the RAG response using the client's knowledge base.
-    """
+
+async def stream_rag_response(
+    question: str,
+    client_id: int,
+    session_id: str,
+    profile: dict | None = None,
+):
+    """Streams the RAG response using the client's knowledge base."""
     try:
         response_data = rag.get_rag_response(
             question=question,
             client_id=client_id,
             chat_session_id=session_id,
-            profile=profile
+            profile=profile,
         )
         for chunk in response_data.get("answer", ""):
             yield chunk
             await asyncio.sleep(0.01)
     except Exception as e:
-        print(f"❌ RAG Error: {e}")
+        logger.error(f"RAG Error: {e}")
         yield f"I encountered an error processing your request: {str(e)}"
+
+
+def _resolve_patient_profile(
+    request: ChatRequest,
+    client,
+    database: Session,
+) -> dict | None:
+    """
+    Resolve the patient profile from the request.
+    Order: explicit profile → patient_id lookup → None.
+    Validates the patient belongs to the calling client.
+    """
+    if request.profile is not None:
+        return request.profile
+
+    if request.patient_id is None:
+        return None
+
+    patient = db.get_patient(database, request.patient_id)
+    if not patient:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Patient {request.patient_id} not found",
+        )
+    if patient.client_id != client.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Patient does not belong to this client",
+        )
+    return db.patient_to_profile_dict(patient)
+
+
+async def _run_extractor_background(
+    patient_id: int,
+    message: str,
+    current_profile: dict,
+    session_id: str,
+):
+    """
+    Async background task: extract supplementary fields from the patient's
+    message and persist via the PatientStore. Runs after the response is sent
+    so it adds zero user-facing latency.
+    """
+    try:
+        # Extractor is sync (blocking HTTP to Ollama), run it in a thread
+        # so we don't block the asyncio event loop.
+        loop = asyncio.get_event_loop()
+        new_fields = await loop.run_in_executor(
+            None,
+            lambda: extract_from_message(message, current_profile),
+        )
+
+        if not new_fields:
+            return
+
+        applied = await loop.run_in_executor(
+            None,
+            lambda: patient_store.update_supplementary_fields(
+                patient_id=patient_id,
+                updates=new_fields,
+                source_session_id=session_id,
+            ),
+        )
+        if applied:
+            logger.info(
+                f"[Extractor] Patient {patient_id} updated: {list(applied.keys())}"
+            )
+    except Exception as e:
+        # Never let extractor failures affect the user. Log and move on.
+        logger.error(f"[Extractor] Background task failed: {e}")
+
 
 @chat_router.post("/get_response")
 async def get_chat_response(
@@ -42,27 +127,34 @@ async def get_chat_response(
     database: Session = Depends(get_db),
 ):
     """
-    Gets a chat response using the client's specialised knowledge base.
-
+    Streaming chat response.
     Profile resolution order:
-      1. Explicit `profile` dict in the request body (legacy path, unchanged).
-      2. `patient_id` in the request body — auto-loads the patient's medical record
-         from the database and converts it to a profile dict.
-      3. Neither provided — the RAG pipeline infers the condition from the question.
+      1. Explicit `profile` dict in the request body
+      2. `patient_id` → auto-loaded from the database
+      3. Neither — RAG infers the condition from the question
     """
-    resolved_profile = request.profile
+    resolved_profile = _resolve_patient_profile(request, client, database)
 
-    if request.patient_id is not None and resolved_profile is None:
-        patient = db.get_patient(database, request.patient_id)
-        if not patient:
-            raise HTTPException(status_code=404, detail=f"Patient {request.patient_id} not found")
-        if patient.client_id != client.id:
-            raise HTTPException(status_code=403, detail="Patient does not belong to this client")
-        resolved_profile = db.patient_to_profile_dict(patient)
+    # Schedule the extractor as a background task BEFORE we start streaming.
+    # asyncio.create_task() runs concurrently with the streaming response.
+    if request.patient_id is not None and resolved_profile is not None:
+        asyncio.create_task(
+            _run_extractor_background(
+                patient_id=request.patient_id,
+                message=request.question,
+                current_profile=resolved_profile,
+                session_id=request.session_id,
+            )
+        )
 
     return StreamingResponse(
-        stream_rag_response(request.question, client.id, request.session_id, resolved_profile),
-        media_type="text/event-stream"
+        stream_rag_response(
+            request.question,
+            client.id,
+            request.session_id,
+            resolved_profile,
+        ),
+        media_type="text/event-stream",
     )
 
 
@@ -73,24 +165,28 @@ async def get_chat_response_sync(
     database: Session = Depends(get_db),
 ):
     """
-    Non-streaming version of get_response. Returns the full answer as plain JSON.
-    Easier to integrate for mobile apps and partner websites that don't handle SSE.
-
-    Request body: same as /get_response
-    Response: {"answer": "...", "session_id": "..."}
+    Non-streaming version. Returns the full answer as JSON.
+    Same profile resolution and extractor logic as /get_response.
     """
-    resolved_profile = request.profile
+    resolved_profile = _resolve_patient_profile(request, client, database)
 
-    if request.patient_id is not None and resolved_profile is None:
-        patient = db.get_patient(database, request.patient_id)
-        if not patient:
-            raise HTTPException(status_code=404, detail=f"Patient {request.patient_id} not found")
-        if patient.client_id != client.id:
-            raise HTTPException(status_code=403, detail="Patient does not belong to this client")
-        resolved_profile = db.patient_to_profile_dict(patient)
+    if request.patient_id is not None and resolved_profile is not None:
+        asyncio.create_task(
+            _run_extractor_background(
+                patient_id=request.patient_id,
+                message=request.question,
+                current_profile=resolved_profile,
+                session_id=request.session_id,
+            )
+        )
 
     full_response = ""
-    async for chunk in stream_rag_response(request.question, client.id, request.session_id, resolved_profile):
+    async for chunk in stream_rag_response(
+        request.question,
+        client.id,
+        request.session_id,
+        resolved_profile,
+    ):
         full_response += chunk
 
     return {"answer": full_response, "session_id": request.session_id}

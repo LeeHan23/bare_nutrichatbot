@@ -31,6 +31,7 @@ MANIFEST
 
 # Environments
 .venv
+.env.backup
 env/
 venv/
 ENV/
@@ -97,3 +98,4 @@ cloudflared
 # Ignore large PDFs in the root
 Food Group .pdf
 Malaysian food portion size photo album copy.pdf
+.env.backup

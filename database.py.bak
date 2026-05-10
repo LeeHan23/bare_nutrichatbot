@@ -74,38 +74,6 @@ class Patient(Base):
     # Free-text clinical notes
     notes = Column(String, default="")
 
-    # ──────────────────────────────────────────────────────────────────
-    # Nutribot supplementary fields (eNCPT 2020 aligned)
-    # Filled by the extractor from chat conversation, not from hospital.
-    # All nullable — existing rows remain valid.
-    # ──────────────────────────────────────────────────────────────────
-
-    # Tier 1 — Critical
-    fluid_intake_ml        = Column(Integer, nullable=True)        # FH-1.2.1.1.1
-    alcohol_per_week       = Column(Integer, nullable=True)        # FH-1.4.1.1
-    supplements            = Column(JSON, default=list)            # FH-3.2.1
-    religion               = Column(String, nullable=True)         # CH-3.1.7
-    tobacco_status         = Column(String, nullable=True)         # CH-1.1.10
-
-    # Tier 2 — Important
-    meals_per_day          = Column(Integer, nullable=True)        # FH-1.2.2.3.1.1
-    snacks_per_day         = Column(Integer, nullable=True)        # FH-1.2.2.3.1.2
-    processed_food_freq    = Column(String, nullable=True)         # FH-1.2.2.2.5
-    fast_food_freq         = Column(String, nullable=True)         # FH-1.2.2.2.6
-    self_prepared_freq     = Column(String, nullable=True)         # FH-1.2.2.2.7
-    caffeine_mg_per_day    = Column(Integer, nullable=True)        # FH-1.4.3.1
-    sugar_drinks_ml        = Column(Integer, nullable=True)        # FH-1.2.1.1.1.3
-    activity_freq          = Column(String, nullable=True)         # FH-7.3.1
-    activity_minutes       = Column(Integer, nullable=True)        # FH-7.3.2
-    activity_intensity     = Column(String, nullable=True)         # FH-7.3.3
-    food_avoidance         = Column(JSON, default=list)            # FH-5.2.1
-    nutrition_knowledge    = Column(Integer, nullable=True)        # FH-4.1.3 (1-5)
-    readiness_to_change    = Column(String, nullable=True)         # FH-4.2.8
-    sodium_awareness       = Column(String, nullable=True)         # FH-1.5.6.1
-
-    # Provenance — which fields were filled by extractor + when
-    extractor_metadata     = Column(JSON, default=dict)            # {field: {confidence, last_updated, source_session_id}}
-
     # Demo auth
     username        = Column(String, unique=True, index=True)
     hashed_password = Column(String)
