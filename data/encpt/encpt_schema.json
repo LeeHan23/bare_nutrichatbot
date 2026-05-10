@@ -1,0 +1,2273 @@
+{
+  "Fluid intake": [
+    {
+      "code": "FH-1.2.1.1",
+      "anduid": "14011",
+      "label": "Estimated fluid intake"
+    },
+    {
+      "code": "FH-1.2.1.1.1",
+      "anduid": "14012",
+      "label": "Total fluid estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.1.1.1",
+      "anduid": "11386",
+      "label": "Fluid estimated intake from oral"
+    },
+    {
+      "code": "FH-1.2.1.1.1.2",
+      "anduid": "14013",
+      "label": "Water estimated oral intake in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.1.1.3",
+      "anduid": "14014",
+      "label": "Sugar sweetened beverage estimated"
+    },
+    {
+      "code": "FH-1.2.1.1.1.4",
+      "anduid": "14015",
+      "label": "Beverage with high intensity sweetener"
+    },
+    {
+      "code": "FH-1.2.1.1.1.5",
+      "anduid": "14016",
+      "label": "percent fruit juice estimated oral"
+    },
+    {
+      "code": "FH-1.2.1.1.1.6",
+      "anduid": "14017",
+      "label": "Liquid dairy product estimated oral"
+    },
+    {
+      "code": "FH-1.2.1.1.1.7",
+      "anduid": "14018",
+      "label": "Caffeinated beverage estimated oral"
+    },
+    {
+      "code": "FH-1.2.1.1.1.8",
+      "anduid": "14019",
+      "label": "Nutritionally complete liquid"
+    },
+    {
+      "code": "FH-1.2.1.1.1.9",
+      "anduid": "14020",
+      "label": "Liquid meal replacement estimated"
+    },
+    {
+      "code": "FH-1.2.1.1.2",
+      "anduid": "14021",
+      "label": "Fluid estimated intake per kg in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.1.3",
+      "anduid": "10009",
+      "label": "Fluid estimated intake from food"
+    },
+    {
+      "code": "FH-1.2.1.1.4",
+      "anduid": "14022",
+      "label": "Free water estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.1.4.1",
+      "anduid": "14023",
+      "label": "Free water estimated intake from"
+    },
+    {
+      "code": "FH-1.2.1.1.4.2",
+      "anduid": "14024",
+      "label": "Free water estimated intake from"
+    },
+    {
+      "code": "FH-1.2.1.1.4.3",
+      "anduid": "14025",
+      "label": "Free water estimated intake from"
+    },
+    {
+      "code": "FH-1.2.1.1.4.4",
+      "anduid": "14026",
+      "label": "Free water estimated intake from"
+    },
+    {
+      "code": "FH-1.2.1.1.4.5",
+      "anduid": "14027",
+      "label": "Free water estimated intake from"
+    },
+    {
+      "code": "FH-1.2.1.2",
+      "anduid": "14028",
+      "label": "Measured fluid intake"
+    },
+    {
+      "code": "FH-1.2.1.2.1",
+      "anduid": "14029",
+      "label": "Total fluid measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.2.1.1",
+      "anduid": "10008",
+      "label": "Fluid measured intake from oral"
+    },
+    {
+      "code": "FH-1.2.1.2.1.2",
+      "anduid": "14030",
+      "label": "Water measured oral intake in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.2.1.3",
+      "anduid": "14031",
+      "label": "Sugar sweetened beverage measured"
+    },
+    {
+      "code": "FH-1.2.1.2.1.4",
+      "anduid": "14032",
+      "label": "Beverage with high intensity sweetener"
+    },
+    {
+      "code": "FH-1.2.1.2.1.5",
+      "anduid": "14033",
+      "label": "percent fruit juice measured oral"
+    },
+    {
+      "code": "FH-1.2.1.2.1.6",
+      "anduid": "14034",
+      "label": "Liquid dairy product measured oral"
+    },
+    {
+      "code": "FH-1.2.1.2.1.7",
+      "anduid": "14035",
+      "label": "Caffeinated beverage measured oral"
+    },
+    {
+      "code": "FH-1.2.1.2.1.8",
+      "anduid": "14036",
+      "label": "Nutritionally complete liquid"
+    },
+    {
+      "code": "FH-1.2.1.2.1.9",
+      "anduid": "14037",
+      "label": "Liquid meal replacement measured"
+    },
+    {
+      "code": "FH-1.2.1.2.2",
+      "anduid": "14038",
+      "label": "Fluid measured intake from food"
+    },
+    {
+      "code": "FH-1.2.1.2.3",
+      "anduid": "14039",
+      "label": "Fluid measured intake per kg in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.2.4",
+      "anduid": "14040",
+      "label": "Free water measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.2.1.2.4.1",
+      "anduid": "14041",
+      "label": "Free water measured intake from"
+    },
+    {
+      "code": "FH-1.2.1.2.4.2",
+      "anduid": "14042",
+      "label": "Free water measured intake from"
+    },
+    {
+      "code": "FH-1.2.1.2.4.3",
+      "anduid": "14043",
+      "label": "Free water measured intake from"
+    },
+    {
+      "code": "FH-1.2.1.2.4.4",
+      "anduid": "14044",
+      "label": "Free water measured intake from"
+    },
+    {
+      "code": "FH-1.2.1.2.4.5",
+      "anduid": "14045",
+      "label": "Free water measured intake from"
+    }
+  ],
+  "Food intake patterns": [
+    {
+      "code": "FH-1.2.2.1",
+      "anduid": "10012",
+      "label": "Amount of food"
+    },
+    {
+      "code": "FH-1.2.2.1.1",
+      "anduid": "13125",
+      "label": "Estimated amount of food"
+    },
+    {
+      "code": "FH-1.2.2.1.1.1",
+      "anduid": "11387",
+      "label": "Grain servings estimated in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.1.2",
+      "anduid": "11389",
+      "label": "Fruit servings estimated in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.1.3",
+      "anduid": "11391",
+      "label": "Vegetable servings estimated in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.1.4",
+      "anduid": "11393",
+      "label": "Milk product servings estimated in 24"
+    },
+    {
+      "code": "FH-1.2.2.1.1.5",
+      "anduid": "11395",
+      "label": "Protein food servings estimated in 24"
+    },
+    {
+      "code": "FH-1.2.2.1.1.6",
+      "anduid": "11397",
+      "label": "Fat servings estimated in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.1.7",
+      "anduid": "11399",
+      "label": "Empty energy servings estimated in 24"
+    },
+    {
+      "code": "FH-1.2.2.1.1.8",
+      "anduid": "14046",
+      "label": "Estimated percent of meals eaten in 24"
+    },
+    {
+      "code": "FH-1.2.2.1.2",
+      "anduid": "13126",
+      "label": "Measured amount of food"
+    },
+    {
+      "code": "FH-1.2.2.1.2.1",
+      "anduid": "11388",
+      "label": "Grain servings measured in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.2.2",
+      "anduid": "11390",
+      "label": "Fruit servings measured in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.2.3",
+      "anduid": "11392",
+      "label": "Vegetable servings measured in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.2.4",
+      "anduid": "11394",
+      "label": "Milk product servings measured in 24"
+    },
+    {
+      "code": "FH-1.2.2.1.2.5",
+      "anduid": "11396",
+      "label": "Protein food servings measured in 24"
+    },
+    {
+      "code": "FH-1.2.2.1.2.6",
+      "anduid": "11398",
+      "label": "Fat servings measured in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.1.2.7",
+      "anduid": "11400",
+      "label": "Empty energy servings measured in 24"
+    },
+    {
+      "code": "FH-1.2.2.1.2.8",
+      "anduid": "14047",
+      "label": "Measured percent of meals eaten in 24"
+    },
+    {
+      "code": "FH-1.2.2.2",
+      "anduid": "10013",
+      "label": "Types of food"
+    },
+    {
+      "code": "FH-1.2.2.2.1",
+      "anduid": "14048",
+      "label": "Fortified food intake"
+    },
+    {
+      "code": "FH-1.2.2.2.2",
+      "anduid": "14049",
+      "label": "Enriched food intake"
+    },
+    {
+      "code": "FH-1.2.2.2.3",
+      "anduid": "14050",
+      "label": "Special dietary food intake"
+    },
+    {
+      "code": "FH-1.2.2.2.4",
+      "anduid": "14051",
+      "label": "Medical food intake"
+    },
+    {
+      "code": "FH-1.2.2.2.5",
+      "anduid": "14052",
+      "label": "Processed food intake"
+    },
+    {
+      "code": "FH-1.2.2.2.6",
+      "anduid": "14053",
+      "label": "Quick service food intake"
+    },
+    {
+      "code": "FH-1.2.2.2.7",
+      "anduid": "14054",
+      "label": "Self prepared food intake"
+    },
+    {
+      "code": "FH-1.2.2.2.8",
+      "anduid": "14210",
+      "label": "Prepared food intake"
+    },
+    {
+      "code": "FH-1.2.2.3",
+      "anduid": "10014",
+      "label": "Meal/snack pattern"
+    },
+    {
+      "code": "FH-1.2.2.3.1",
+      "anduid": "13127",
+      "label": "Estimated meal and snack pattern"
+    },
+    {
+      "code": "FH-1.2.2.3.1.1",
+      "anduid": "11404",
+      "label": "Number of meals estimated in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.3.1.2",
+      "anduid": "11402",
+      "label": "Number of snacks estimated in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.3.2",
+      "anduid": "13128",
+      "label": "Measured meal and snack pattern"
+    },
+    {
+      "code": "FH-1.2.2.3.2.1",
+      "anduid": "11405",
+      "label": "Number of meals measured in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.3.2.2",
+      "anduid": "11403",
+      "label": "Number of snacks measured in 24 hours"
+    },
+    {
+      "code": "FH-1.2.2.4",
+      "anduid": "10015",
+      "label": "Diet quality index"
+    },
+    {
+      "code": "FH-1.2.2.4.1",
+      "anduid": "14055",
+      "label": "Healthy eating index (HEI) 2015 score"
+    },
+    {
+      "code": "FH-1.2.2.5",
+      "anduid": "10016",
+      "label": "Food variety"
+    }
+  ],
+  "Breastmilk/infant formula": [
+    {
+      "code": "FH-1.2.3.1",
+      "anduid": "10018",
+      "label": "Breastmilk intake"
+    },
+    {
+      "code": "FH-1.2.3.1.1",
+      "anduid": "11406",
+      "label": "Breastmilk feeding attempts in 24 hours"
+    },
+    {
+      "code": "FH-1.2.3.1.2",
+      "anduid": "11409",
+      "label": "Adequacy of breastmilk intake"
+    },
+    {
+      "code": "FH-1.2.3.1.3",
+      "anduid": "14056",
+      "label": "Donor breastmilk intake"
+    },
+    {
+      "code": "FH-1.2.3.1.4",
+      "anduid": "14057",
+      "label": "s expressed breastmilk intake"
+    },
+    {
+      "code": "FH-1.2.3.1.5",
+      "anduid": "14058",
+      "label": "Estimated breastmilk intake"
+    },
+    {
+      "code": "FH-1.2.3.1.5.1",
+      "anduid": "11407",
+      "label": "Breastmilk intake estimated volume in 24"
+    },
+    {
+      "code": "FH-1.2.3.1.5.2",
+      "anduid": "14059",
+      "label": "Breastmilk intake estimated volume per"
+    },
+    {
+      "code": "FH-1.2.3.1.6",
+      "anduid": "14060",
+      "label": "Measured breastmilk intake"
+    },
+    {
+      "code": "FH-1.2.3.1.6.1",
+      "anduid": "11408",
+      "label": "Breastmilk intake measured volume in 24"
+    },
+    {
+      "code": "FH-1.2.3.1.6.2",
+      "anduid": "14061",
+      "label": "Breastmilk intake measured volume per"
+    },
+    {
+      "code": "FH-1.2.3.2",
+      "anduid": "10019",
+      "label": "Infant formula intake"
+    },
+    {
+      "code": "FH-1.2.3.2.1",
+      "anduid": "11412",
+      "label": "Infant formula feedings in 24 hours"
+    },
+    {
+      "code": "FH-1.2.3.2.2",
+      "anduid": "11413",
+      "label": "Adequacy of infant formula intake"
+    },
+    {
+      "code": "FH-1.2.3.2.3",
+      "anduid": "14211",
+      "label": "Infant formula intake composition"
+    },
+    {
+      "code": "FH-1.2.3.2.4",
+      "anduid": "14062",
+      "label": "Infant formula intake concentration"
+    },
+    {
+      "code": "FH-1.2.3.2.5",
+      "anduid": "14063",
+      "label": "Estimated infant formula intake"
+    },
+    {
+      "code": "FH-1.2.3.2.5.1",
+      "anduid": "11410",
+      "label": "Infant formula intake estimated volume in"
+    },
+    {
+      "code": "FH-1.2.3.2.5.2",
+      "anduid": "14064",
+      "label": "Infant formula intake estimated volume"
+    },
+    {
+      "code": "FH-1.2.3.2.6",
+      "anduid": "14065",
+      "label": "Measured infant formula intake"
+    },
+    {
+      "code": "FH-1.2.3.2.6.1",
+      "anduid": "11411",
+      "label": "Infant formula intake measured volume in"
+    },
+    {
+      "code": "FH-1.2.3.2.6.2",
+      "anduid": "14066",
+      "label": "Infant formula intake measured volume"
+    }
+  ],
+  "Alcohol intake": [
+    {
+      "code": "FH-1.4.1.1",
+      "anduid": "14172",
+      "label": "Alcohol intake in one week"
+    },
+    {
+      "code": "FH-1.4.1.2",
+      "anduid": "14173",
+      "label": "Alcohol intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.1.2.1",
+      "anduid": "14174",
+      "label": "Beer intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.1.2.2",
+      "anduid": "14175",
+      "label": "Distilled alcohol intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.1.2.3",
+      "anduid": "14176",
+      "label": "Wine intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.1.2.4",
+      "anduid": "14177",
+      "label": "Hard cider intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.1.3",
+      "anduid": "14188",
+      "label": "Days per week alcoholic drinks consumed"
+    },
+    {
+      "code": "FH-1.4.1.4",
+      "anduid": "10031",
+      "label": "Alcohol intake pattern on drinking days"
+    }
+  ],
+  "Bioactive substances": [
+    {
+      "code": "FH-1.4.2.1",
+      "anduid": "13129",
+      "label": "Estimated bioactive substance intake"
+    },
+    {
+      "code": "FH-1.4.2.1.1",
+      "anduid": "11422",
+      "label": "Plant stanol ester estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.1.2",
+      "anduid": "11424",
+      "label": "Plant sterol ester estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.1.3",
+      "anduid": "11426",
+      "label": "Soy protein estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.1.4",
+      "anduid": "11428",
+      "label": "Psyllium estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.1.5",
+      "anduid": "11430",
+      "label": "Beta glucan estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.2",
+      "anduid": "13130",
+      "label": "Measured bioactive substance intake"
+    },
+    {
+      "code": "FH-1.4.2.2.1",
+      "anduid": "11423",
+      "label": "Plant stanol ester measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.2.2",
+      "anduid": "11425",
+      "label": "Plant sterol ester measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.2.3",
+      "anduid": "11427",
+      "label": "Soy protein measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.2.4",
+      "anduid": "11429",
+      "label": "Psyllium measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.2.5",
+      "anduid": "11431",
+      "label": "Beta glucan measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.2.3",
+      "anduid": "10038",
+      "label": "Food additive intake (specify)"
+    },
+    {
+      "code": "FH-1.4.2.3.1",
+      "anduid": "14067",
+      "label": "High intensity sweetener additive intake"
+    },
+    {
+      "code": "FH-1.4.2.3.1.1",
+      "anduid": "14068",
+      "label": "Excessive high intensity sweetener"
+    }
+  ],
+  "Macronutrient intake": [
+    {
+      "code": "FH-1.5.1.1",
+      "anduid": "13131",
+      "label": "Estimated fat intake"
+    },
+    {
+      "code": "FH-1.5.1.1.1",
+      "anduid": "11433",
+      "label": "Total fat estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.1.2",
+      "anduid": "11435",
+      "label": "Saturated fat estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.1.3",
+      "anduid": "11437",
+      "label": "Trans fatty acid estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.1.4",
+      "anduid": "11439",
+      "label": "Polyunsaturated fat estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.1.4.1",
+      "anduid": "11602",
+      "label": "Linoleic acid estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.1.5",
+      "anduid": "11441",
+      "label": "Monounsaturated fat estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.1.6",
+      "anduid": "11443",
+      "label": "Omega 3 fatty acid estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.1.6.1",
+      "anduid": "11445",
+      "label": "Alpha linolenic acid estimated intake in"
+    },
+    {
+      "code": "FH-1.5.1.1.6.2",
+      "anduid": "11447",
+      "label": "Eicosapentaenoic acid estimated intake in"
+    },
+    {
+      "code": "FH-1.5.1.1.6.3",
+      "anduid": "11449",
+      "label": "Docosahexaenoic acid estimated intake in"
+    },
+    {
+      "code": "FH-1.5.1.1.7",
+      "anduid": "11451",
+      "label": "Essential fatty acid estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.1.8",
+      "anduid": "11453",
+      "label": "Medium chain triglyceride estimated intake in"
+    },
+    {
+      "code": "FH-1.5.1.1.9",
+      "anduid": "14069",
+      "label": "Fat estimated intake in one meal"
+    },
+    {
+      "code": "FH-1.5.1.1.10",
+      "anduid": "14070",
+      "label": "Percent saturated fat estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.1.11",
+      "anduid": "13000",
+      "label": "Fat estimated intake from oral nutrition in 24"
+    },
+    {
+      "code": "FH-1.5.1.1.12",
+      "anduid": "12014",
+      "label": "Fat estimated intake from enteral nutrition in"
+    },
+    {
+      "code": "FH-1.5.1.1.13",
+      "anduid": "13001",
+      "label": "Fat estimated intake from parenteral nutrition"
+    },
+    {
+      "code": "FH-1.5.1.1.14",
+      "anduid": "13002",
+      "label": "Fat estimated intake from intravenous fluids in"
+    },
+    {
+      "code": "FH-1.5.1.1.15",
+      "anduid": "14071",
+      "label": "Fat additive estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.1.16",
+      "anduid": "14216",
+      "label": "Percent fat estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.2",
+      "anduid": "13132",
+      "label": "Measured fat intake"
+    },
+    {
+      "code": "FH-1.5.1.2.1",
+      "anduid": "11434",
+      "label": "Total fat measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.2.2",
+      "anduid": "11436",
+      "label": "Saturated fat measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.2.3",
+      "anduid": "11438",
+      "label": "Trans fatty acid measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.2.4",
+      "anduid": "11440",
+      "label": "Polyunsaturated fat measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.2.4.1",
+      "anduid": "13225",
+      "label": "Linoleic acid measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.2.5",
+      "anduid": "11442",
+      "label": "Monounsaturated fat measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.2.6",
+      "anduid": "11444",
+      "label": "Omega 3 fatty acid measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.2.6.1",
+      "anduid": "11446",
+      "label": "Alpha linolenic acid measured intake in"
+    },
+    {
+      "code": "FH-1.5.1.2.6.2",
+      "anduid": "11448",
+      "label": "Eicosapentaenoic acid measured intake in"
+    },
+    {
+      "code": "FH-1.5.1.2.6.3",
+      "anduid": "11450",
+      "label": "Docosahexaenoic acid measured intake in"
+    },
+    {
+      "code": "FH-1.5.1.2.7",
+      "anduid": "11452",
+      "label": "Essential fatty acid measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.1.2.8",
+      "anduid": "11454",
+      "label": "Medium chain triglyceride measured intake in"
+    },
+    {
+      "code": "FH-1.5.1.2.9",
+      "anduid": "14072",
+      "label": "Fat measured intake in one meal"
+    },
+    {
+      "code": "FH-1.5.1.2.10",
+      "anduid": "14073",
+      "label": "Percent saturated fat measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.2.11",
+      "anduid": "14074",
+      "label": "Fat measured intake from oral nutrition in 24"
+    },
+    {
+      "code": "FH-1.5.1.2.12",
+      "anduid": "14075",
+      "label": "Fat measured intake from enteral nutrition in 24"
+    },
+    {
+      "code": "FH-1.5.1.2.13",
+      "anduid": "14076",
+      "label": "Fat measured intake from parenteral nutrition in"
+    },
+    {
+      "code": "FH-1.5.1.2.14",
+      "anduid": "14077",
+      "label": "Fat measured intake from intravenous fluids in 24"
+    },
+    {
+      "code": "FH-1.5.1.2.15",
+      "anduid": "14078",
+      "label": "Fat additive measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.1.2.16",
+      "anduid": "14217",
+      "label": "Percent fat measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.2.1",
+      "anduid": "11455",
+      "label": "Cholesterol estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.2.2",
+      "anduid": "11456",
+      "label": "Cholesterol measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1",
+      "anduid": "13133",
+      "label": "Estimated protein intake"
+    },
+    {
+      "code": "FH-1.5.3.1.1",
+      "anduid": "11457",
+      "label": "Total protein estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1.2",
+      "anduid": "11459",
+      "label": "High biological value protein estimated intake"
+    },
+    {
+      "code": "FH-1.5.3.1.3",
+      "anduid": "11461",
+      "label": "Casein estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1.4",
+      "anduid": "11463",
+      "label": "Whey estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1.5",
+      "anduid": "11465",
+      "label": "Gluten estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1.6",
+      "anduid": "11467",
+      "label": "Protein estimated intake per kg in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1.7",
+      "anduid": "11610",
+      "label": "Natural protein estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1.8",
+      "anduid": "14079",
+      "label": "Protein estimated intake in one meal"
+    },
+    {
+      "code": "FH-1.5.3.1.9",
+      "anduid": "14080",
+      "label": "Percent protein estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.1.10",
+      "anduid": "13003",
+      "label": "Protein estimated intake from oral nutrition in"
+    },
+    {
+      "code": "FH-1.5.3.1.11",
+      "anduid": "13004",
+      "label": "Protein estimated intake from enteral nutrition"
+    },
+    {
+      "code": "FH-1.5.3.1.12",
+      "anduid": "14081",
+      "label": "Protein additive estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2",
+      "anduid": "13134",
+      "label": "Measured protein intake"
+    },
+    {
+      "code": "FH-1.5.3.2.1",
+      "anduid": "11458",
+      "label": "Total protein measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2.2",
+      "anduid": "11460",
+      "label": "High biological value protein measured intake"
+    },
+    {
+      "code": "FH-1.5.3.2.3",
+      "anduid": "11462",
+      "label": "Casein measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2.4",
+      "anduid": "11464",
+      "label": "Whey measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2.5",
+      "anduid": "11466",
+      "label": "Gluten measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2.6",
+      "anduid": "11468",
+      "label": "Protein measured intake per kg in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2.7",
+      "anduid": "14082",
+      "label": "Natural protein measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2.8",
+      "anduid": "14083",
+      "label": "Protein measured intake in one meal"
+    },
+    {
+      "code": "FH-1.5.3.2.9",
+      "anduid": "14212",
+      "label": "Percent protein measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.3.2.10",
+      "anduid": "14084",
+      "label": "Protein measured intake from oral nutrition in"
+    },
+    {
+      "code": "FH-1.5.3.2.11",
+      "anduid": "14085",
+      "label": "Protein measured intake from enteral nutrition"
+    },
+    {
+      "code": "FH-1.5.3.2.12",
+      "anduid": "14087",
+      "label": "Protein additive measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1",
+      "anduid": "13135",
+      "label": "Estimated amino acid intake"
+    },
+    {
+      "code": "FH-1.5.4.1.1",
+      "anduid": "10057",
+      "label": "Total amino acid estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2",
+      "anduid": "10058",
+      "label": "Essential amino acid estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.4.1.2.1",
+      "anduid": "11612",
+      "label": "Histidine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2.2",
+      "anduid": "11613",
+      "label": "Methionine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2.3",
+      "anduid": "11614",
+      "label": "Isoleucine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2.4",
+      "anduid": "11615",
+      "label": "Leucine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2.5",
+      "anduid": "11616",
+      "label": "Lysine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2.6",
+      "anduid": "11617",
+      "label": "Threonine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2.7",
+      "anduid": "11618",
+      "label": "Tryptophan estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.2.8",
+      "anduid": "11619",
+      "label": "Phenylalanine estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.4.1.2.9",
+      "anduid": "11620",
+      "label": "Valine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.3",
+      "anduid": "11621",
+      "label": "Nonessential amino acid estimated intake in"
+    },
+    {
+      "code": "FH-1.5.4.1.3.1",
+      "anduid": "11622",
+      "label": "Arginine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.3.2",
+      "anduid": "11623",
+      "label": "Glutamine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.3.4",
+      "anduid": "11625",
+      "label": "Tyramine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.1.3.5",
+      "anduid": "11626",
+      "label": "Tyrosine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2",
+      "anduid": "13226",
+      "label": "Measured amino acid intake"
+    },
+    {
+      "code": "FH-1.5.4.2.1",
+      "anduid": "13137",
+      "label": "Total amino acid measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2",
+      "anduid": "13138",
+      "label": "Essential amino acid measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.4.2.2.1",
+      "anduid": "13139",
+      "label": "Histidine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2.2",
+      "anduid": "13140",
+      "label": "Methionine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2.3",
+      "anduid": "13141",
+      "label": "Isoleucine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2.4",
+      "anduid": "13142",
+      "label": "Leucine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2.5",
+      "anduid": "13143",
+      "label": "Lysine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2.6",
+      "anduid": "13144",
+      "label": "Threonine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2.7",
+      "anduid": "13145",
+      "label": "Tryptophan measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.2.8",
+      "anduid": "13146",
+      "label": "Phenylalanine measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.4.2.2.9",
+      "anduid": "13147",
+      "label": "Valine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.3",
+      "anduid": "13148",
+      "label": "Nonessential amino acid measured intake in"
+    },
+    {
+      "code": "FH-1.5.4.2.3.1",
+      "anduid": "13136",
+      "label": "Arginine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.3.2",
+      "anduid": "13149",
+      "label": "Glutamine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.3.3",
+      "anduid": "13150",
+      "label": "Homocysteine measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.4.2.3.4",
+      "anduid": "13151",
+      "label": "Tyramine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.3.5",
+      "anduid": "13152",
+      "label": "Tyrosine measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.4.2.4",
+      "anduid": "13005",
+      "label": "Amino acids from enteral nutrition"
+    },
+    {
+      "code": "FH-1.5.4.2.5",
+      "anduid": "13006",
+      "label": "Amino acids from parenteral nutrition"
+    },
+    {
+      "code": "FH-1.5.4.2.6",
+      "anduid": "13007",
+      "label": "Amino acids from intravenous fluids"
+    },
+    {
+      "code": "FH-1.5.5.1",
+      "anduid": "13153",
+      "label": "Estimated carbohydrate intake"
+    },
+    {
+      "code": "FH-1.5.5.1.1",
+      "anduid": "10060",
+      "label": "Total carbohydrate estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.1.2",
+      "anduid": "11627",
+      "label": "Complex carbohydrate estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.1.3",
+      "anduid": "11628",
+      "label": "Simple carbohydrate estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.1.4",
+      "anduid": "11629",
+      "label": "Galactose estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.5.1.5",
+      "anduid": "11630",
+      "label": "Lactose estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.5.1.6",
+      "anduid": "11631",
+      "label": "Fructose estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.5.1.7",
+      "anduid": "14088",
+      "label": "Carbohydrate estimated intake per kg in 24"
+    },
+    {
+      "code": "FH-1.5.5.1.8",
+      "anduid": "14089",
+      "label": "Carbohydrate estimated intake in one meal"
+    },
+    {
+      "code": "FH-1.5.5.1.9",
+      "anduid": "14090",
+      "label": "Percent carbohydrate estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.1.10",
+      "anduid": "12143",
+      "label": "Carbohydrate estimated intake from oral"
+    },
+    {
+      "code": "FH-1.5.5.1.11",
+      "anduid": "12011",
+      "label": "Carbohydrate estimated intake from enteral"
+    },
+    {
+      "code": "FH-1.5.5.1.12",
+      "anduid": "11180",
+      "label": "Carbohydrate estimated intake from parenteral"
+    },
+    {
+      "code": "FH-1.5.5.1.13",
+      "anduid": "11240",
+      "label": "Carbohydrate estimated intake from"
+    },
+    {
+      "code": "FH-1.5.5.1.14",
+      "anduid": "14091",
+      "label": "Carbohydrate additive estimated intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.2",
+      "anduid": "12013",
+      "label": "Estimated daily glycemic index value"
+    },
+    {
+      "code": "FH-1.5.5.3",
+      "anduid": "12142",
+      "label": "Estimated daily glycemic load"
+    },
+    {
+      "code": "FH-1.5.5.4",
+      "anduid": "10066",
+      "label": "Insulin to carbohydrate ratio"
+    },
+    {
+      "code": "FH-1.5.5.5",
+      "anduid": "13154",
+      "label": "Measured carbohydrate intake"
+    },
+    {
+      "code": "FH-1.5.5.5.1",
+      "anduid": "13155",
+      "label": "Total carbohydrate measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.5.2",
+      "anduid": "13156",
+      "label": "Complex carbohydrate measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.5.3",
+      "anduid": "13157",
+      "label": "Simple carbohydrate measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.5.4",
+      "anduid": "13158",
+      "label": "Galactose measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.5.5.5",
+      "anduid": "13159",
+      "label": "Lactose measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.5.5.6",
+      "anduid": "13160",
+      "label": "Fructose measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.5.5.7",
+      "anduid": "14092",
+      "label": "Carbohydrate measured intake per kg in 24"
+    },
+    {
+      "code": "FH-1.5.5.5.8",
+      "anduid": "14093",
+      "label": "Carbohydrate measured intake in one meal"
+    },
+    {
+      "code": "FH-1.5.5.5.9",
+      "anduid": "14094",
+      "label": "Percent carbohydrate measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.5.5.10",
+      "anduid": "14095",
+      "label": "Carbohydrate measured intake from oral"
+    },
+    {
+      "code": "FH-1.5.5.5.11",
+      "anduid": "14096",
+      "label": "Carbohydrate measured intake from enteral"
+    },
+    {
+      "code": "FH-1.5.5.5.12",
+      "anduid": "14097",
+      "label": "Carbohydrate measured intake from parenteral"
+    },
+    {
+      "code": "FH-1.5.5.5.13",
+      "anduid": "14098",
+      "label": "Carbohydrate measured intake from"
+    },
+    {
+      "code": "FH-1.5.5.5.14",
+      "anduid": "14099",
+      "label": "Carbohydrate additive measured intake in 24"
+    },
+    {
+      "code": "FH-1.5.6.1",
+      "anduid": "13161",
+      "label": "Estimated fiber intake"
+    },
+    {
+      "code": "FH-1.5.6.1.1",
+      "anduid": "10068",
+      "label": "Total fiber estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.1.2",
+      "anduid": "10069",
+      "label": "Soluble fiber estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.1.3",
+      "anduid": "10070",
+      "label": "Insoluble fiber estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.1.4",
+      "anduid": "14213",
+      "label": "Fiber estimated intake from oral nutrition in 24"
+    },
+    {
+      "code": "FH-1.5.6.1.5",
+      "anduid": "14100",
+      "label": "Fiber estimated intake from enteral nutrition in"
+    },
+    {
+      "code": "FH-1.5.6.1.6",
+      "anduid": "14214",
+      "label": "Fiber additive estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.1.6",
+      "anduid": "14103",
+      "label": "Fiber additive measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.2",
+      "anduid": "11519",
+      "label": "Measured fiber intake"
+    },
+    {
+      "code": "FH-1.5.6.2.1",
+      "anduid": "13162",
+      "label": "Total fiber measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.2.2",
+      "anduid": "13163",
+      "label": "Soluble fiber measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.2.3",
+      "anduid": "13164",
+      "label": "Insoluble fiber measured intake in 24 hours"
+    },
+    {
+      "code": "FH-1.5.6.2.4",
+      "anduid": "14101",
+      "label": "Fiber measured intake from oral nutrition in 24"
+    },
+    {
+      "code": "FH-1.5.6.2.5",
+      "anduid": "14102",
+      "label": "Fiber measured intake from enteral nutrition in"
+    }
+  ],
+  "Caffeine intake": [
+    {
+      "code": "FH-1.4.3.1",
+      "anduid": "11432",
+      "label": "Total caffeine estimated intake in 24 hours"
+    },
+    {
+      "code": "FH-1.4.3.2",
+      "anduid": "10041",
+      "label": "Total caffeine measured intake in 24 hours"
+    }
+  ],
+  "Micronutrient intake": [
+    {
+      "code": "FH-1.6.1.1",
+      "anduid": "13165",
+      "label": "Estimated vitamin intake"
+    },
+    {
+      "code": "FH-1.6.1.2",
+      "anduid": "13167",
+      "label": "Measured vitamin intake"
+    },
+    {
+      "code": "FH-1.6.2.1",
+      "anduid": "13182",
+      "label": "Estimated mineral intake"
+    },
+    {
+      "code": "FH-1.6.2.2",
+      "anduid": "13183",
+      "label": "Measured mineral intake"
+    }
+  ],
+  "Dietary supplement use": [
+    {
+      "code": "FH-1.7.1.1",
+      "anduid": "14104",
+      "label": "Estimated consistency modifier intake"
+    },
+    {
+      "code": "FH-1.7.1.1.1",
+      "anduid": "14105",
+      "label": "Thickener additive estimated intake in 24"
+    },
+    {
+      "code": "FH-1.7.1.2",
+      "anduid": "14106",
+      "label": "Measured consistency modifier intake"
+    },
+    {
+      "code": "FH-1.7.1.2.1",
+      "anduid": "14107",
+      "label": "Thickener additive measured intake in 24"
+    }
+  ],
+  "Knowledge / beliefs / attitudes": [
+    {
+      "code": "FH-4.1.1",
+      "anduid": "13204",
+      "label": "Nutrition knowledge of community"
+    },
+    {
+      "code": "FH-4.1.2",
+      "anduid": "13205",
+      "label": "Nutrition knowledge of supportive individuals"
+    },
+    {
+      "code": "FH-4.1.3",
+      "anduid": "13206",
+      "label": "Nutrition knowledge of individual client"
+    },
+    {
+      "code": "FH-4.2.1",
+      "anduid": "13207",
+      "label": "Nutrition skill of the community"
+    },
+    {
+      "code": "FH-4.2.2",
+      "anduid": "13208",
+      "label": "Nutrition skill of supportive individuals"
+    },
+    {
+      "code": "FH-4.2.3",
+      "anduid": "13209",
+      "label": "Nutrition skill of individual client"
+    },
+    {
+      "code": "FH-4.3.1",
+      "anduid": "14508",
+      "label": "Nutrition priority of individual client"
+    },
+    {
+      "code": "FH-4.3.2",
+      "anduid": "14509",
+      "label": "s supportive"
+    },
+    {
+      "code": "FH-4.3.3",
+      "anduid": "14510",
+      "label": "s supportive structures"
+    },
+    {
+      "code": "FH-4.3.4",
+      "anduid": "14511",
+      "label": "s stakeholders"
+    },
+    {
+      "code": "FH-4.3.5",
+      "anduid": "14512",
+      "label": "s value system"
+    },
+    {
+      "code": "FH-4.3.7",
+      "anduid": "14514",
+      "label": "value"
+    },
+    {
+      "code": "FH-4.3.8",
+      "anduid": "14515",
+      "label": "value system"
+    },
+    {
+      "code": "FH-4.3.9",
+      "anduid": "14516",
+      "label": "Behavioral beliefs"
+    },
+    {
+      "code": "FH-4.3.9.1",
+      "anduid": "14517",
+      "label": "Perceived susceptibility to nutrition related"
+    },
+    {
+      "code": "FH-4.3.9.2",
+      "anduid": "14518",
+      "label": "Perceived severity of risk to health score"
+    },
+    {
+      "code": "FH-4.3.9.3",
+      "anduid": "14519",
+      "label": "Perceived benefit of nutrition related change"
+    },
+    {
+      "code": "FH-4.3.9.4",
+      "anduid": "14520",
+      "label": "Likelihood of performing nutrition related"
+    },
+    {
+      "code": "FH-4.3.9.5",
+      "anduid": "14521",
+      "label": "Perceived control over nutrition related"
+    },
+    {
+      "code": "FH-4.3.9.6",
+      "anduid": "14522",
+      "label": "Nutrition self efficacy score"
+    },
+    {
+      "code": "FH-4.3.9.7",
+      "anduid": "14523",
+      "label": "Perceived barrier to nutrition related behavior"
+    },
+    {
+      "code": "FH-4.3.9.8",
+      "anduid": "10151",
+      "label": "Readiness to change nutrition related behavior"
+    },
+    {
+      "code": "FH-4.3.9.8.1",
+      "anduid": "14524",
+      "label": "Precontemplation stage for readiness to"
+    },
+    {
+      "code": "FH-4.3.9.8.2",
+      "anduid": "14525",
+      "label": "Contemplation stage for readiness to"
+    },
+    {
+      "code": "FH-4.3.9.8.3",
+      "anduid": "14526",
+      "label": "Preparation stage for readiness to change"
+    },
+    {
+      "code": "FH-4.3.9.8.4",
+      "anduid": "14527",
+      "label": "Action stage for readiness to change"
+    },
+    {
+      "code": "FH-4.3.9.8.5",
+      "anduid": "14528",
+      "label": "Maintenance stage for readiness to change"
+    },
+    {
+      "code": "FH-4.3.9.8.6",
+      "anduid": "14529",
+      "label": "Relapse stage for readiness to change"
+    },
+    {
+      "code": "FH-4.3.9.9",
+      "anduid": "14590",
+      "label": "Readiness to change nutrition related behavior"
+    },
+    {
+      "code": "FH-4.3.10",
+      "anduid": "14530",
+      "label": "Negative emotions about food and nutrition"
+    },
+    {
+      "code": "FH-4.3.11",
+      "anduid": "14531",
+      "label": "Positive emotions about food and nutrition"
+    },
+    {
+      "code": "FH-4.3.12",
+      "anduid": "10154",
+      "label": "Unrealistic nutrition related goals"
+    },
+    {
+      "code": "FH-4.3.13",
+      "anduid": "14532",
+      "label": "Unscientific nutrition beliefs"
+    },
+    {
+      "code": "FH-4.3.14",
+      "anduid": "10146",
+      "label": "Body image disturbance"
+    },
+    {
+      "code": "FH-4.3.15",
+      "anduid": "10149",
+      "label": "Preoccupation with food"
+    },
+    {
+      "code": "FH-4.3.16",
+      "anduid": "10150",
+      "label": "Preoccupation with weight"
+    },
+    {
+      "code": "FH-4.3.17",
+      "anduid": "14533",
+      "label": "Preoccupation with body shape"
+    },
+    {
+      "code": "FH-4.3.18",
+      "anduid": "14534",
+      "label": "Negative nutrition self talk"
+    },
+    {
+      "code": "FH-4.3.19",
+      "anduid": "14535",
+      "label": "Positive nutrition self talk"
+    },
+    {
+      "code": "FH-4.3.20",
+      "anduid": "10156",
+      "label": "Preferences for food"
+    },
+    {
+      "code": "FH-4.3.21",
+      "anduid": "14537",
+      "label": "Preferences for beverages"
+    }
+  ],
+  "Medication & supplement use": [
+    {
+      "code": "FH-3.1.1",
+      "anduid": "10820",
+      "label": "Prescription medication use"
+    },
+    {
+      "code": "FH-3.1.1.1",
+      "anduid": "11241",
+      "label": "Insulin sensitivity factor"
+    },
+    {
+      "code": "FH-3.1.2",
+      "anduid": "10134",
+      "label": "Over the counter (OTC) medication use"
+    },
+    {
+      "code": "FH-3.1.3",
+      "anduid": "10135",
+      "label": "Misuse of medication"
+    },
+    {
+      "code": "FH-3.2.1",
+      "anduid": "10137",
+      "label": "Nutrition related complementary/alternative"
+    }
+  ],
+  "Behavior": [
+    {
+      "code": "FH-5.1.1",
+      "anduid": "10160",
+      "label": "Self reported nutrition adherence score"
+    },
+    {
+      "code": "FH-5.1.2",
+      "anduid": "14215",
+      "label": "Nutrition encounter ratio"
+    },
+    {
+      "code": "FH-5.1.3",
+      "anduid": "10162",
+      "label": "Ability to recall nutrition goals"
+    },
+    {
+      "code": "FH-5.1.4",
+      "anduid": "10163",
+      "label": "Nutrition self monitoring at agreed upon rate"
+    },
+    {
+      "code": "FH-5.1.5",
+      "anduid": "10164",
+      "label": "Nutrition self management as agreed upon"
+    },
+    {
+      "code": "FH-5.2.1",
+      "anduid": "10166",
+      "label": "Avoidance"
+    },
+    {
+      "code": "FH-5.2.2",
+      "anduid": "10167",
+      "label": "Restrictive eating"
+    },
+    {
+      "code": "FH-5.2.3",
+      "anduid": "10168",
+      "label": "Cause of avoidance behavior"
+    },
+    {
+      "code": "FH-5.3.1",
+      "anduid": "10170",
+      "label": "Binge eating behavior"
+    },
+    {
+      "code": "FH-5.3.2",
+      "anduid": "10171",
+      "label": "Purging behavior"
+    },
+    {
+      "code": "FH-5.4.1",
+      "anduid": "10173",
+      "label": "Meal duration"
+    },
+    {
+      "code": "FH-5.4.2",
+      "anduid": "10174",
+      "label": "Percent of meal time spent eating"
+    },
+    {
+      "code": "FH-5.4.3",
+      "anduid": "10175",
+      "label": "Preference to drink rather than eat"
+    },
+    {
+      "code": "FH-5.4.4",
+      "anduid": "10176",
+      "label": "Refusal to eat/chew"
+    },
+    {
+      "code": "FH-5.4.5",
+      "anduid": "10177",
+      "label": "Spitting food out"
+    },
+    {
+      "code": "FH-5.4.6",
+      "anduid": "10178",
+      "label": "Rumination"
+    },
+    {
+      "code": "FH-5.4.7",
+      "anduid": "10179",
+      "label": "Patient/client/caregiver fatigue during feeding"
+    },
+    {
+      "code": "FH-5.4.8",
+      "anduid": "10180",
+      "label": "Willingness to try new foods"
+    },
+    {
+      "code": "FH-5.4.9",
+      "anduid": "10181",
+      "label": "Limited number of accepted foods"
+    },
+    {
+      "code": "FH-5.4.10",
+      "anduid": "10182",
+      "label": "Rigid sensory preferences"
+    },
+    {
+      "code": "FH-5.5.1",
+      "anduid": "10184",
+      "label": "Ability to build and utilize social network"
+    }
+  ],
+  "Food and supply access": [
+    {
+      "code": "FH-6.1.1",
+      "anduid": "10187",
+      "label": "Eligibility for government nutrition programs"
+    },
+    {
+      "code": "FH-6.1.2",
+      "anduid": "14538",
+      "label": "Enrollment in government nutrition programs"
+    },
+    {
+      "code": "FH-6.1.3",
+      "anduid": "10189",
+      "label": "Eligibility for community nutrition programs"
+    },
+    {
+      "code": "FH-6.1.4",
+      "anduid": "14539",
+      "label": "Enrollment in community nutrition programs"
+    },
+    {
+      "code": "FH-6.1.5",
+      "anduid": "14540",
+      "label": "Awareness of programs offering food support and"
+    },
+    {
+      "code": "FH-6.2.1",
+      "anduid": "10192",
+      "label": "Availability of shopping facilities"
+    },
+    {
+      "code": "FH-6.2.2",
+      "anduid": "10800",
+      "label": "Ability to procure safe food"
+    },
+    {
+      "code": "FH-6.2.3",
+      "anduid": "14541",
+      "label": "Access to food preparation equipment"
+    },
+    {
+      "code": "FH-6.2.4",
+      "anduid": "14542",
+      "label": "Availability of food refrigeration"
+    },
+    {
+      "code": "FH-6.2.5",
+      "anduid": "14543",
+      "label": "Ability to store food safely"
+    },
+    {
+      "code": "FH-6.2.6",
+      "anduid": "10801",
+      "label": "Ability to identify safe food"
+    },
+    {
+      "code": "FH-6.2.7",
+      "anduid": "14544",
+      "label": "Individual client food security level"
+    },
+    {
+      "code": "FH-6.2.8",
+      "anduid": "14545",
+      "label": "Household food security level"
+    },
+    {
+      "code": "FH-6.2.9",
+      "anduid": "14546",
+      "label": "Situational food insecurity"
+    },
+    {
+      "code": "FH-6.2.10",
+      "anduid": "14547",
+      "label": "Chronic food insecurity"
+    },
+    {
+      "code": "FH-6.3.1",
+      "anduid": "10198",
+      "label": "Availability of potable water"
+    },
+    {
+      "code": "FH-6.3.2",
+      "anduid": "14548",
+      "label": "Ability to decontaminate water"
+    },
+    {
+      "code": "FH-6.3.3",
+      "anduid": "14549",
+      "label": "Awareness of public health water alert"
+    },
+    {
+      "code": "FH-6.4.1",
+      "anduid": "10201",
+      "label": "Access to food and nutrition related supplies"
+    },
+    {
+      "code": "FH-6.4.2",
+      "anduid": "10202",
+      "label": "Access to assistive eating devices"
+    },
+    {
+      "code": "FH-6.4.3",
+      "anduid": "10203",
+      "label": "Access to assistive food preparation devices"
+    },
+    {
+      "code": "FH-6.5.1",
+      "anduid": "14551",
+      "label": "Availability of suitable sanitation facilities"
+    },
+    {
+      "code": "FH-6.5.2",
+      "anduid": "14552",
+      "label": "Ability to wash hands with soap and water"
+    }
+  ],
+  "Physical activity & function": [
+    {
+      "code": "FH-7.1.1",
+      "anduid": "10206",
+      "label": "Initiation of breastfeeding"
+    },
+    {
+      "code": "FH-7.1.1.1",
+      "anduid": "14108",
+      "label": "Start breastfeeding"
+    },
+    {
+      "code": "FH-7.1.1.2",
+      "anduid": "14109",
+      "label": "Stop breastfeeding"
+    },
+    {
+      "code": "FH-7.1.2",
+      "anduid": "14110",
+      "label": "Breastfeeding approach"
+    },
+    {
+      "code": "FH-7.1.2.1",
+      "anduid": "10208",
+      "label": "Exclusive breastfeeding"
+    },
+    {
+      "code": "FH-7.1.2.2",
+      "anduid": "14111",
+      "label": "Predominant breastfeeding"
+    },
+    {
+      "code": "FH-7.1.2.3",
+      "anduid": "14112",
+      "label": "Partial breastfeeding"
+    },
+    {
+      "code": "FH-7.1.3",
+      "anduid": "10209",
+      "label": "Breastfeeding difficulties"
+    },
+    {
+      "code": "FH-7.1.3.1",
+      "anduid": "14113",
+      "label": "Infant able to latch on to breast for"
+    },
+    {
+      "code": "FH-7.1.3.2",
+      "anduid": "14114",
+      "label": "Infant unable to latch on to breast for"
+    },
+    {
+      "code": "FH-7.1.3.3",
+      "anduid": "14115",
+      "label": "Difficulty latching onto breast for feeding"
+    },
+    {
+      "code": "FH-7.1.3.4",
+      "anduid": "14116",
+      "label": "Abscess of breast associated with"
+    },
+    {
+      "code": "FH-7.1.3.5",
+      "anduid": "14117",
+      "label": "Cracked nipple associated with lactation"
+    },
+    {
+      "code": "FH-7.1.3.6",
+      "anduid": "14118",
+      "label": "Infection of nipple associated with"
+    },
+    {
+      "code": "FH-7.1.3.7",
+      "anduid": "14119",
+      "label": "Non purulent mastitis associated with"
+    },
+    {
+      "code": "FH-7.1.3.8",
+      "anduid": "14120",
+      "label": "Retracted nipple associated with lactation"
+    },
+    {
+      "code": "FH-7.1.3.9",
+      "anduid": "14121",
+      "label": "Inversion of nipple associated with"
+    },
+    {
+      "code": "FH-7.1.3.10",
+      "anduid": "14122",
+      "label": "Breast engorgement associated with"
+    },
+    {
+      "code": "FH-7.1.3.11",
+      "anduid": "14123",
+      "label": "Previous breast surgery associated with"
+    },
+    {
+      "code": "FH-7.1.3.12",
+      "anduid": "14124",
+      "label": "Breast abnormality associated with"
+    },
+    {
+      "code": "FH-7.1.3.13",
+      "anduid": "14125",
+      "label": "Inadequate flow of breastmilk"
+    },
+    {
+      "code": "FH-7.1.4",
+      "anduid": "14126",
+      "label": "s ability to suck"
+    },
+    {
+      "code": "FH-7.1.4.1",
+      "anduid": "14127",
+      "label": "Infant able to suck"
+    },
+    {
+      "code": "FH-7.1.4.2",
+      "anduid": "14128",
+      "label": "Infant unable to suck"
+    },
+    {
+      "code": "FH-7.1.4.3",
+      "anduid": "14129",
+      "label": "Difficulty sucking"
+    },
+    {
+      "code": "FH-7.2.1",
+      "anduid": "10211",
+      "label": "Physical ability to complete tasks for meal"
+    },
+    {
+      "code": "FH-7.2.2",
+      "anduid": "10212",
+      "label": "Physical ability to self feed"
+    },
+    {
+      "code": "FH-7.2.3",
+      "anduid": "10213",
+      "label": "Ability to position self in relation to plate"
+    },
+    {
+      "code": "FH-7.2.4",
+      "anduid": "10214",
+      "label": "Receives assistance with intake"
+    },
+    {
+      "code": "FH-7.2.5",
+      "anduid": "10215",
+      "label": "Ability to use adaptive eating devices"
+    },
+    {
+      "code": "FH-7.2.6",
+      "anduid": "10216",
+      "label": "Cognitive ability to complete tasks for meal"
+    },
+    {
+      "code": "FH-7.2.7",
+      "anduid": "10139",
+      "label": "Remembers to eat"
+    },
+    {
+      "code": "FH-7.2.8",
+      "anduid": "10218",
+      "label": "Recalls eating"
+    },
+    {
+      "code": "FH-7.2.9",
+      "anduid": "10219",
+      "label": "Mini mental state examination score"
+    },
+    {
+      "code": "FH-7.2.10",
+      "anduid": "10220",
+      "label": "Nutrition related activities of daily living (ADL)"
+    },
+    {
+      "code": "FH-7.2.11",
+      "anduid": "10221",
+      "label": "Nutrition related instrumental activities of daily"
+    },
+    {
+      "code": "FH-7.3.1",
+      "anduid": "10223",
+      "label": "Physical activity history"
+    },
+    {
+      "code": "FH-7.3.2",
+      "anduid": "10224",
+      "label": "Consistency"
+    },
+    {
+      "code": "FH-7.3.3",
+      "anduid": "10225",
+      "label": "Frequency"
+    },
+    {
+      "code": "FH-7.3.4",
+      "anduid": "10226",
+      "label": "Duration"
+    },
+    {
+      "code": "FH-7.3.5",
+      "anduid": "10227",
+      "label": "Intensity"
+    },
+    {
+      "code": "FH-7.3.6",
+      "anduid": "10228",
+      "label": "Type of physical activity"
+    },
+    {
+      "code": "FH-7.3.7",
+      "anduid": "10229",
+      "label": "Strength"
+    },
+    {
+      "code": "FH-7.3.7.1",
+      "anduid": "11680",
+      "label": "Handgrip strength"
+    },
+    {
+      "code": "FH-7.3.8",
+      "anduid": "10230",
+      "label": "TV/screen time"
+    },
+    {
+      "code": "FH-7.3.9",
+      "anduid": "10231",
+      "label": "Other sedentary activity time"
+    },
+    {
+      "code": "FH-7.3.10",
+      "anduid": "10232",
+      "label": "Involuntary physical movement"
+    },
+    {
+      "code": "FH-7.3.11",
+      "anduid": "10233",
+      "label": "Non exercise activity thermogenesis"
+    },
+    {
+      "code": "FH-7.4.1",
+      "anduid": "10822",
+      "label": "Neighborhood safety"
+    },
+    {
+      "code": "FH-7.4.2",
+      "anduid": "10823",
+      "label": "Walkability of neighborhood"
+    },
+    {
+      "code": "FH-7.4.3",
+      "anduid": "10824",
+      "label": "Proximity to parks/green space"
+    },
+    {
+      "code": "FH-7.4.4",
+      "anduid": "10825",
+      "label": "Access to physical activity facilities/programs"
+    }
+  ],
+  "Quality of life / patient-centered": [
+    {
+      "code": "FH-8.1.1",
+      "anduid": "10236",
+      "label": "Nutrition quality of life responses"
+    }
+  ],
+  "Personal demographics": [
+    {
+      "code": "CH-1.1.4",
+      "anduid": "11139",
+      "label": "Race"
+    },
+    {
+      "code": "CH-1.1.5",
+      "anduid": "11140",
+      "label": "Ethnicity"
+    },
+    {
+      "code": "CH-1.1.6",
+      "anduid": "10377",
+      "label": "Language"
+    },
+    {
+      "code": "CH-1.1.7",
+      "anduid": "10378",
+      "label": "Literacy factors"
+    },
+    {
+      "code": "CH-1.1.8",
+      "anduid": "10379",
+      "label": "Education"
+    },
+    {
+      "code": "CH-1.1.9",
+      "anduid": "10380",
+      "label": "Role in family"
+    }
+  ],
+  "Social history": [
+    {
+      "code": "CH-3.1.1",
+      "anduid": "10407",
+      "label": "Socioeconomic factors"
+    },
+    {
+      "code": "CH-3.1.2",
+      "anduid": "10408",
+      "label": "Living/housing situation"
+    },
+    {
+      "code": "CH-3.1.3",
+      "anduid": "10409",
+      "label": "Domestic issues"
+    },
+    {
+      "code": "CH-3.1.4",
+      "anduid": "10410",
+      "label": "Social and medical support"
+    },
+    {
+      "code": "CH-3.1.5",
+      "anduid": "10411",
+      "label": "Geographic location of home"
+    },
+    {
+      "code": "CH-3.1.6",
+      "anduid": "10412",
+      "label": "Occupation"
+    },
+    {
+      "code": "CH-3.1.7",
+      "anduid": "10413",
+      "label": "Religion"
+    },
+    {
+      "code": "CH-3.1.8",
+      "anduid": "10414",
+      "label": "History of recent crisis"
+    },
+    {
+      "code": "CH-3.1.9",
+      "anduid": "10415",
+      "label": "Daily stress level"
+    }
+  ],
+  "Personal habits (tobacco, mobility)": [
+    {
+      "code": "CH-1.1.10",
+      "anduid": "10381",
+      "label": "Tobacco use"
+    },
+    {
+      "code": "CH-1.1.11",
+      "anduid": "10382",
+      "label": "Physical disability"
+    },
+    {
+      "code": "CH-1.1.12",
+      "anduid": "10383",
+      "label": "Mobility"
+    }
+  ]
+}
