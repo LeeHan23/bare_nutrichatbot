@@ -4,59 +4,6 @@
 
 ## Table of Contents
 
-0. [Use Cases](#0-use-cases)
-1. [System Overview](#1-system-overview)
-2. [System Flowchart](#2-system-flowchart)
-3. [High-Level Architecture Diagram](#3-high-level-architecture-diagram)
-3. [Technology Stack](#3-technology-stack)
-4. [Application Entry Point & Startup](#4-application-entry-point--startup)
-5. [Routing & API Surface](#5-routing--api-surface)
-6. [Authentication & Authorization](#6-authentication--authorization)
-7. [Patient Identity System](#7-patient-identity-system)
-   - 7.1 [Patient Database Model](#71-patient-database-model)
-   - 7.2 [Patient Login & IC Verification Flow](#72-patient-login--ic-verification-flow)
-   - 7.3 [Profile Injection into RAG](#73-profile-injection-into-rag)
-   - 7.4 [PatientStore Abstraction](#74-patientstore-abstraction)
-   - 7.5 [Profile Extractor — Dynamic Data Collection](#75-profile-extractor--dynamic-data-collection)
-   - 7.6 [Nutrition Assessment Priority List — eNCPT v2 Cardiac Schema](#76-nutrition-assessment-priority-list--encpt-v2-cardiac-schema)
-8. [RAG Pipeline — Core Chat Flow](#8-rag-pipeline--core-chat-flow)
-   - 8.1 [Disease Identification](#81-disease-identification)
-   - 8.2 [Conversational Chain Construction](#82-conversational-chain-construction)
-   - 8.3 [Retriever — Hybrid Multi-Tenant Vector Search](#83-retriever--hybrid-multi-tenant-vector-search)
-   - 8.4 [LLM Configuration](#84-llm-configuration)
-   - 8.5 [Fallback Mechanism](#85-fallback-mechanism)
-   - 8.6 [Image Injection](#86-image-injection)
-9. [Embedding Model](#9-embedding-model)
-   - 9.1 [Base Model: BAAI/bge-m3](#91-base-model-baaibge-m3)
-   - 9.2 [LoRA Adapter Inference](#92-lora-adapter-inference)
-10. [Database Layer](#10-database-layer)
-    - 10.1 [Relational Database (SQLAlchemy)](#101-relational-database-sqlalchemy)
-    - 10.2 [Vector Store (pgvector)](#102-vector-store-pgvector)
-11. [Document Ingestion Pipelines](#11-document-ingestion-pipelines)
-    - 11.1 [Base Knowledge Build (`build_base_db.py`)](#111-base-knowledge-build-build_base_dbpy)
-    - 11.2 [Client Document Ingestion (`process_client_docs.py`)](#112-client-document-ingestion-process_client_docspy)
-    - 11.3 [Document Deletion (`document_manager.py`)](#113-document-deletion-document_managerpy)
-12. [Multi-Tenancy Model](#12-multi-tenancy-model)
-13. [Conversation Memory](#13-conversation-memory)
-14. [Persona & Prompt Engineering](#14-persona--prompt-engineering)
-15. [Streaming Response Delivery](#15-streaming-response-delivery)
-16. [UI Layers](#16-ui-layers)
-    - 16.1 [Patient-Facing App (`patient_app.html`)](#161-patient-facing-app-patient_apphtml)
-    - 16.2 [Admin Dashboard](#162-admin-dashboard)
-    - 16.3 [Client Portal](#163-client-portal)
-17. [Embedding Fine-Tuning Pipeline](#17-embedding-fine-tuning-pipeline)
-    - 17.1 [Training Data Generation](#171-training-data-generation)
-    - 17.2 [LoRA Fine-Tuning (`finetune_embeddings.py`)](#172-lora-fine-tuning-finetune_embeddingspy)
-    - 17.3 [Hyperparameter Decisions](#173-hyperparameter-decisions)
-18. [LLM Fine-Tuning Pipeline](#18-llm-fine-tuning-pipeline)
-    - 18.1 [Training Data Generation](#181-training-data-generation)
-    - 18.2 [LoRA Fine-Tuning (Ollama/Unsloth)](#182-lora-fine-tuning-ollamaunsloth)
-19. [Evaluation Framework](#19-evaluation-framework)
-20. [Testing Strategy](#20-testing-strategy)
-21. [Deployment](#21-deployment)
-22. [Environment Variables Reference](#22-environment-variables-reference)
-23. [Data Flow: End-to-End Request Trace](#23-data-flow-end-to-end-request-trace)
-24. [Module Reference Table](#24-module-reference-table)
 
 ---
 
@@ -647,185 +594,78 @@ Current whitelist: `fluid_intake_ml`, `alcohol_per_week`, `supplements`, `religi
 
 ### 7.5 Profile Extractor — Dynamic Data Collection
 
-**File:** `extractor.py`  
-**Schema version:** v2.0-cardiac | **Active fields:** 13 | **Languages:** English + Bahasa Malaysia
+**File:** `extractor.py`
 
-The extractor is a passive data collection layer that runs silently on every patient message. It analyses what the patient says and fills in supplementary profile fields that the hospital system does not supply — things like how much water they drink, whether they take their medication regularly, or what types of cooking oil they use. Over several conversations, the patient profile becomes progressively richer without ever requiring the patient to fill in a form.
+The extractor passively analyses every incoming patient message and extracts new supplementary profile fields from what the patient says. It is:
 
-**Design guarantees:**
-- **Conservative** — only extracts what is explicitly stated; never infers or assumes
-- **Additive** — only fills fields that are currently empty (`None`, `[]`, `""`); never overwrites
-- **Whitelist-constrained** — all writes go through `SUPPLEMENTARY_FIELDS`; clinical fields (`conditions`, `medications`, etc.) cannot be touched regardless of what the LLM returns
-- **Fault-tolerant** — any error (Ollama unreachable, bad JSON, validation failure) returns `{}` and logs; the user-facing response is never affected
-- **Zero user-facing latency** — runs as an `asyncio.create_task()` concurrently with the streaming response; the patient sees no delay
+- **Conservative** — only extracts what is explicitly stated, never infers or assumes
+- **Additive** — only fills fields that are currently empty (`None`, `[]`, or `""`), never overwrites
+- **Whitelist-constrained** — only writes to `SUPPLEMENTARY_FIELDS`; rejected at the `PatientStore` layer regardless
 
-#### How it fits into the chat request flow
+**Pipeline:**
 
 ```
-POST /chat/get_response (patient_id=4, question="I fry with palm oil every day lah")
+Patient message
     │
-    ├─ asyncio.create_task(_run_extractor_background(...))   ← dispatched immediately
-    │      runs concurrently, patient never waits for this
+    ▼
+_build_field_descriptions()    ← format EXTRACTOR_FIELDS for prompt
+_build_known_summary(profile)  ← show LLM what is already filled
     │
-    └─ StreamingResponse(stream_rag_response(...))           ← patient sees answer now
-           │
-           └─ [~2-5s later, in background]
-                  extract_from_message(message, current_profile)
-                  → {"fat_intake_level": "high", "fat_sources": ["palm oil"]}
-                  patient_store.update_supplementary_fields(patient_id=4, updates=...)
-                  → Profile updated silently; next request will include fat context
+    ▼
+EXTRACTION_PROMPT.format(...)  ← construct structured extraction prompt
+    │
+    ▼
+call_ollama_extractor(prompt)  ← qwen2.5:32b, temperature=0.0, num_predict=200
+    │
+    ▼
+_strip_json_response(raw)      ← strip markdown fences / LLM noise
+    │
+    ▼
+json.loads(cleaned)            ← parse JSON dict; return {} on decode error
+    │
+    ▼
+_validate_extraction(dict)     ← type checks, range checks, allowed_values enforcement
+    │
+    ▼
+_filter_already_filled(dict)   ← drop any field that already has a value
+    │
+    ▼
+return dict of new fields → PatientStore.update_supplementary_fields()
 ```
 
-The extractor task is fire-and-forget from the user's perspective. Its results accumulate across sessions — each conversation fills in a few more fields until the profile reaches the depth needed for fully personalised advice.
-
-#### Full extraction pipeline
-
-```
-Patient message (any language)
-    │
-    ▼
-_build_field_descriptions()
-    ← Formats all 13 EXTRACTOR_FIELDS into a structured list for the prompt
-    ← Each field includes: name, type hint, guidance with BM ↔ EN mappings
-    │
-    ▼
-_build_known_summary(current_profile)
-    ← Lists already-filled fields so the LLM skips them
-    ← Example: "  tobacco_status: Never smoked" → LLM won't re-extract this
-    │
-    ▼
-EXTRACTION_PROMPT.format(field_descriptions, known, message)
-    ← Single structured prompt:
-       - Role: clinical data extractor
-       - Language: "patient may write in English, Bahasa Malaysia, or a mix (rojak)"
-       - Critical rules: only explicit, no inference, allowed_values only
-       - What's already known: filled fields summary
-       - The patient's message
-    │
-    ▼
-call_ollama_extractor(prompt)
-    ← POST to qwen2.5:32b at OLLAMA_BASE_URL/api/generate
-    ← temperature=0.0 (deterministic — medical data must not vary between calls)
-    ← num_predict=250 (caps output; forces compact JSON, not paragraphs)
-    ← timeout=30s
-    │
-    ▼
-_strip_json_response(raw_text)
-    ← Removes ```json ... ``` fences and leading/trailing whitespace
-    ← LLMs often wrap JSON in markdown even when instructed not to
-    │
-    ▼
-json.loads(cleaned)
-    ← Parses the JSON dict; returns {} on any decode error (logged)
-    │
-    ▼
-_validate_extraction(extracted_dict)
-    ← Per-field validation — each field has its own validator:
-       • Integer fields: range check (e.g., 0 < fluid_intake_ml < 10000)
-       • allowed_values fields: exact string match against an enum
-       • List fields: all elements must be non-empty strings
-       • String fields: non-empty, length limit
-    ← Unknown or invalid fields dropped silently
-    │
-    ▼
-_filter_already_filled(validated, current_profile)
-    ← Drops any field that already has a non-null, non-empty value in the profile
-    ← This is the "additive-only" guarantee — extractor never overwrites
-    │
-    ▼
-return new_fields dict
-    │
-    ▼
-patient_store.update_supplementary_fields(patient_id, new_fields, session_id)
-    ← SUPPLEMENTARY_FIELDS whitelist check (second line of defence)
-    ← setattr() applies each value to the Patient ORM object
-    ← extractor_metadata[field] = {last_updated, source_session_id}  ← provenance
-    ← session.commit()
-```
-
-#### Bahasa Malaysia support
-
-The extraction prompt explicitly states that the patient may write in English, Bahasa Malaysia, or a mix. The guidance for each field includes BM-to-EN mappings so qwen2.5:32b can correctly normalise values regardless of input language:
-
-| BM patient says | Extracted as |
-|---|---|
-| `"Saya tidak pernah merokok"` | `tobacco_status: "Never smoked"` |
-| `"Saya goreng dengan minyak sawit setiap hari"` | `fat_intake_level: "high"`, `fat_sources: ["palm oil"]` |
-| `"Kadang-kadang saya terlupa ambil ubat"` | `medication_compliance: "variable"` |
-| `"Saya minum 6 gelas air sehari"` | `fluid_intake_ml: 1500` |
-| `"Saya berjoging 3 kali seminggu, 30 minit"` | `activity_freq: "3 times a week"`, `activity_minutes: 30`, `activity_types: ["jogging"]` |
-
-#### EXTRACTOR_FIELDS — v2 (13 fields, cardiac focus)
-
-**Tier 1 — Critical (must collect for safe cardiac advice):**
-
-| Field | eNCPT | Type | Allowed Values / Range |
-|---|---|---|---|
-| `fluid_intake_ml` | FH-1.2.1.1.1 | integer (mL/day) | `0 < value < 10000` |
-| `alcohol_per_week` | FH-1.4.1.1 | integer (drinks/wk) | `0 ≤ value < 200` |
-| `tobacco_status` | CH-1.1.10 | string | `Never smoked` · `Current smoker` · `Former smoker` |
-| `fat_intake_level` | FH-1.5.1.1 | string | `low` · `moderate` · `high` |
-| `sodium_awareness` | FH-1.5.6.1 | string | `low_awareness_high_intake` · `moderate` · `actively_restricting` |
-| `religion` | CH-3.1.7 | string | free text (`len < 100`) |
-| `supplements` | FH-3.2.1 | list of strings | non-empty elements |
-
-**Tier 2 — Important (significantly improves personalisation):**
-
-| Field | eNCPT | Type | Allowed Values / Range |
-|---|---|---|---|
-| `medication_compliance` | FH-3.1.1.1 | string | `good` · `variable` · `poor` |
-| `fat_sources` | FH-1.5.1.2 | list of strings | raw food names (lowercased) |
-| `activity_freq` | FH-7.3.1 | string | free text (`len < 100`), e.g. `"3 times a week"` |
-| `activity_minutes` | FH-7.3.2 | integer (min/session) | `0 < value < 300` |
-| `activity_types` | FH-7.3.1.1 | list of strings | activity names (lowercased) |
-| `activity_intensity` | FH-7.3.3 | string | `light` · `moderate` · `vigorous` |
-
-#### Provenance metadata
-
-Every field written by the extractor is recorded in the `extractor_metadata` JSON column:
-
-```json
-{
-  "fat_intake_level": {
-    "last_updated": "2026-05-14T09:23:11+00:00",
-    "source_session_id": "uuid-abc-123"
-  },
-  "medication_compliance": {
-    "last_updated": "2026-05-14T09:23:11+00:00",
-    "source_session_id": "uuid-abc-123"
-  }
-}
-```
-
-This creates a full audit trail of what the bot inferred, from which session, and when. It also powers the `_build_known_summary()` function — before each extraction, the extractor checks what is already filled and excludes those fields from the prompt so the LLM doesn't re-extract stale data.
-
-#### Key functions
+**Key functions:**
 
 | Function | Description |
 |---|---|
 | `extract_from_message(message, current_profile)` | Main entry point. Returns `{}` on any error — never raises. |
-| `call_ollama_extractor(prompt)` | POST to `OLLAMA_BASE_URL/api/generate`; `temperature=0.0`; `num_predict=250`; `timeout=30s` |
-| `_build_field_descriptions()` | Formats `EXTRACTOR_FIELDS` into a structured list for the prompt, including BM guidance |
-| `_build_known_summary(profile)` | Lists already-filled supplementary fields so the LLM skips re-extraction |
+| `call_ollama_extractor(prompt)` | POST to Ollama `/api/generate`; `temperature=0.0`; `num_predict=200` |
+| `_build_field_descriptions()` | Formats `EXTRACTOR_FIELDS` list for inclusion in the prompt |
+| `_build_known_summary(profile)` | Summarises already-filled fields so the LLM doesn't re-extract them |
 | `_strip_json_response(text)` | Removes ` ```json ``` ` fences and whitespace from LLM output |
-| `_validate_field(key, value)` | Per-field validator returning `(valid: bool, cleaned_value)` |
-| `_validate_extraction(extracted)` | Applies `_validate_field` to all extracted keys; silently drops invalid entries |
+| `_validate_extraction(extracted)` | Type-checks and range-validates each extracted value; drops invalid entries |
 | `_filter_already_filled(extracted, profile)` | Drops fields that already have a non-null, non-empty value |
 
-#### Why qwen2.5:32b, not CLaRa-7B?
+**EXTRACTOR_FIELDS (current — v1, 5 active fields):**
 
-CLaRa-7B is optimised for compressed-context retrieval — it excels at reading a passage and generating domain-specific answers. qwen2.5:32b is a larger general-purpose instruction model that follows structured output formats (JSON) far more reliably. The extractor's job is a structured extraction task, not a retrieval task. The extraction call is capped at 250 tokens output and runs once per message asynchronously, so the extra latency (qwen2.5:32b is ~3-5× slower than CLaRa) is never user-facing.
+| Field | eNCPT Code | Type | Validation |
+|---|---|---|---|
+| `fluid_intake_ml` | FH-1.2.1.1.1 | int (mL/day) | `0 < value < 10000` |
+| `alcohol_per_week` | FH-1.4.1.1 | int (drinks/week) | `0 ≤ value < 200` |
+| `supplements` | FH-3.2.1 | list of strings | all elements non-empty str |
+| `religion` | CH-3.1.7 | string | non-empty, `len < 100` |
+| `tobacco_status` | CH-1.1.10 | string | one of: `Never smoked`, `Current smoker`, `Former smoker` |
 
-#### Demo
+**Pending (v2 cardiac — fields exist in DB, extractor not yet extended):** `fat_intake_level` (FH-1.5.1.1), `fat_sources` (FH-1.5.1.2), `medication_compliance` (FH-3.1.1.1), `activity_types` (FH-7.3.1.1), `sodium_awareness` (FH-1.5.6.1).
 
-A standalone demo script is provided at `scripts/demo_extractor.py`. It runs the full extraction pipeline against a real patient record and shows the before/after profile state. Requires Ollama reachable at `OLLAMA_BASE_URL`:
+**Prompt design decisions:**
+- `temperature=0.0` — deterministic; medical data extraction must not vary between calls.
+- `num_predict=200` — capped output forces a small JSON object, not paragraphs.
+- Already-known fields are listed in the prompt so the LLM skips them rather than re-extracting the same value.
+- The prompt explicitly forbids prose: *"Return ONLY a JSON object. No prose. No markdown. Just JSON."*
 
-```bash
-python scripts/demo_extractor.py
-python scripts/demo_extractor.py --patient-id 4   # default: Hafizuddin (dyslipidaemia + obesity)
-python scripts/demo_extractor.py --patient-id 7   # Rajendran (post-CABG, L3)
-python scripts/demo_extractor.py --reset          # clear supplementary fields before demo
-```
+**Why qwen2.5:32b for extraction (not CLaRa-7B)?** CLaRa is optimised for compressed-context retrieval and answer generation. qwen2.5:32b handles structured JSON output tasks far more reliably due to its larger capacity and instruction-following training. The extractor call is short (200 tokens max) and runs once per message, so the extra latency is acceptable.
+
+**Integration point:** `website_chat_router.py` calls `extract_from_message()` after the RAG response is generated (non-blocking — extraction happens in the background for non-streaming path; currently synchronous for streaming path). If new fields are found, `patient_store.update_supplementary_fields()` writes them with session provenance.
 
 ---
 

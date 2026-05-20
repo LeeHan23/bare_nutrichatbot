@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from database import SessionLocal, create_db_and_tables, add_patient, get_patient_by_username
 
-CLIENT_ID = 2  # test1 client — matches current API key
+CLIENT_ID = 4  # test3 client — matches the active API key
 
 PATIENTS = [
     dict(
@@ -41,6 +41,7 @@ PATIENTS = [
         ),
         username="ahmad.fadzillah",
         password="demo1234",
+        personalization_level="L2",
     ),
     dict(
         name="Lim Siew Ching",
@@ -64,6 +65,7 @@ PATIENTS = [
         ),
         username="lim.siewching",
         password="demo1234",
+        personalization_level="L2",
     ),
     dict(
         name="Kavitha a/p Subramaniam",
@@ -84,6 +86,7 @@ PATIENTS = [
         ),
         username="kavitha.subra",
         password="demo1234",
+        personalization_level="L1",
     ),
     dict(
         name="Mohd Hafizuddin bin Salleh",
@@ -105,6 +108,7 @@ PATIENTS = [
         ),
         username="hafizuddin.salleh",
         password="demo1234",
+        personalization_level="L1",
     ),
     dict(
         name="Tan Wei Loong",
@@ -131,6 +135,66 @@ PATIENTS = [
         ),
         username="tan.weiloong",
         password="demo1234",
+        personalization_level="L2",
+    ),
+    # L0 — no risk, no history
+    dict(
+        name="Nurul Ain binti Zulkifli",
+        ic_number="990304-14-6218",
+        age=27,
+        gender="Female",
+        ethnicity="Malay",
+        weight_kg=56.0,
+        height_cm=162.0,
+        conditions=[],
+        medications=[],
+        dietary_restrictions=["Halal only"],
+        allergies=[],
+        notes=(
+            "Primary school teacher, active lifestyle — jogs 3x per week. "
+            "BMI 21.3. No chronic conditions. Referred for general wellness and sports nutrition advice. "
+            "Interested in optimising energy levels and diet for long-distance running."
+        ),
+        username="nuraini.zulkifli",
+        password="demo1234",
+        personalization_level="L0",
+    ),
+    # L3 — high clinical risk / recent cardiac event
+    dict(
+        name="Rajendran a/l Muthu",
+        ic_number="530818-07-5341",
+        age=73,
+        gender="Male",
+        ethnicity="Indian",
+        weight_kg=67.0,
+        height_cm=163.0,
+        conditions=[
+            "Post-CABG (coronary artery bypass graft, 3 months ago)",
+            "Heart Failure (EF 35%)",
+            "Type 2 Diabetes",
+            "Hypertension",
+            "Chronic Kidney Disease Stage 4",
+        ],
+        medications=[
+            "Bisoprolol 5mg OD", "Ramipril 2.5mg OD", "Furosemide 80mg OD",
+            "Spironolactone 25mg OD", "Insulin Glargine 20 units ON",
+            "Aspirin 75mg OD", "Clopidogrel 75mg OD", "Atorvastatin 40mg ON",
+        ],
+        dietary_restrictions=[
+            "Cardiac diet", "Fluid restriction 1.0L per day",
+            "Low sodium", "Low potassium", "Low phosphorus",
+            "Low simple carbohydrates",
+        ],
+        allergies=["ACE inhibitors (cough — tolerated at low dose, monitor)"],
+        notes=(
+            "Recent CABG with reduced ejection fraction. Requires strict dietitian-supervised meal plan. "
+            "Family (wife and daughter) involved in all dietary decisions. "
+            "Any physical activity must be under cardiac rehab programme supervision only. "
+            "High fall risk. BP 110/70 mmHg on current medications. eGFR 22 mL/min/1.73m²."
+        ),
+        username="rajendran.muthu",
+        password="demo1234",
+        personalization_level="L3",
     ),
 ]
 
@@ -147,11 +211,16 @@ def main():
         for p in PATIENTS:
             existing = get_patient_by_username(session, p["username"])
             if existing:
-                # Patch ic_number if missing
+                changed = False
                 if not existing.ic_number and p.get("ic_number"):
                     existing.ic_number = p["ic_number"]
+                    changed = True
+                if existing.personalization_level != p.get("personalization_level") and p.get("personalization_level"):
+                    existing.personalization_level = p["personalization_level"]
+                    changed = True
+                if changed:
                     session.commit()
-                    print(f"  PATCH {p['username']} — ic_number updated to {p['ic_number']}")
+                    print(f"  PATCH {p['username']} — updated fields")
                     patched += 1
                 else:
                     print(f"  SKIP  {p['username']} (already exists)")

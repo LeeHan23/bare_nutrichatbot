@@ -1,0 +1,539 @@
+"""
+Curated bot-collectable schema — CARDIAC FOCUS (v2).
+
+Built from eNCPT 2020 source + cardiac dietitian consultation (May 2026).
+Preserves the original 30 reference fields with cardiac-adjusted tiers,
+adds 4 new fields requested by the dietitian, and includes Bahasa Malaysia
+translations for all bot questions.
+
+Tier philosophy for cardiac patients:
+  Tier 1 — Must collect for safe cardiac dietary advice
+  Tier 2 — Significantly improves quality of cardiac care
+  Tier 3 — Adds context, supports long-term care
+
+Cardiac priority adjustments vs general schema:
+  PROMOTED to T1: Sodium (was T2)
+  PROMOTED to T1: Total fat intake (NEW)
+  DEMOTED to T3:  Supplements (was T1) — generally safe in cardiac context
+  ADDED:          Medication compliance, Fat type sources, Activity type
+"""
+
+import json
+
+CURATED = [
+    # ═══════════════════════════════════════════════════════════════════
+    # TIER 1 — CRITICAL FOR CARDIAC CARE
+    # Must collect for safe cardiac dietary advice
+    # ═══════════════════════════════════════════════════════════════════
+    {
+        "code": "FH-1.2.1.1.1",
+        "label": "Total fluid estimated intake in 24 hours",
+        "priority": "tier1",
+        "data_type": "number_ml",
+        "example_question": {
+            "en": "About how much fluid do you drink in a typical day?",
+            "ms": "Berapa banyak cecair (air, kopi, teh, dll) yang anda minum dalam sehari?"
+        },
+        "example_answer": "I drink about 6 glasses of water plus 2 cups of coffee",
+        "clinical_relevance": "Heart failure patients have fluid restriction; over-intake worsens edema and dyspnea",
+        "relevant_conditions": ["Heart Failure", "CKD", "Hypertension"]
+    },
+    {
+        "code": "FH-1.4.1.1",
+        "label": "Alcohol intake in one week",
+        "priority": "tier1",
+        "data_type": "number_drinks",
+        "example_question": {
+            "en": "How much alcohol do you drink in a typical week?",
+            "ms": "Berapa banyak alkohol yang anda minum dalam seminggu?"
+        },
+        "example_answer": "Maybe 2-3 beers on weekends",
+        "clinical_relevance": "Alcohol elevates BP and triglycerides; affects warfarin and antiarrhythmics",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "CH-1.1.10",
+        "label": "Tobacco use",
+        "priority": "tier1",
+        "data_type": "string",
+        "allowed_values": ["Never smoked", "Current smoker", "Former smoker"],
+        "example_question": {
+            "en": "Do you currently smoke or use any tobacco?",
+            "ms": "Adakah anda merokok atau menggunakan tembakau?"
+        },
+        "example_answer": "I quit 5 years ago",
+        "clinical_relevance": "Major modifiable risk factor for ischemic heart disease",
+        "relevant_conditions": ["Cardiac", "Hypertension", "Dyslipidemia"]
+    },
+    {
+        "code": "FH-1.5.1.1",
+        "label": "Total fat intake (qualitative estimate from food sources)",
+        "priority": "tier1",
+        "data_type": "string",
+        "allowed_values": ["low", "moderate", "high"],
+        "example_question": {
+            "en": "How often do you eat fried foods, fatty meats, or oily curries?",
+            "ms": "Berapa kerap anda makan makanan goreng, daging berlemak, atau kari berminyak?"
+        },
+        "example_answer": "Most days I have nasi lemak or fried chicken",
+        "clinical_relevance": "Total fat affects LDL and overall cardiovascular risk",
+        "relevant_conditions": ["Cardiac", "Dyslipidemia"],
+        "extractor_note": "Estimate qualitative level (low/moderate/high) from food sources mentioned. Don't ask patients for grams.",
+        "new_field": True
+    },
+    {
+        "code": "FH-1.5.6.1",
+        "label": "Sodium intake / awareness",
+        "priority": "tier1",
+        "data_type": "string",
+        "allowed_values": ["low_awareness_high_intake", "moderate", "actively_restricting"],
+        "example_question": {
+            "en": "How salty do you like your food, and do you ever check labels for sodium?",
+            "ms": "Adakah anda suka makanan masin, dan adakah anda memeriksa kandungan garam pada label?"
+        },
+        "example_answer": "I add salt to almost everything, never check labels",
+        "clinical_relevance": "Direct driver of hypertension and fluid retention in heart failure",
+        "relevant_conditions": ["Cardiac", "Hypertension", "Heart Failure", "CKD"],
+        "tier_change_note": "Promoted from T2 → T1 for cardiac focus"
+    },
+    {
+        "code": "FH-1.6",
+        "label": "Food allergies and intolerances",
+        "priority": "tier1",
+        "data_type": "list_of_strings",
+        "example_question": {
+            "en": "Do you have any food allergies or foods that make you feel unwell?",
+            "ms": "Adakah anda alah kepada makanan atau ada makanan yang membuat anda tidak sihat?"
+        },
+        "example_answer": "I'm allergic to shellfish and dairy gives me stomach issues",
+        "clinical_relevance": "Required to ensure dietary recommendations are safe",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "CH-3.1.7",
+        "label": "Religion (affects diet)",
+        "priority": "tier1",
+        "data_type": "string",
+        "example_question": {
+            "en": "Are there foods you avoid for religious or cultural reasons?",
+            "ms": "Adakah ada makanan yang anda elak atas sebab agama atau budaya?"
+        },
+        "example_answer": "I'm Muslim so I only eat halal, no pork",
+        "clinical_relevance": "Required to ensure dietary recommendations are culturally acceptable",
+        "relevant_conditions": ["all"]
+    },
+
+    # ═══════════════════════════════════════════════════════════════════
+    # TIER 2 — IMPORTANT FOR CARDIAC CARE QUALITY
+    # Significantly improves quality and personalization of advice
+    # ═══════════════════════════════════════════════════════════════════
+    {
+        "code": "FH-3.1.1.1",
+        "label": "Medication compliance",
+        "priority": "tier2",
+        "data_type": "string",
+        "allowed_values": ["good", "variable", "poor"],
+        "example_question": {
+            "en": "Are you taking your medications as prescribed?",
+            "ms": "Adakah anda mengambil ubat seperti yang ditetapkan oleh doktor?"
+        },
+        "example_answer": "Sometimes I forget the evening dose",
+        "clinical_relevance": "Non-compliance with antihypertensives, statins, or anticoagulants directly worsens outcomes",
+        "relevant_conditions": ["Cardiac", "Hypertension", "Heart Failure"],
+        "new_field": True
+    },
+    {
+        "code": "FH-1.5.1.2",
+        "label": "Fat type sources (raw food sources mentioned)",
+        "priority": "tier2",
+        "data_type": "list_of_strings",
+        "example_question": {
+            "en": "What kinds of cooking oils, butter, or fatty foods do you usually have?",
+            "ms": "Jenis minyak masak atau makanan berlemak apa yang biasa anda makan?"
+        },
+        "example_answer": "I cook with palm oil and use butter on toast",
+        "clinical_relevance": "Saturated/trans fat sources matter more than total fat for cardiac patients",
+        "relevant_conditions": ["Cardiac", "Dyslipidemia"],
+        "extractor_note": "Capture raw food sources (palm oil, butter, ghee, olive oil, etc.); separate clinical layer maps to saturated/trans/unsaturated categories",
+        "new_field": True
+    },
+    {
+        "code": "FH-7.3.1",
+        "label": "Physical activity frequency",
+        "priority": "tier2",
+        "data_type": "string",
+        "example_question": {
+            "en": "How often do you exercise or do physical activity?",
+            "ms": "Berapa kerap anda bersenam atau melakukan aktiviti fizikal?"
+        },
+        "example_answer": "I walk for 30 minutes 3 times a week",
+        "clinical_relevance": "Frequency drives cardiac rehabilitation outcomes",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-7.3.2",
+        "label": "Physical activity duration",
+        "priority": "tier2",
+        "data_type": "number_minutes",
+        "example_question": {
+            "en": "About how long do your exercise sessions last?",
+            "ms": "Lama setiap sesi senaman anda berapa minit?"
+        },
+        "example_answer": "30 to 45 minutes each time",
+        "clinical_relevance": "Total weekly minutes determine training effect",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-7.3.1.1",
+        "label": "Type of physical activity",
+        "priority": "tier2",
+        "data_type": "list_of_strings",
+        "example_question": {
+            "en": "What kind of exercise do you do — walking, swimming, gym, sports?",
+            "ms": "Jenis senaman apa yang anda lakukan — berjalan, berenang, gim, atau sukan?"
+        },
+        "example_answer": "Mostly walking, sometimes I cycle on weekends",
+        "clinical_relevance": "Aerobic vs resistance vs flexibility have different cardiac benefits",
+        "relevant_conditions": ["Cardiac", "Heart Failure"],
+        "new_field": True
+    },
+    {
+        "code": "FH-7.3.3",
+        "label": "Physical activity intensity",
+        "priority": "tier2",
+        "data_type": "string",
+        "allowed_values": ["light", "moderate", "vigorous"],
+        "example_question": {
+            "en": "Would you describe your exercise as light, moderate, or vigorous?",
+            "ms": "Senaman anda boleh dikatakan ringan, sederhana, atau cergas?"
+        },
+        "example_answer": "Moderate - I get a bit out of breath",
+        "clinical_relevance": "Vigorous activity may be contraindicated in some cardiac conditions",
+        "relevant_conditions": ["Cardiac", "Heart Failure"]
+    },
+    {
+        "code": "FH-1.4.3.1",
+        "label": "Total caffeine estimated intake in 24 hours",
+        "priority": "tier2",
+        "data_type": "number_mg",
+        "example_question": {
+            "en": "How much coffee or tea do you drink a day?",
+            "ms": "Berapa banyak kopi atau teh yang anda minum sehari?"
+        },
+        "example_answer": "Two cups of coffee in the morning",
+        "clinical_relevance": "Excess caffeine can trigger arrhythmias and elevate BP",
+        "relevant_conditions": ["Cardiac", "Hypertension", "Atrial Fibrillation"]
+    },
+    {
+        "code": "FH-1.2.2.3.1.1",
+        "label": "Number of meals estimated in 24 hours",
+        "priority": "tier2",
+        "data_type": "number",
+        "example_question": {
+            "en": "How many meals do you eat in a day?",
+            "ms": "Berapa kali anda makan dalam sehari?"
+        },
+        "example_answer": "Three main meals plus 2 snacks usually",
+        "clinical_relevance": "Meal pattern affects glycemic control and energy distribution",
+        "relevant_conditions": ["Diabetes", "Hypertension"]
+    },
+    {
+        "code": "FH-1.2.2.3.1.2",
+        "label": "Number of snacks estimated in 24 hours",
+        "priority": "tier2",
+        "data_type": "number",
+        "example_question": {
+            "en": "How many snacks do you have between meals?",
+            "ms": "Berapa kali anda makan snek antara waktu makan?"
+        },
+        "example_answer": "1 or 2 snacks usually",
+        "clinical_relevance": "Frequent snacking may reflect calorie excess",
+        "relevant_conditions": ["Diabetes", "Obesity"]
+    },
+    {
+        "code": "FH-1.2.2.2.5",
+        "label": "Processed food intake",
+        "priority": "tier2",
+        "data_type": "string",
+        "example_question": {
+            "en": "How often do you eat processed or packaged foods?",
+            "ms": "Berapa kerap anda makan makanan diproses atau makanan dalam tin/bungkus?"
+        },
+        "example_answer": "Maybe once a week, mostly home-cooked",
+        "clinical_relevance": "Processed foods are major source of sodium and trans fats",
+        "relevant_conditions": ["Cardiac", "Hypertension", "Dyslipidemia", "Obesity"]
+    },
+    {
+        "code": "FH-1.2.2.2.6",
+        "label": "Quick service food intake",
+        "priority": "tier2",
+        "data_type": "string",
+        "example_question": {
+            "en": "How often do you eat fast food or takeaway?",
+            "ms": "Berapa kerap anda makan makanan segera atau bawa pulang?"
+        },
+        "example_answer": "Twice a week or so",
+        "clinical_relevance": "Fast food typically high in saturated fat, sodium, and refined carbs",
+        "relevant_conditions": ["Cardiac", "Hypertension", "Dyslipidemia", "Obesity", "Diabetes"]
+    },
+    {
+        "code": "FH-1.2.2.2.7",
+        "label": "Self prepared food intake",
+        "priority": "tier2",
+        "data_type": "string",
+        "example_question": {
+            "en": "Do you usually cook your own meals or does someone else?",
+            "ms": "Biasanya anda yang masak sendiri atau orang lain yang masak?"
+        },
+        "example_answer": "My wife cooks most days",
+        "clinical_relevance": "Determines who needs nutrition education and meal control",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-1.2.1.1.1.3",
+        "label": "Sugar sweetened beverage estimated oral intake in 24 hours",
+        "priority": "tier2",
+        "data_type": "number_ml",
+        "example_question": {
+            "en": "Do you drink sweetened drinks like soda, juice, or sweetened tea?",
+            "ms": "Adakah anda minum minuman manis seperti air kotak, jus, atau teh manis?"
+        },
+        "example_answer": "I have one teh tarik a day",
+        "clinical_relevance": "Liquid sugar contributes to obesity, insulin resistance, hypertriglyceridemia",
+        "relevant_conditions": ["Diabetes", "Obesity", "Cardiac"]
+    },
+    {
+        "code": "FH-5.2.1",
+        "label": "Food avoidance",
+        "priority": "tier2",
+        "data_type": "list_of_strings",
+        "example_question": {
+            "en": "Are there any foods you avoid eating, and why?",
+            "ms": "Adakah ada makanan yang anda elak makan, dan kenapa?"
+        },
+        "example_answer": "I avoid fatty foods because they upset my stomach",
+        "clinical_relevance": "Voluntary restrictions inform what dietary advice will be acceptable",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-5.4.1",
+        "label": "Cultural/religious eating practices",
+        "priority": "tier2",
+        "data_type": "string",
+        "example_question": {
+            "en": "Are there cultural or family traditions that shape what you eat?",
+            "ms": "Adakah amalan budaya atau tradisi keluarga yang mempengaruhi pemakanan anda?"
+        },
+        "example_answer": "We always have rice with every meal",
+        "clinical_relevance": "Cultural norms shape food choices; advice must be culturally adapted",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-4.1.3",
+        "label": "Nutrition knowledge of individual client",
+        "priority": "tier2",
+        "data_type": "scale_1_5",
+        "example_question": {
+            "en": "How familiar are you with what foods to eat for your condition?",
+            "ms": "Sejauh mana anda tahu makanan yang sesuai untuk keadaan kesihatan anda?"
+        },
+        "example_answer": "I know I should eat less salt but not much else",
+        "clinical_relevance": "Determines depth of education needed",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-4.2.8",
+        "label": "Readiness to change nutrition-related behaviors",
+        "priority": "tier2",
+        "data_type": "stage",
+        "allowed_values": ["precontemplation", "contemplation", "preparation", "action", "maintenance"],
+        "example_question": {
+            "en": "How ready do you feel to make changes to your diet?",
+            "ms": "Sejauh mana anda bersedia untuk mengubah pemakanan anda?"
+        },
+        "example_answer": "I'm trying to eat less rice already",
+        "clinical_relevance": "Stage of change determines intervention approach",
+        "relevant_conditions": ["all"]
+    },
+
+    # ═══════════════════════════════════════════════════════════════════
+    # TIER 3 — NICE TO HAVE / CONTEXT
+    # Adds context, supports long-term care
+    # ═══════════════════════════════════════════════════════════════════
+    {
+        "code": "FH-3.2.1",
+        "label": "Vitamin/mineral supplement intake",
+        "priority": "tier3",
+        "data_type": "list_of_strings",
+        "example_question": {
+            "en": "Are you taking any vitamins, minerals, or other supplements?",
+            "ms": "Adakah anda mengambil sebarang vitamin, mineral, atau suplemen?"
+        },
+        "example_answer": "I take fish oil and CoQ10 daily",
+        "clinical_relevance": "Common cardiac supplements (fish oil, CoQ10, K, Mg) interact with medications",
+        "relevant_conditions": ["all"],
+        "tier_change_note": "Demoted from T1 → T3 for cardiac focus per dietitian"
+    },
+    {
+        "code": "FH-6.2.1",
+        "label": "Food availability",
+        "priority": "tier3",
+        "data_type": "string",
+        "example_question": {
+            "en": "Is it easy for you to buy fresh fruit, vegetables, and lean proteins?",
+            "ms": "Adakah mudah untuk anda membeli buah-buahan, sayur-sayuran, dan protein yang sihat?"
+        },
+        "example_answer": "Yes, there's a market nearby",
+        "clinical_relevance": "Affects feasibility of dietary recommendations",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-1.4.1.4",
+        "label": "Alcohol intake pattern on drinking days",
+        "priority": "tier3",
+        "data_type": "string",
+        "example_question": {
+            "en": "On days you drink, do you usually have one drink or several?",
+            "ms": "Pada hari anda minum, biasanya satu gelas atau beberapa gelas?"
+        },
+        "example_answer": "Usually 2-3 in one sitting",
+        "clinical_relevance": "Binge pattern more harmful than equivalent spread intake",
+        "relevant_conditions": ["Liver", "Hypertension", "Cardiac"]
+    },
+    {
+        "code": "FH-6.2.3",
+        "label": "Access to food preparation equipment",
+        "priority": "tier3",
+        "data_type": "boolean",
+        "example_question": {
+            "en": "Do you have a kitchen with a stove and refrigerator?",
+            "ms": "Adakah anda mempunyai dapur dengan dapur masak dan peti sejuk?"
+        },
+        "example_answer": "Yes, just basic but it works",
+        "clinical_relevance": "Affects whether home-cooking advice is realistic",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-5.4.2",
+        "label": "Eating environment (alone/with family/etc)",
+        "priority": "tier3",
+        "data_type": "string",
+        "example_question": {
+            "en": "Do you usually eat alone or with others?",
+            "ms": "Biasanya anda makan seorang diri atau bersama orang lain?"
+        },
+        "example_answer": "With my family for dinner, lunch is at work",
+        "clinical_relevance": "Social context affects portion control and food choices",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "CH-3.1.9",
+        "label": "Daily stress level",
+        "priority": "tier3",
+        "data_type": "scale_1_10",
+        "example_question": {
+            "en": "How stressful would you say your daily life is, on a scale of 1 to 10?",
+            "ms": "Pada skala 1 hingga 10, sejauh mana stres dalam kehidupan harian anda?"
+        },
+        "example_answer": "About a 7, work has been intense",
+        "clinical_relevance": "Stress drives BP elevation and unhealthy coping behaviors",
+        "relevant_conditions": ["Cardiac", "Hypertension"]
+    },
+    {
+        "code": "CH-3.1.6",
+        "label": "Occupation",
+        "priority": "tier3",
+        "data_type": "string",
+        "example_question": {
+            "en": "What do you do for work?",
+            "ms": "Apakah pekerjaan anda?"
+        },
+        "example_answer": "I'm a teacher, mostly desk work",
+        "clinical_relevance": "Occupation influences activity level and meal patterns",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "CH-3.1.4",
+        "label": "Social and medical support",
+        "priority": "tier3",
+        "data_type": "string",
+        "example_question": {
+            "en": "Do you have family or friends helping you manage your health?",
+            "ms": "Adakah keluarga atau kawan yang membantu anda menjaga kesihatan?"
+        },
+        "example_answer": "My daughter helps with my appointments",
+        "clinical_relevance": "Support network predicts adherence and outcomes",
+        "relevant_conditions": ["all"]
+    },
+    {
+        "code": "FH-1.5.4.5",
+        "label": "Fiber estimated intake",
+        "priority": "tier3",
+        "data_type": "string",
+        "example_question": {
+            "en": "Do you eat whole grains, beans, or lots of fruits and vegetables?",
+            "ms": "Adakah anda makan bijirin penuh, kekacang, atau banyak buah dan sayur?"
+        },
+        "example_answer": "Some fruit daily, mostly white rice for grains",
+        "clinical_relevance": "Fiber lowers LDL cholesterol; relevant for cardiac too",
+        "relevant_conditions": ["Diabetes", "Dyslipidemia", "Cardiac", "Obesity"]
+    },
+    {
+        "code": "FH-8.1",
+        "label": "Nutrition quality of life",
+        "priority": "tier3",
+        "data_type": "scale_1_5",
+        "example_question": {
+            "en": "How happy are you with the way you eat right now?",
+            "ms": "Sejauh mana anda berpuas hati dengan pemakanan anda sekarang?"
+        },
+        "example_answer": "Not really, I want to change but it's hard",
+        "clinical_relevance": "Predicts long-term adherence and satisfaction",
+        "relevant_conditions": ["all"]
+    },
+]
+
+
+def main():
+    new_count = sum(1 for f in CURATED if f.get("new_field"))
+    promoted = [f for f in CURATED if "Promoted" in f.get("tier_change_note", "")]
+    demoted = [f for f in CURATED if "Demoted" in f.get("tier_change_note", "")]
+
+    out = {
+        "version": "2.0-cardiac",
+        "specialty": "cardiology",
+        "based_on": "eNCPT 2020 + cardiac dietitian consultation (May 2026)",
+        "languages": ["en", "ms"],
+        "total_fields": len(CURATED),
+        "new_fields": new_count,
+        "tier_counts": {
+            "tier1": sum(1 for f in CURATED if f["priority"] == "tier1"),
+            "tier2": sum(1 for f in CURATED if f["priority"] == "tier2"),
+            "tier3": sum(1 for f in CURATED if f["priority"] == "tier3"),
+        },
+        "fields": CURATED,
+    }
+
+    with open("/mnt/ssd/bare_NutriChatbot/data/encpt/encpt_curated.json", "w") as f:
+        json.dump(out, f, indent=2, ensure_ascii=False)
+
+    print(f"Cardiac-focused curated schema (v2.0)")
+    print(f"  Total fields:  {out['total_fields']} ({new_count} new)")
+    for tier in ["tier1", "tier2", "tier3"]:
+        print(f"  {tier}:        {out['tier_counts'][tier]}")
+    if promoted:
+        print(f"\nPromoted (cardiac):")
+        for f in promoted:
+            print(f"  {f['code']}  {f['label']}")
+    if demoted:
+        print(f"\nDemoted (cardiac):")
+        for f in demoted:
+            print(f"  {f['code']}  {f['label']}")
+    print(f"\nNew fields:")
+    for f in CURATED:
+        if f.get("new_field"):
+            print(f"  {f['code']}  {f['label']}")
+
+
+if __name__ == "__main__":
+    main()

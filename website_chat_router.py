@@ -24,8 +24,9 @@ patient_store = LocalPatientStore()
 class ChatRequest(BaseModel):
     question: str
     session_id: str
-    profile: dict | None = None     # Optional explicit profile dict (legacy path)
-    patient_id: int | None = None   # Optional: auto-load profile from DB by patient ID
+    profile: dict | None = None      # Optional explicit profile dict (legacy path)
+    patient_id: int | None = None    # Optional: auto-load profile from DB by patient ID
+    is_patient_self: bool | None = None  # True = patient is chatting (second-person). Defaults to True when patient_id is set; pass False explicitly for clinician tools.
 
 
 async def stream_rag_response(
@@ -33,6 +34,7 @@ async def stream_rag_response(
     client_id: int,
     session_id: str,
     profile: dict | None = None,
+    is_patient_self: bool = False,
 ):
     """Streams the RAG response using the client's knowledge base."""
     try:
@@ -41,6 +43,7 @@ async def stream_rag_response(
             client_id=client_id,
             chat_session_id=session_id,
             profile=profile,
+            is_patient_self=is_patient_self,
         )
         for chunk in response_data.get("answer", ""):
             yield chunk
@@ -135,6 +138,12 @@ async def get_chat_response(
     """
     resolved_profile = _resolve_patient_profile(request, client, database)
 
+    # Infer is_patient_self: default True when a patient_id is provided and the
+    # caller did not explicitly set the flag. Clinician tools should pass False.
+    is_patient_self = request.is_patient_self
+    if is_patient_self is None:
+        is_patient_self = request.patient_id is not None
+
     # Schedule the extractor as a background task BEFORE we start streaming.
     # asyncio.create_task() runs concurrently with the streaming response.
     if request.patient_id is not None and resolved_profile is not None:
@@ -153,6 +162,7 @@ async def get_chat_response(
             client.id,
             request.session_id,
             resolved_profile,
+            is_patient_self=is_patient_self,
         ),
         media_type="text/event-stream",
     )
@@ -170,6 +180,10 @@ async def get_chat_response_sync(
     """
     resolved_profile = _resolve_patient_profile(request, client, database)
 
+    is_patient_self = request.is_patient_self
+    if is_patient_self is None:
+        is_patient_self = request.patient_id is not None
+
     if request.patient_id is not None and resolved_profile is not None:
         asyncio.create_task(
             _run_extractor_background(
@@ -186,6 +200,7 @@ async def get_chat_response_sync(
         client.id,
         request.session_id,
         resolved_profile,
+        is_patient_self=is_patient_self,
     ):
         full_response += chunk
 

@@ -103,15 +103,6 @@ class Patient(Base):
     readiness_to_change    = Column(String, nullable=True)         # FH-4.2.8
     sodium_awareness       = Column(String, nullable=True)         # FH-1.5.6.1
 
-    # ── v2 (cardiac priority additions) ─────────────────────────────────
-    fat_intake_level       = Column(String, nullable=True)         # FH-1.5.1.1 (low/moderate/high)
-    fat_sources            = Column(JSON, default=list)            # FH-1.5.1.2
-    medication_compliance  = Column(String, nullable=True)         # FH-3.1.1.1 (good/variable/poor)
-    activity_types         = Column(JSON, default=list)            # FH-7.3.1.1
-
-    # Dietitian-assigned personalization level (L0/L1/L2/L3)
-    personalization_level  = Column(String, nullable=True)
-
     # Provenance — which fields were filled by extractor + when
     extractor_metadata     = Column(JSON, default=dict)            # {field: {confidence, last_updated, source_session_id}}
 
@@ -250,7 +241,7 @@ def add_patient(db_session, client_id: int, name: str, age: int, gender: str,
                 ethnicity: str, weight_kg: float, height_cm: float,
                 conditions: list, medications: list, dietary_restrictions: list,
                 allergies: list, notes: str, username: str, password: str,
-                ic_number: str = None, personalization_level: str = None):
+                ic_number: str = None):
     """Create a new patient record with a hashed password."""
     hashed_pw = generate_password_hash(password)
     patient = Patient(
@@ -259,7 +250,6 @@ def add_patient(db_session, client_id: int, name: str, age: int, gender: str,
         conditions=conditions, medications=medications,
         dietary_restrictions=dietary_restrictions, allergies=allergies,
         notes=notes, username=username, hashed_password=hashed_pw,
-        personalization_level=personalization_level,
     )
     db_session.add(patient)
     db_session.commit()
@@ -324,16 +314,15 @@ def patient_to_profile_dict(patient) -> dict:
     Key 'condition' (not 'conditions') matches the existing rag.py dict schema.
     """
     return {
-        "condition":              patient.conditions           or [],
-        "medications":            patient.medications          or [],
-        "dietary_restrictions":   patient.dietary_restrictions or [],
-        "name":                   patient.name,
-        "age":                    patient.age,
-        "gender":                 patient.gender,
-        "ethnicity":              patient.ethnicity,
-        "weight_kg":              patient.weight_kg,
-        "height_cm":              patient.height_cm,
-        "allergies":              patient.allergies            or [],
-        "notes":                  patient.notes                or "",
-        "personalization_level":  patient.personalization_level,
+        "condition":             patient.conditions           or [],
+        "medications":           patient.medications          or [],
+        "dietary_restrictions":  patient.dietary_restrictions or [],
+        "name":                  patient.name,
+        "age":                   patient.age,
+        "gender":                patient.gender,
+        "ethnicity":             patient.ethnicity,
+        "weight_kg":             patient.weight_kg,
+        "height_cm":             patient.height_cm,
+        "allergies":             patient.allergies            or [],
+        "notes":                 patient.notes                or "",
     }

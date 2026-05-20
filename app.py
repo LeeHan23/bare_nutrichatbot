@@ -341,7 +341,7 @@ async function sendMessage() {
     const r = await fetch('/chat/get_response', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey() },
-      body: JSON.stringify({ question: q, session_id: sessionId, patient_id: selectedPatient.patient_id || selectedPatient.id })
+      body: JSON.stringify({ question: q, session_id: sessionId, patient_id: selectedPatient.patient_id || selectedPatient.id, is_patient_self: true })
     });
     if (!r.ok) { loading.textContent = 'Error ' + r.status; loading.classList.add('err'); return; }
     // Stream the response

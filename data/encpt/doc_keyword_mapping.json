@@ -1,0 +1,673 @@
+{
+  "version": "1.0",
+  "based_on": "Manual curation by Lee Yean Han, May 2026, with cardiac dietitian input",
+  "languages": [
+    "en",
+    "ms"
+  ],
+  "documents": {
+    "Garis Panduan Aktiviti Fizikal Malaysia 27122024 (1).pdf": {
+      "keywords": [
+        "garis panduan",
+        "aktiviti fizikal",
+        "senaman",
+        "sukan",
+        "senaman aerobik",
+        "senaman anaerobik",
+        "kadar nadi",
+        "faedah aktiviti fizikal",
+        "fisiologi",
+        "psikologi",
+        "sosial",
+        "spiritual",
+        "Saranan Aktiviti Fizikal"
+      ],
+      "topic_summary": "Malaysian physical activity guidelines: aerobic and anaerobic exercise, heart rate, benefits of physical activity",
+      "primary_topics": [
+        "physical activity",
+        "exercise",
+        "Malaysian guidelines"
+      ],
+      "language": "ms"
+    },
+    "LE8_How_to_be_More_Active.pdf": {
+      "keywords": [
+        "physical activity duration",
+        "adult",
+        "tips",
+        "recommendation"
+      ],
+      "topic_summary": "Tips and recommendations for adult physical activity duration",
+      "primary_topics": [
+        "physical activity",
+        "exercise"
+      ],
+      "language": "en"
+    },
+    "wolters-klewitt-acsm-11th-edition-11nbsped-2020029779-2020029780-9781975150181-9781975150198-9781975150211-9781975150228_compress.pdf": {
+      "keywords": [
+        "prescreening",
+        "clinical exercise testing",
+        "exercise prescription",
+        "sedentary",
+        "active",
+        "cardiac diseases",
+        "pulmonary diseases",
+        "peripheral diseases",
+        "metabolic diseases",
+        "chronic diseases",
+        "brain related disorder",
+        "young adult",
+        "older",
+        "pregnant",
+        "environment exercise consideration",
+        "promoting physical activities"
+      ],
+      "topic_summary": "ACSM Guidelines for exercise testing and prescription across populations and conditions",
+      "primary_topics": [
+        "exercise testing",
+        "exercise prescription",
+        "ACSM guidelines",
+        "cardiac exercise"
+      ],
+      "language": "en"
+    },
+    "WHO-Sugars intake for adults and children.pdf": {
+      "keywords": [
+        "sugar intake",
+        "adults",
+        "kids",
+        "overweight",
+        "design guideline",
+        "policies"
+      ],
+      "topic_summary": "WHO guideline on sugar intake for adults and children",
+      "primary_topics": [
+        "sugar intake",
+        "nutrition",
+        "obesity prevention"
+      ],
+      "language": "en"
+    },
+    "WHO Guideline- Sodium Intake for Adults and Children.pdf": {
+      "keywords": [
+        "sodium intake",
+        "adults",
+        "blood pressure",
+        "hypertension",
+        "design guideline",
+        "policies"
+      ],
+      "topic_summary": "WHO sodium intake guideline for adults and children, with focus on hypertension",
+      "primary_topics": [
+        "sodium intake",
+        "hypertension",
+        "blood pressure"
+      ],
+      "language": "en"
+    },
+    "Tips for Reducing Sodium Intake _ Salt _ CDC.pdf": {
+      "keywords": [
+        "reduce sodium intake",
+        "grocery store",
+        "home",
+        "restaurant",
+        "DASH diet",
+        "tips"
+      ],
+      "topic_summary": "CDC tips for reducing sodium intake at home, when shopping, and dining out",
+      "primary_topics": [
+        "sodium reduction",
+        "DASH diet",
+        "practical tips"
+      ],
+      "language": "en"
+    },
+    "LE8_Eat_Better_Fact_Sheet.pdf": {
+      "keywords": [
+        "healthy diet",
+        "nutrition label",
+        "tips"
+      ],
+      "topic_summary": "Healthy diet tips and nutrition label guidance",
+      "primary_topics": [
+        "healthy eating",
+        "nutrition labels"
+      ],
+      "language": "en"
+    },
+    "LE8_How_to_Get_Healthy_Sleep.pdf": {
+      "keywords": [
+        "healthy sleep",
+        "benefits",
+        "how sleep affects health",
+        "tips for success",
+        "sleep activity"
+      ],
+      "topic_summary": "Healthy sleep — benefits, impact on health, and tips for success",
+      "primary_topics": [
+        "sleep",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "Prevention of Cardiovascular Disease-WHO.pdf": {
+      "keywords": [
+        "Guideline development",
+        "Hospital care",
+        "Post-discharge",
+        "Maintenance",
+        "Physical assessment",
+        "Psychological",
+        "Risk factors",
+        "Functional capacity",
+        "Exercise testing",
+        "Exercise prescription",
+        "Safety",
+        "Education",
+        "Secondary prevention",
+        "Medical treatment",
+        "Physical activity",
+        "Lifestyle education",
+        "Family involvement",
+        "Follow-up",
+        "Behaviour change",
+        "Cardiac rehab",
+        "Post-MI",
+        "HF",
+        "High-risk",
+        "Adult",
+        "Older",
+        "CAD",
+        "MI",
+        "Lifestyle",
+        "Medication"
+      ],
+      "topic_summary": "WHO guideline on CVD prevention — hospital and post-discharge care, cardiac rehabilitation",
+      "primary_topics": [
+        "CVD prevention",
+        "cardiac rehabilitation",
+        "post-MI care",
+        "WHO guidelines"
+      ],
+      "language": "en"
+    },
+    "Primary & Secondary Prevention of Cardiovascular Disease.pdf": {
+      "keywords": [
+        "Guideline",
+        "Assessment",
+        "Exercise",
+        "Nutrition",
+        "Weight",
+        "BP",
+        "Lipid",
+        "Diabetes",
+        "Smoking",
+        "Psychosocial",
+        "Lifestyle",
+        "Risk factors",
+        "Cardiac patients",
+        "Post-MI",
+        "Post-surgery",
+        "High-risk",
+        "Adult",
+        "Elder",
+        "Male/Female",
+        "CAD",
+        "HF",
+        "Stroke",
+        "PAD",
+        "Diabetes",
+        "Renal",
+        "Behaviour change",
+        "Medication"
+      ],
+      "topic_summary": "Primary and secondary CVD prevention — assessment across lifestyle and clinical factors",
+      "primary_topics": [
+        "CVD prevention",
+        "risk assessment",
+        "lifestyle modification"
+      ],
+      "language": "en"
+    },
+    "CPG Stable Coronary Artery Disease (2nd Edition).pdf": {
+      "keywords": [
+        "Coronary Artery Disease management",
+        "CAD diagnosis",
+        "stable chest pain",
+        "angina",
+        "risk stratification",
+        "optimal medical therapy"
+      ],
+      "topic_summary": "Malaysian CPG for stable Coronary Artery Disease — diagnosis and management",
+      "primary_topics": [
+        "CAD",
+        "stable angina",
+        "coronary artery disease",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "BACPR-Standards-and-Core-Components-2023.pdf": {
+      "keywords": [
+        "cardiac rehabilitation",
+        "Health behaviour change and education",
+        "Lifestyle risk factor management",
+        "Physical activity and exercise training",
+        "Healthy eating and body composition",
+        "Tobacco cessation and relapse prevention",
+        "Psychosocial health",
+        "Medical risk management"
+      ],
+      "topic_summary": "BACPR standards and core components of cardiac rehabilitation (2023)",
+      "primary_topics": [
+        "cardiac rehabilitation",
+        "lifestyle modification",
+        "BACPR standards"
+      ],
+      "language": "en"
+    },
+    "NICE-Hypertension in adults diagnosis and management.pdf": {
+      "keywords": [
+        "Measuring blood pressure",
+        "Training",
+        "technique",
+        "device maintenance",
+        "Diagnosing hypertension",
+        "Assessing cardiovascular risk",
+        "target organ damage",
+        "Treating and monitoring hypertension"
+      ],
+      "topic_summary": "NICE guideline for hypertension diagnosis and management in adults",
+      "primary_topics": [
+        "hypertension",
+        "blood pressure measurement",
+        "NICE guidelines"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Hypertension.pdf": {
+      "keywords": [
+        "Definition and Classification of Hypertension",
+        "Measurement of Blood Pressure",
+        "Diagnosis and Initial Assessment",
+        "Non-pharmacological Management",
+        "Pharmacological Management",
+        "Management of Severe Hypertension",
+        "Hypertension in Special Groups",
+        "Types of Antihypertensive Agents"
+      ],
+      "topic_summary": "Malaysian CPG for Hypertension Management — diagnosis, classification, treatment",
+      "primary_topics": [
+        "hypertension",
+        "blood pressure",
+        "antihypertensives",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "4_GPKBM_edisi_2.pdf": {
+      "keywords": [
+        "kesan negatif merokok",
+        "bahaya merokok",
+        "faedah berhenti merokok",
+        "langkah-langkah persediaan untuk berhenti merokok",
+        "Petua 12M untuk mengatasi keinginan merokok",
+        "jenis rawatan berhenti merokok"
+      ],
+      "topic_summary": "Malaysian guide to smoking cessation — effects, benefits of quitting, 12M tips",
+      "primary_topics": [
+        "smoking cessation",
+        "tobacco",
+        "berhenti merokok"
+      ],
+      "language": "ms"
+    },
+    "LE8_How_to_Quit_Tobacco.pdf": {
+      "keywords": [
+        "HOW TO QUIT TOBACCO AND NICOTINE PRODUCTS",
+        "make a plan to quit",
+        "tips for success"
+      ],
+      "topic_summary": "Practical guide for quitting tobacco and nicotine products",
+      "primary_topics": [
+        "smoking cessation",
+        "tobacco",
+        "nicotine"
+      ],
+      "language": "en"
+    },
+    "CPG_TobacoDisorder.pdf": {
+      "keywords": [
+        "Clinical Intervention for Tobacco Use Disorder",
+        "relapse prevention intervention"
+      ],
+      "topic_summary": "Clinical Practice Guideline for Tobacco Use Disorder",
+      "primary_topics": [
+        "tobacco use disorder",
+        "smoking cessation",
+        "clinical intervention"
+      ],
+      "language": "en"
+    },
+    "Xu 2024 Depression and coronary heart disease mechanisms, interventions, and treatments.pdf": {
+      "keywords": [
+        "coronary heart disease",
+        "depression",
+        "bipolar heart disease",
+        "mechanisms",
+        "antidepressant treatment"
+      ],
+      "topic_summary": "Xu 2024 — mechanisms linking depression and coronary heart disease, treatment options",
+      "primary_topics": [
+        "depression",
+        "coronary heart disease",
+        "mental health"
+      ],
+      "language": "en"
+    },
+    "levine-et-al-2021-psychological-health-well-being-and-the-mind-heart-body-connection-a-scientific-statement-from-the.pdf": {
+      "keywords": [
+        "NEGATIVE PSYCHOLOGICAL HEALTH AND CVD",
+        "Chronic Stress",
+        "Anger and Hostility",
+        "Anxiety",
+        "Depression",
+        "Pessimism",
+        "mind-heart-body connection"
+      ],
+      "topic_summary": "AHA scientific statement on psychological health, well-being and the mind-heart-body connection",
+      "primary_topics": [
+        "psychological health",
+        "CVD",
+        "stress",
+        "depression",
+        "anxiety"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Dyslipidaemia (6th Edition).pdf": {
+      "keywords": [
+        "Individuals Who are at High Risk of Developing CVD",
+        "Therapeutic Lifestyle Changes",
+        "Medical Nutrition Therapy",
+        "Dietary Cholesterol",
+        "Saturated and Unsaturated Fats",
+        "Trans Fat",
+        "Carbohydrates",
+        "Sodium",
+        "Weight Loss",
+        "smoking"
+      ],
+      "topic_summary": "Malaysian CPG for Dyslipidaemia Management (6th Edition) — therapeutic lifestyle and nutrition",
+      "primary_topics": [
+        "dyslipidaemia",
+        "cholesterol management",
+        "lipid disorder",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "LE8_How_to_Control_Cholesterol.pdf": {
+      "keywords": [
+        "HOW TO CONTROL CHOLESTEROL",
+        "understand cholestrol",
+        "track levels",
+        "tips for success"
+      ],
+      "topic_summary": "Practical guide for understanding and controlling cholesterol levels",
+      "primary_topics": [
+        "cholesterol",
+        "lipid management"
+      ],
+      "language": "en"
+    },
+    "grundy-et-al-2018-2018-aha-acc-aacvpr-aapa-abc-acpm-ada-ags-apha-aspc-nla-pcna-guideline-on-the-management-of-blood.pdf": {
+      "keywords": [
+        "REDUCE RISK OF ATHEROSCLEROTIC CARDIOVASCULAR DISEASE",
+        "CHOLESTEROL MANAGEMENT",
+        "THERAPEUTIC MODALITIES",
+        "Diet Composition",
+        "Weight Control",
+        "Physical Activity"
+      ],
+      "topic_summary": "2018 AHA/ACC guideline on blood cholesterol management",
+      "primary_topics": [
+        "cholesterol management",
+        "ASCVD prevention",
+        "AHA/ACC guidelines"
+      ],
+      "language": "en"
+    },
+    "Cholesterol-Control Poster.pdf": {
+      "keywords": [
+        "cholestrol control",
+        "types of fats and its function",
+        "what is cholestrol",
+        "types of cholestrol",
+        "causes of high cholestrol"
+      ],
+      "topic_summary": "Poster on cholesterol control — types of fats, types of cholesterol, causes",
+      "primary_topics": [
+        "cholesterol",
+        "fats",
+        "patient education"
+      ],
+      "language": "en"
+    },
+    "2023-correction-to-2018-aha-acc-aacvpr-aapa-abc-acpm-ada-ags-apha-aspc-nla-pcna-guideline-on-the-management-of-blood.pdf": {
+      "keywords": [
+        "correction",
+        "cholesterol management",
+        "REDUCE RISK OF ATHEROSCLEROTIC CARDIOVASCULAR DISEASE",
+        "CHOLESTEROL MANAGEMENT"
+      ],
+      "topic_summary": "2023 correction to the 2018 AHA/ACC blood cholesterol management guideline",
+      "primary_topics": [
+        "cholesterol management",
+        "ASCVD prevention",
+        "AHA/ACC guidelines"
+      ],
+      "language": "en"
+    },
+    "LE8_How_to_Manage_Blood_Sugar.pdf": {
+      "keywords": [
+        "MANAGE BLOOD SUGAR",
+        "understand blood glucose",
+        "track levels",
+        "tips"
+      ],
+      "topic_summary": "Practical guide for understanding and managing blood sugar",
+      "primary_topics": [
+        "blood sugar",
+        "diabetes management",
+        "glucose"
+      ],
+      "language": "en"
+    },
+    "e-MDES Manual 2020.pdf": {
+      "keywords": [
+        "Diabetes Education Assessment",
+        "Eating Pattern and Macronutrient Distribution",
+        "Energy Balance",
+        "Carbohydrates",
+        "Dietary Fibre",
+        "Protein",
+        "Dietary Fats and Sodium",
+        "Assessment",
+        "Goal Setting"
+      ],
+      "topic_summary": "e-MDES Manual 2020 — diabetes nutrition education and goal setting",
+      "primary_topics": [
+        "diabetes education",
+        "medical nutrition therapy",
+        "T2DM"
+      ],
+      "language": "en"
+    },
+    "Diabetes, Heart Disease, & Stroke - NIDDK.pdf": {
+      "keywords": [
+        "link between diabetes, heart disease, and stroke",
+        "factors increases the chances of heart disease if have diabetes",
+        "steps to lower chances of heart attack or stroke"
+      ],
+      "topic_summary": "NIDDK patient education on the link between diabetes, heart disease, and stroke",
+      "primary_topics": [
+        "diabetes",
+        "heart disease",
+        "stroke",
+        "T2DM cardiovascular risk"
+      ],
+      "language": "en"
+    },
+    "CPG-T2DM_6th-Edition-2020_210226.pdf": {
+      "keywords": [
+        "Criteria for testing for T2DM or prediabetes",
+        "Cardiovascular risk estimation",
+        "Diabetes Self-Management Education (DSME)",
+        "Medical nutrition therapy",
+        "Management of co-morbidities in T2DM"
+      ],
+      "topic_summary": "Malaysian CPG for Type 2 Diabetes (6th Edition 2020) — diagnosis, education, comorbidities",
+      "primary_topics": [
+        "T2DM",
+        "diabetes",
+        "DSME",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Caregiver handbook.pdf": {
+      "keywords": [
+        "caregiver",
+        "patient support",
+        "home care",
+        "elderly care",
+        "chronic disease management"
+      ],
+      "topic_summary": "Caregiver handbook — general patient support and home care guidance",
+      "primary_topics": [
+        "caregiving",
+        "patient support",
+        "home care"
+      ],
+      "language": "en",
+      "note": "Keywords inferred from filename; please verify"
+    },
+    "Management of Heart Failure (5th Edition).pdf": {
+      "keywords": [
+        "heart failure",
+        "disease management",
+        "prevention",
+        "CPG",
+        "5th Edition",
+        "Malaysian guideline"
+      ],
+      "topic_summary": "Malaysian Clinical Practice Guidelines for Heart Failure Management (5th Edition)",
+      "primary_topics": [
+        "heart failure",
+        "HF management",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Malaysian Dietary Guideline 2020.pdf": {
+      "keywords": [
+        "Recommendation for serving meal",
+        "food intake",
+        "weight management",
+        "exercise plan",
+        "Nutrition guideline",
+        "nutrition information",
+        "food label",
+        "MDG",
+        "adult",
+        "Malaysian",
+        "Prevention"
+      ],
+      "topic_summary": "Malaysian Dietary Guidelines 2020 — serving recommendations, food labels, nutrition for adults",
+      "primary_topics": [
+        "nutrition",
+        "diet",
+        "Malaysian guidelines",
+        "MDG"
+      ],
+      "language": "en"
+    },
+    "2019_ACCAHA_Guideline_on_the_Primary_Prevention_of Cardiovascular Disease.pdf": {
+      "keywords": [
+        "social determinants of health",
+        "ASCVD prevention",
+        "Assessment of Cardiovascular Risk",
+        "Risk-Enhancing Factors for Clinician–Patient Risk Discussion",
+        "LIFESTYLE FACTORS AFFECTING CARDIOVASCULAR RISK"
+      ],
+      "topic_summary": "ACC/AHA 2019 guideline on primary prevention of cardiovascular disease",
+      "primary_topics": [
+        "ASCVD prevention",
+        "cardiovascular risk",
+        "ACC/AHA"
+      ],
+      "language": "en"
+    },
+    "Joel 2022-Psychosocial management in cardiac rehabilitation.pdf": {
+      "keywords": [
+        "Psychosocial management",
+        "cardiac rehabilitation",
+        "Interventions"
+      ],
+      "topic_summary": "Joel 2022 — current practices in psychosocial management during cardiac rehabilitation",
+      "primary_topics": [
+        "cardiac rehabilitation",
+        "psychosocial care",
+        "mental health"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Percutaneous Coronory Intervention (PCI).pdf": {
+      "keywords": [
+        "Guideline",
+        "Assessment",
+        "Risk stratification",
+        "Cardiovascular risk",
+        "Primary/secondary prevention",
+        "Asymptomatic",
+        "High-risk",
+        "Cardiac patients",
+        "Special population",
+        "Male/Female",
+        "Adult",
+        "Middle-aged",
+        "Elder",
+        "CAD",
+        "MI",
+        "Stroke",
+        "HF",
+        "PAD",
+        "Diabetes",
+        "Renal",
+        "Lifestyle",
+        "Exercise",
+        "Nutrition",
+        "Smoking",
+        "Medication",
+        "Monitoring",
+        "Outcomes",
+        "PCI",
+        "Percutaneous Coronary Intervention"
+      ],
+      "topic_summary": "Malaysian CPG for Percutaneous Coronary Intervention (PCI) management",
+      "primary_topics": [
+        "PCI",
+        "coronary intervention",
+        "post-procedure care",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    }
+  },
+  "fallback_strategy": {
+    "description": "Documents not in this mapping receive filename-derived tags",
+    "rule": "Extract topic hints from filename (split by - and _, lowercase, dedupe)"
+  }
+}

@@ -1,6 +1,6 @@
 """
-Profile extractor — analyses patient messages and extracts new supplementary
-profile fields aligned with the cardiac eNCPT schema.
+Profile extractor v2 — analyses patient messages and extracts new
+supplementary profile fields aligned with the cardiac eNCPT schema.
 
 Pipeline:
     User message  →  qwen2.5:32b  →  JSON of new fields  →  PatientStore
