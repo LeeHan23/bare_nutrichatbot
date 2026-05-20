@@ -66,9 +66,4 @@ SUPPLEMENTARY_FIELDS = {
     "nutrition_knowledge",
     "readiness_to_change",
     "sodium_awareness",
-    # v2 cardiac additions
-    "fat_intake_level",
-    "fat_sources",
-    "medication_compliance",
-    "activity_types",
 }

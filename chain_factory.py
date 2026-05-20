@@ -21,7 +21,7 @@ def _format_docs(docs) -> str:
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-def get_system_template(target_disease: str, patient_context: str = "") -> str:
+def get_system_template(target_disease: str, patient_context: str = "", is_patient_self: bool = False) -> str:
     """
     Returns the system-level persona/instruction block.
     {context} is injected at runtime by the retriever step.
@@ -29,12 +29,28 @@ def get_system_template(target_disease: str, patient_context: str = "") -> str:
 
     patient_context: optional pre-formatted string with patient demographics and clinical
     details (name, age, ethnicity, BMI, conditions, medications, allergies, notes).
-    When provided it is injected as a dedicated "Current Patient Profile" section so the
-    LLM can personalise every response without re-identifying the disease from the question.
+    When provided it is injected as a dedicated profile section so the LLM can personalise
+    every response without re-identifying the disease from the question.
+
+    is_patient_self: when True, the user IS the patient — use second person (you/your)
+    throughout instead of referring to them as "the patient" or by name in the third person.
     """
     patient_block = ""
     if patient_context:
-        patient_block = f"""
+        if is_patient_self:
+            patient_block = f"""
+**Your Profile:**
+{patient_context}
+
+You are speaking directly with the patient. Use second person throughout — say "you" and "your".
+Never refer to them as "the patient" or use their name in the third person (e.g. do NOT say
+"Ahmad should avoid..." — instead say "you should avoid...").
+Tailor every food suggestion to their ethnicity and cultural eating context.
+Respect ALL listed dietary restrictions and allergies without exception — never suggest
+foods that conflict with them.
+"""
+        else:
+            patient_block = f"""
 **Current Patient Profile:**
 {patient_context}
 
@@ -109,7 +125,7 @@ Your primary focus is on managing **{target_disease}**, but always within the co
 ---"""
 
 
-def create_conversational_chain(client_id: int, target_disease: str, patient_context: str = ""):
+def create_conversational_chain(client_id: int, target_disease: str, patient_context: str = "", is_patient_self: bool = False):
     """
     Builds an LCEL chain with per-session conversation memory.
     Returns a RunnableWithMessageHistory that accepts {{"question": "..."}}
@@ -117,11 +133,12 @@ def create_conversational_chain(client_id: int, target_disease: str, patient_con
 
     patient_context: optional string injected into the system prompt (see get_system_template).
     Defaults to "" so existing callers (eval_ragas.py, evaluate_rag.py) are unaffected.
+    is_patient_self: when True, switches the prompt to second-person (patient is the user).
     """
     llm = get_llm()
     retriever = get_retriever(client_id=str(client_id))
 
-    system_template = get_system_template(target_disease, patient_context)
+    system_template = get_system_template(target_disease, patient_context, is_patient_self=is_patient_self)
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_template),

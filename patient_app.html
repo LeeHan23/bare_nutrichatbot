@@ -323,7 +323,7 @@ async function sendMsg(){
   inp.value='';busy=true;document.getElementById('bsd').disabled=true;
   usrMsg(q);var bub=botMsg(null,true);
   try{
-    var r=await fetch('/chat/get_response',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({question:q,session_id:sid,patient_id:pat.patient_id||pat.id})});
+    var r=await fetch('/chat/get_response',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({question:q,session_id:sid,patient_id:pat.patient_id||pat.id,is_patient_self:true})});
     if(!r.ok){bub.className='bub bot';bub.textContent='Sorry, there was an error. Please try again.';}
     else{
       var reader=r.body.getReader(),dec=new TextDecoder(),txt='';
