@@ -624,6 +624,64 @@
       ],
       "language": "en"
     },
+    "CPG Management of Chronic Kidney  Disease Second Edition.pdf": {
+      "keywords": [
+        "chronic kidney disease",
+        "CKD",
+        "renal",
+        "potassium restriction",
+        "phosphorus restriction",
+        "protein restriction",
+        "fluid management",
+        "dialysis",
+        "GFR",
+        "eGFR",
+        "CKD staging",
+        "renal diet",
+        "sodium restriction CKD",
+        "anaemia in CKD",
+        "mineral bone disorder",
+        "CPG Malaysia CKD"
+      ],
+      "topic_summary": "Malaysian CPG for Chronic Kidney Disease (2nd Edition) — staging, dietary management, potassium/phosphorus/protein restrictions",
+      "primary_topics": [
+        "CKD",
+        "renal nutrition",
+        "kidney disease management",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "PIIS0272638620307265.pdf": {
+      "keywords": [
+        "KDOQI",
+        "nutrition in CKD",
+        "protein energy wasting",
+        "protein restriction",
+        "dietary protein intake",
+        "potassium",
+        "phosphorus",
+        "sodium CKD",
+        "energy intake CKD",
+        "keto acid supplementation",
+        "dialysis nutrition",
+        "hemodialysis",
+        "peritoneal dialysis",
+        "CKD stages 3-5",
+        "mineral bone disease CKD",
+        "vitamin supplementation CKD"
+      ],
+      "topic_summary": "KDOQI 2020 Clinical Practice Guideline for Nutrition in CKD — protein, potassium, phosphorus, energy, dialysis nutrition",
+      "primary_topics": [
+        "CKD",
+        "renal nutrition",
+        "kidney disease management",
+        "KDOQI guidelines",
+        "potassium restriction",
+        "phosphorus restriction"
+      ],
+      "language": "en"
+    },
     "CPG Management of Percutaneous Coronory Intervention (PCI).pdf": {
       "keywords": [
         "Guideline",
