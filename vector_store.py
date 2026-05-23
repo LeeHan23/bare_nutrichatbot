@@ -132,6 +132,35 @@ TOPIC_HINTS = {
     "heart disease":           {"CVD prevention", "cardiovascular health",
                                 "coronary heart disease"},
     "ascvd":                   {"ASCVD prevention", "CVD prevention"},
+
+    # Chronic kidney disease / renal nutrition
+    "chronic kidney":          {"CKD", "renal nutrition", "kidney disease management"},
+    "kidney disease":          {"CKD", "renal nutrition", "kidney disease management"},
+    " ckd ":                   {"CKD", "renal nutrition", "kidney disease management"},
+    "renal":                   {"CKD", "renal nutrition", "kidney disease management"},
+    "potassium":               {"CKD", "renal nutrition", "potassium restriction"},
+    "phosphorus":              {"CKD", "renal nutrition", "phosphorus restriction"},
+    "fluid restriction":       {"CKD", "heart failure", "HF management"},
+    "penyakit buah pinggang":  {"CKD", "renal nutrition"},
+    "ginjal":                  {"CKD", "renal nutrition"},
+
+    # PCOS / insulin resistance
+    "pcos":                    {"PCOS", "insulin resistance", "hormonal health"},
+    "polycystic":              {"PCOS", "insulin resistance"},
+    "insulin resistance":      {"insulin resistance", "T2DM", "diabetes management"},
+    "rintangan insulin":       {"PCOS", "insulin resistance"},
+
+    # Obesity / weight
+    "obesity":                 {"obesity", "weight management", "BMI"},
+    "overweight":              {"obesity", "weight management"},
+    "berat badan":             {"obesity", "weight management"},
+    "obesiti":                 {"obesity", "weight management"},
+
+    # Post-surgical / cardiac procedures
+    "cabg":                    {"cardiac rehabilitation", "post-MI care", "CAD"},
+    "post-cabg":               {"cardiac rehabilitation", "post-MI care"},
+    "bypass":                  {"cardiac rehabilitation", "CAD"},
+    "stent":                   {"PCI", "post-procedure care", "CAD"},
 }
 
 

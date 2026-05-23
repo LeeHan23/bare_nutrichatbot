@@ -244,8 +244,12 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
     # ============================================================
     if USE_CLARA:
         print("[DEBUG] Using CLaRa for generation")
-        retriever = get_retriever(str(client_id))
-        retrieved_docs = retriever.invoke(question)
+        conditions_list = profile.get("condition", []) if profile else []
+        retriever = get_retriever(str(client_id), patient_conditions=conditions_list)
+        retrieval_query = (
+            f"{', '.join(conditions_list)}: {question}" if conditions_list else question
+        )
+        retrieved_docs = retriever.invoke(retrieval_query)
         doc_texts = [doc.page_content for doc in retrieved_docs]
         print(f"[DEBUG] Retrieved {len(doc_texts)} docs for CLaRa")
 
@@ -326,7 +330,12 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         print("[DEBUG] Using Option B: CLaRa compress → Qwen generate")
         conditions_list = profile.get("condition", []) if profile else []
         retriever = get_retriever(str(client_id), patient_conditions=conditions_list)
-        retrieved_docs = retriever.invoke(question)
+        # Prefix query with patient conditions so condition-specific guideline
+        # chunks score higher than generic nutrition content in vector search.
+        retrieval_query = (
+            f"{', '.join(conditions_list)}: {question}" if conditions_list else question
+        )
+        retrieved_docs = retriever.invoke(retrieval_query)
         doc_texts = [doc.page_content for doc in retrieved_docs]
         print(f"[DEBUG] Retrieved {len(doc_texts)} docs for CLaRa compress")
 
