@@ -139,6 +139,8 @@ def _to_second_person_profile(patient_context: str) -> str:
         (r"^Fat intake", r"Your fat intake"),
         (r"^Fat type", r"Your fat type"),
         (r"^Medication compliance:", r"Your medication compliance:"),
+        (r"^Self-reported food allergies:", r"Your self-reported food allergies:"),
+        (r"^Activity types:", r"Your activity types:"),
     ]
     out = []
     for line in patient_context.split("\n"):
@@ -234,6 +236,22 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         if w and h:
             bmi = w / ((h / 100) ** 2)
             parts.append(f"Weight: {w}kg, Height: {h}cm, BMI: {bmi:.1f}")
+
+        # --- v2 cardiac supplementary fields (extractor-filled) ---
+        if profile.get("fat_intake_level"):
+            parts.append(f"Fat intake level: {profile['fat_intake_level']}")
+        fat_src = profile.get("fat_sources", [])
+        if fat_src:
+            parts.append(f"Fat type sources: {', '.join(fat_src)}")
+        if profile.get("medication_compliance"):
+            parts.append(f"Medication compliance: {profile['medication_compliance']}")
+        act_types = profile.get("activity_types", [])
+        if act_types:
+            parts.append(f"Activity types: {', '.join(act_types)}")
+        ext_allergies = profile.get("extractor_food_allergies", [])
+        if ext_allergies:
+            parts.append(f"Self-reported food allergies: {', '.join(ext_allergies)}")
+
         patient_context = "\n".join(parts)
         print(f"[DEBUG] Using patient profile: {target_disease}")
     else:
@@ -369,8 +387,18 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
     # ============================================================
     # Legacy LangChain path (only used if USE_CLARA=false and USE_CLARA_COMPRESS=false)
     # ============================================================
+    # Append personalization level to patient_context so the chain system
+    # prompt receives it — same level injection as Option B and CLaRa paths.
+    lc_patient_context = patient_context
+    if profile:
+        level = profile.get("personalization_level")
+        level_map = _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
+        level_instruction = level_map.get(level, "") if level else ""
+        if level_instruction:
+            lc_patient_context += f"\n\nPersonalization Level {level}: {level_instruction}"
+
     qa_chain = create_conversational_chain(
-        client_id, target_disease, patient_context,
+        client_id, target_disease, lc_patient_context,
         is_patient_self=is_patient_self,
         patient_conditions=profile.get("condition", []) if profile else [],
     )

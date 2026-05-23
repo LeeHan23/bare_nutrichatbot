@@ -337,4 +337,10 @@ def patient_to_profile_dict(patient) -> dict:
         "allergies":              patient.allergies            or [],
         "notes":                  patient.notes                or "",
         "personalization_level":  patient.personalization_level,
+        # v2 cardiac supplementary fields (extractor-filled)
+        "fat_intake_level":        patient.fat_intake_level,
+        "fat_sources":             patient.fat_sources             or [],
+        "medication_compliance":   patient.medication_compliance,
+        "activity_types":          patient.activity_types          or [],
+        "extractor_food_allergies": patient.extractor_food_allergies or [],
     }
