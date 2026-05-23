@@ -1,4 +1,11 @@
-from llm import get_direct_llm_response, call_clara_api, USE_CLARA
+from llm import (
+    get_direct_llm_response,
+    call_clara_api,
+    call_clara_compress,
+    call_ollama_generate,
+    USE_CLARA,
+    USE_CLARA_COMPRESS,
+)
 from image_handler import parse_response_for_image
 from chain_factory import create_conversational_chain
 from vector_store import get_retriever
@@ -141,6 +148,66 @@ def _to_second_person_profile(patient_context: str) -> str:
     return "\n".join(out)
 
 
+def _build_qwen_prompt(
+    question: str,
+    patient_context: str,
+    digest: str,
+    food_context: str,
+    profile: dict | None,
+    is_patient_self: bool,
+) -> str:
+    """Build the Qwen generation prompt for Option B (CLaRa-compress → Qwen-generate).
+
+    CLaRa produces a structured clinical digest; Qwen turns it into a warm,
+    conversational response that respects the patient's profile and voice rules.
+    """
+    parts = [
+        "You are NutriBot, a clinical nutrition assistant for Malaysian cardiac patients.\n"
+    ]
+
+    if patient_context:
+        level = profile.get("personalization_level") if profile else None
+        level_map = _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
+        level_instruction = level_map.get(level, "") if level else ""
+
+        if is_patient_self:
+            ctx = _to_second_person_profile(patient_context)
+            parts.append(
+                "## Patient Profile (never repeat these details verbatim)\n" + ctx
+            )
+        else:
+            parts.append("## Patient Profile\n" + patient_context)
+
+        if level_instruction:
+            parts.append(f"\n## Personalization Level {level}\n{level_instruction}")
+
+    parts.append(f"\n## Clinical Evidence Digest\n{digest}")
+
+    if food_context:
+        parts.append(f"\n## Food Context\n{food_context}")
+
+    if is_patient_self:
+        parts.append(
+            "\n## Voice Rules — apply to every word of your reply\n"
+            "- Speak DIRECTLY to the person: use 'you', 'your', 'yours'\n"
+            "- NEVER use their name; never say 'the patient', 'they', 'she', 'he'\n"
+            "- NEVER use generic framings like 'an adult with BMI X should...'\n"
+            "- Be warm, conversational, and practical — skip definitions and preamble\n"
+            "- Verify every food recommendation against their conditions; flag anything contraindicated"
+        )
+    else:
+        parts.append(
+            "\n## Instructions\n"
+            "Verify all food and drink recommendations against the patient's conditions. "
+            "Flag anything contraindicated. Be concise and practical."
+        )
+
+    parts.append(f"\n## Question\n{question}")
+    parts.append("\n## Answer")
+
+    return "\n".join(parts)
+
+
 def get_rag_response(question: str, client_id: int, chat_session_id: str, profile: dict | None = None, is_patient_self: bool = False) -> dict:
     patient_context = ""
     if profile:
@@ -251,7 +318,47 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         return parse_response_for_image(answer)
 
     # ============================================================
-    # Legacy LangChain path (only used if USE_CLARA=false)
+    # Option B: CLaRa compress → Qwen generate
+    # CLaRa synthesises a clinical digest from retrieved docs;
+    # Qwen delivers the conversational response.
+    # ============================================================
+    if USE_CLARA_COMPRESS:
+        print("[DEBUG] Using Option B: CLaRa compress → Qwen generate")
+        conditions_list = profile.get("condition", []) if profile else []
+        retriever = get_retriever(str(client_id), patient_conditions=conditions_list)
+        retrieved_docs = retriever.invoke(question)
+        doc_texts = [doc.page_content for doc in retrieved_docs]
+        print(f"[DEBUG] Retrieved {len(doc_texts)} docs for CLaRa compress")
+
+        for i, doc in enumerate(doc_texts):
+            print(f"  [Doc {i+1}]: {doc[:120].replace(chr(10), ' ')}...")
+
+        digest = call_clara_compress(doc_texts, question, patient_context)
+
+        if not digest:
+            # Graceful fallback: join raw chunks so Qwen still has clinical grounding
+            print("[DEBUG] CLaRa compress failed — using raw chunks as fallback digest")
+            digest = "Clinical context from guidelines:\n\n" + "\n\n---\n\n".join(doc_texts)
+
+        food_context = get_food_context(question)
+
+        qwen_prompt = _build_qwen_prompt(
+            question, patient_context, digest, food_context, profile, is_patient_self
+        )
+        print(f"[DEBUG] Qwen prompt length: {len(qwen_prompt)} chars")
+
+        answer = call_ollama_generate(qwen_prompt)
+
+        if not answer:
+            answer = (
+                "I'm sorry, I couldn't generate a response right now. "
+                "Please try again shortly."
+            )
+
+        return parse_response_for_image(answer)
+
+    # ============================================================
+    # Legacy LangChain path (only used if USE_CLARA=false and USE_CLARA_COMPRESS=false)
     # ============================================================
     qa_chain = create_conversational_chain(
         client_id, target_disease, patient_context,
