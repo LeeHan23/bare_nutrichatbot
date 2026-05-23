@@ -71,4 +71,5 @@ SUPPLEMENTARY_FIELDS = {
     "fat_sources",
     "medication_compliance",
     "activity_types",
+    "extractor_food_allergies",
 }

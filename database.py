@@ -108,6 +108,7 @@ class Patient(Base):
     fat_sources            = Column(JSON, default=list)            # FH-1.5.1.2
     medication_compliance  = Column(String, nullable=True)         # FH-3.1.1.1 (good/variable/poor)
     activity_types         = Column(JSON, default=list)            # FH-7.3.1.1
+    extractor_food_allergies = Column(JSON, default=list)          # FH-1.6 (self-reported, extractor-filled)
 
     # Dietitian-assigned personalization level (L0/L1/L2/L3)
     personalization_level  = Column(String, nullable=True)

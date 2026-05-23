@@ -39,6 +39,7 @@ def get_llm():
             base_url=OLLAMA_BASE_URL,
             temperature=0.3,
             num_predict=512,
+            keep_alive=-1,
         )
     else:
         from langchain_openai import ChatOpenAI
