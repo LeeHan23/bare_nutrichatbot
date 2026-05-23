@@ -5,6 +5,7 @@ load_dotenv()
 
 # --- Feature flags ---
 USE_CLARA = os.getenv("USE_CLARA", "false").lower() in ("true", "1", "yes")
+USE_CLARA_COMPRESS = os.getenv("USE_CLARA_COMPRESS", "false").lower() in ("true", "1", "yes")
 USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("true", "1", "yes")
 
 # --- CLaRa config (main RAG model on Mac Studio) ---
@@ -77,4 +78,56 @@ def call_clara_api(prompt: str, documents: list = None) -> str:
         return resp.json().get("answer", "")
     except Exception as e:
         print(f"[CLaRa API error] {e}")
+        return ""
+
+
+def call_clara_compress(documents: list, question: str = "", patient_context: str = "") -> str:
+    """Calls CLaRa /compress to synthesise a structured clinical digest from retrieved docs.
+
+    Returns a ~300-500 token digest with RECOMMENDATIONS / CAUTIONS / KEY NUMBERS sections.
+    Returns "" on failure — caller should fall back to raw chunks.
+    """
+    import requests
+    payload = {
+        "documents": documents,
+        "question": question,
+        "patient_context": patient_context,
+        "max_tokens": 500,
+        "temperature": 0.1,
+    }
+    try:
+        resp = requests.post(f"{CLARA_BASE_URL}/compress", json=payload, timeout=120)
+        resp.raise_for_status()
+        digest = resp.json().get("digest", "")
+        if digest:
+            print(f"[CLaRa compress] digest length={len(digest)} chars")
+        return digest
+    except Exception as e:
+        print(f"[CLaRa compress error] {e}")
+        return ""
+
+
+def call_ollama_generate(prompt: str, max_tokens: int = 800) -> str:
+    """Calls Ollama directly (not via LangChain) for full-response generation.
+
+    Used by Option B after CLaRa produces the clinical digest.
+    Larger token budget than get_direct_llm_response (800 vs 512).
+    """
+    import requests
+    payload = {
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.5,
+            "num_predict": max_tokens,
+            "keep_alive": -1,
+        },
+    }
+    try:
+        resp = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=180)
+        resp.raise_for_status()
+        return resp.json().get("response", "")
+    except Exception as e:
+        print(f"[Ollama generate error] {e}")
         return ""
