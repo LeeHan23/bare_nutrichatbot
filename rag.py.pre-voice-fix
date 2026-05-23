@@ -89,58 +89,6 @@ Food description:"""
     return result
 
 
-def _to_second_person_profile(patient_context: str) -> str:
-    """Rewrite third-person profile labels to second-person for self-mode.
-
-    Turns lines like 'Name: Lim Siew Ching' into 'Your name: Lim Siew Ching
-    (do NOT repeat this name back — address them as you).' so the LLM is
-    primed for second-person responses by the input itself.
-    """
-    import re
-    replacements = [
-        (r"^Name:\s*(.+)$",
-            r"Your name: \1  (do NOT repeat this name back — address them as 'you')"),
-        (r"^Age:", r"Your age:"),
-        (r"^Gender:", r"Your gender:"),
-        (r"^Ethnicity:", r"Your ethnicity:"),
-        (r"^Weight\s*\(kg\):", r"Your weight (kg):"),
-        (r"^Height\s*\(cm\):", r"Your height (cm):"),
-        (r"^BMI:", r"Your BMI:"),
-        (r"^Conditions:", r"Your conditions:"),
-        (r"^Medications:", r"Your medications:"),
-        (r"^Allergies:", r"Your allergies:"),
-        (r"^Dietary [Rr]estrictions?:", r"Your dietary restrictions:"),
-        (r"^Religion:", r"Your religion:"),
-        (r"^Notes:", r"Notes about you:"),
-        # Extended supplementary fields — match prefixes broadly
-        (r"^Tobacco status:", r"Your tobacco status:"),
-        (r"^Alcohol", r"Your alcohol"),
-        (r"^Fluid intake", r"Your fluid intake"),
-        (r"^Supplements:", r"Your supplements:"),
-        (r"^Activity ", r"Your activity "),
-        (r"^Caffeine", r"Your caffeine"),
-        (r"^Sodium ", r"Your sodium "),
-        (r"^Meals ", r"Your meals "),
-        (r"^Snacks ", r"Your snacks "),
-        (r"^Processed food", r"Your processed food"),
-        (r"^Fast food", r"Your fast food"),
-        (r"^Self.prepared", r"Your self-prepared"),
-        (r"^Sugar drinks", r"Your sugar drinks"),
-        (r"^Food avoidance:", r"Your food avoidance:"),
-        (r"^Nutrition knowledge:", r"Your nutrition knowledge:"),
-        (r"^Readiness to change:", r"Your readiness to change:"),
-        (r"^Fat intake", r"Your fat intake"),
-        (r"^Fat type", r"Your fat type"),
-        (r"^Medication compliance:", r"Your medication compliance:"),
-    ]
-    out = []
-    for line in patient_context.split("\n"):
-        for pat, rep in replacements:
-            line = re.sub(pat, rep, line, count=1)
-        out.append(line)
-    return "\n".join(out)
-
-
 def get_rag_response(question: str, client_id: int, chat_session_id: str, profile: dict | None = None, is_patient_self: bool = False) -> dict:
     patient_context = ""
     if profile:
@@ -196,38 +144,16 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
             level_map = _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
             level_instruction = level_map.get(level, "") if level else ""
             if is_patient_self:
-                self_ctx = _to_second_person_profile(patient_context)
-                header = (
-                    "This is the person you are talking to. They are reading your reply.\n"
-                    "Address them in second person ('you', 'your') — do NOT use their name.\n\n"
-                    f"{self_ctx}"
-                )
+                header = f"Your Profile:\n{patient_context}"
             else:
                 header = f"Patient Profile:\n{patient_context}"
             if level_instruction:
                 header += f"\n\nPersonalization Level {level}: {level_instruction}"
             if is_patient_self:
                 instruction = (
-                    "VOICE RULES — apply to every word of your reply:\n"
-                    "  You are speaking DIRECTLY to the person whose profile is shown above.\n"
-                    "  They are reading your reply word-for-word, in real time.\n"
-                    "  ALWAYS write in second person: 'you', 'your', 'yours'.\n"
-                    "  NEVER write the person's name. NEVER write 'the patient', 'they', 'she', 'he', 'her', 'his'.\n"
-                    "  NEVER use generic third-person framings like 'an adult with BMI X should...'.\n"
-                    "\n"
-                    "Examples of CORRECT phrasing:\n"
-                    "  CORRECT: 'Given your CKD and hypertension, you should aim for under 5g of sodium per day.'\n"
-                    "  CORRECT: 'I would recommend you cut back on processed foods.'\n"
-                    "  CORRECT: 'Because your BMI is 25.6, this is especially important for you.'\n"
-                    "\n"
-                    "Examples of WRONG phrasing — do NOT write like any of these:\n"
-                    "  WRONG: 'Lim Siew Ching should aim for...'\n"
-                    "  WRONG: 'The patient should limit...'\n"
-                    "  WRONG: 'An adult with a BMI of 25.6 should...'\n"
-                    "  WRONG: 'She has hypertension, so she should...'\n"
-                    "\n"
-                    "Also: verify every food and drink recommendation against your conditions and flag anything contraindicated. "
-                    "Be conversational and practical — skip definitions and unnecessary preamble."
+                    "Respond directly to the patient using 'you' and 'your' — never use their name or say 'the patient'. "
+                    "Verify all food and drink recommendations against the conditions listed above and flag any that are contraindicated. "
+                    "Be conversational and practical; skip definitions and unnecessary preamble."
                 )
             else:
                 instruction = (
@@ -253,11 +179,7 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
     # ============================================================
     # Legacy LangChain path (only used if USE_CLARA=false)
     # ============================================================
-    qa_chain = create_conversational_chain(
-        client_id, target_disease, patient_context,
-        is_patient_self=is_patient_self,
-        patient_conditions=profile.get("condition", []) if profile else [],
-    )
+    qa_chain = create_conversational_chain(client_id, target_disease, patient_context, is_patient_self=is_patient_self)
     answer = qa_chain.invoke(
         {"question": question},
         config={"configurable": {"session_id": chat_session_id}},

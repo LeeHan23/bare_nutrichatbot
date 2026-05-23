@@ -39,15 +39,33 @@ def get_system_template(target_disease: str, patient_context: str = "", is_patie
     if patient_context:
         if is_patient_self:
             patient_block = f"""
-**Your Profile:**
+**Your Profile (this is YOU, the person I am talking to):**
 {patient_context}
 
-You are speaking directly with the patient. Use second person throughout — say "you" and "your".
-Never refer to them as "the patient" or use their name in the third person (e.g. do NOT say
-"Ahmad should avoid..." — instead say "you should avoid...").
-Tailor every food suggestion to their ethnicity and cultural eating context.
-Respect ALL listed dietary restrictions and allergies without exception — never suggest
-foods that conflict with them.
+═══════════════════════════════════════════════════════════════
+HOW YOU MUST SPEAK
+═══════════════════════════════════════════════════════════════
+You are having a conversation directly with the person whose profile is shown above.
+They are reading every word you write. Address them in the second person at all times.
+
+ALWAYS use: "you", "your", "yours".
+NEVER use: the patient's name, "the patient", "they", "she", "he", "them", "her", "his".
+
+Examples of CORRECT phrasing:
+  ✓ "Given your CKD and hypertension, you should aim for under 5g of sodium daily."
+  ✓ "I'd recommend you cut back on processed foods."
+  ✓ "Because your BMI is 25.6 and you have diabetes, ..."
+  ✓ "Let's look at what works for your situation."
+
+Examples of WRONG phrasing — NEVER write like this:
+  ✗ "Lim Siew Ching should aim for..."
+  ✗ "The patient should limit..."
+  ✗ "She has hypertension, so she needs..."
+  ✗ "Given her CKD..."
+  ✗ "An adult with a BMI of 25.6 should..."
+
+Tailor every food suggestion to your ethnic and cultural eating context (as shown in your profile).
+Respect every dietary restriction and allergy in your profile — never suggest conflicting foods.
 """
         else:
             patient_block = f"""
@@ -120,12 +138,17 @@ Your primary focus is on managing **{target_disease}**, but always within the co
 -   Every piece of advice should answer "Why does this matter for MY specific condition?"
 
 ---
+**Final Reminder Before You Reply:**
+If is_patient_self mode is active (profile starts with "Your Profile"), you MUST address
+the user in the second person. Never write their name. Never say "the patient" or "they".
+Write as if you are speaking face-to-face with the person.
+
 **Retrieved Knowledge:**
 {{context}}
 ---"""
 
 
-def create_conversational_chain(client_id: int, target_disease: str, patient_context: str = "", is_patient_self: bool = False):
+def create_conversational_chain(client_id: int, target_disease: str, patient_context: str = "", is_patient_self: bool = False, patient_conditions: list = None):
     """
     Builds an LCEL chain with per-session conversation memory.
     Returns a RunnableWithMessageHistory that accepts {{"question": "..."}}
@@ -134,9 +157,10 @@ def create_conversational_chain(client_id: int, target_disease: str, patient_con
     patient_context: optional string injected into the system prompt (see get_system_template).
     Defaults to "" so existing callers (eval_ragas.py, evaluate_rag.py) are unaffected.
     is_patient_self: when True, switches the prompt to second-person (patient is the user).
+    patient_conditions: list of condition strings passed to TopicBoostedRetriever for reranking.
     """
     llm = get_llm()
-    retriever = get_retriever(client_id=str(client_id))
+    retriever = get_retriever(client_id=str(client_id), patient_conditions=patient_conditions or [])
 
     system_template = get_system_template(target_disease, patient_context, is_patient_self=is_patient_self)
 

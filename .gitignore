@@ -41,6 +41,7 @@ venv.bak/
 # --- SECRETS ---
 # Ignore environment files containing API keys and other secrets.
 .env
+.env.pre-qwen-gen
 
 # --- DATA AND KNOWLEDGE BASES ---
 # Ignore generated databases and vector stores
