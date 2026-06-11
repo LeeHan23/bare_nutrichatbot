@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A distributed AI-powered nutrition chatbot for cardiac patients, built for a Malaysian hospital/university client. Uses a split architecture across two machines. The system provides personalized dietary advice using RAG (Retrieval-Augmented Generation) via CLaRa-7B, with dynamic patient profile collection via an LLM extractor.
+A distributed AI-powered nutrition chatbot for cardiac patients, built for a Malaysian hospital/university client. Uses a split architecture across two machines. The system provides personalized dietary advice using RAG (Retrieval-Augmented Generation) via CLaRa-7B + Qwen2.5:32b (Option B hybrid), with dynamic patient profile collection via an LLM extractor and a scheduled content drip pipeline.
 
 **Public demo URL:** `https://nutribot.computationalrd.com`
 **API Key:** `nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3`
@@ -20,7 +20,7 @@ nutribot.computationalrd.com (Cloudflare Tunnel)
     │
     ▼
 RTX 3050 Server — Linux, user: han, IP: 100.101.247.5
-/mnt/ssd/bare_NutriChatbot/          ← main codebase (exFAT, broken venv)
+/mnt/ext/bare_NutriChatbot/          ← main codebase (exFAT drive MEEEE, /dev/sdb1)
     - FastAPI bot (systemd: nutribot.service)
     - PGVector / Postgres (Docker: pgvector-nutribot)
     - Cloudflare tunnel (systemd: cloudflared.service)
@@ -38,19 +38,32 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
     - Conda env: clara (Python 3.10)
 ```
 
+### Drive Layout (RTX 3050)
+
+| Device | Mount | Label | FS | Size | Notes |
+|--------|-------|-------|----|------|-------|
+| /dev/sda1 | /mnt/ssd | T7 Shield | exFAT | 932GB | **100% FULL** — do not use for project files |
+| /dev/sdb1 | /mnt/ext | MEEEE | exFAT | 932GB | **Active project drive** (~910GB free) |
+| /dev/nvme0n1p3 | / | — | ext4 | 465GB | OS drive |
+
+**IMPORTANT:** `/mnt/ssd` is full. The project codebase lives on `/mnt/ext`. `/mnt/sdb1` must be mounted on boot — add to `/etc/fstab` if not already:
+```
+/dev/sdb1  /mnt/ext  exfat  rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro  0  0
+```
+
 ---
 
 ## Repository Structure
 
 ```
-/mnt/ssd/bare_NutriChatbot/
+/mnt/ext/bare_NutriChatbot/
 ├── app.py                    # FastAPI app entry point, demo UI
-├── rag.py                    # RAG pipeline (CLaRa primary, Ollama orchestration)
+├── rag.py                    # RAG pipeline (Option B: CLaRa compress → Qwen generate)
 ├── llm.py                    # LLM abstraction (CLARA_BASE_URL, OLLAMA_BASE_URL from .env)
 ├── chain_factory.py          # LangChain LCEL chain, InMemoryChatMessageHistory
-├── database.py               # SQLAlchemy ORM — Patient, ApiClient, User models
+├── database.py               # SQLAlchemy ORM — Patient, ContentMaterial, ContentDeliveryLog
 ├── dependencies.py           # FastAPI dependencies (X-API-Key auth, DB session)
-├── vector_store.py           # PGVector hybrid retriever, LoRA embedding model
+├── vector_store.py           # PGVector TopicBoostedRetriever, LoRA embedding model
 ├── embeddings.py             # Embedding utilities (BAAI/bge-m3 + LoRA)
 ├── website_chat_router.py    # /chat/get_response (streaming) + /chat/get_response_sync
 ├── admin_router.py           # Admin API routes
@@ -58,13 +71,13 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
 ├── mcp_server.py             # MCP server for Claude Desktop integration
 ├── patient_store.py          # PatientStore ABC + SUPPLEMENTARY_FIELDS whitelist
 ├── local_patient_store.py    # LocalPatientStore (dev/staging, wraps SQLAlchemy)
-├── extractor.py              # LLM-based profile extractor (qwen2.5:32b via Ollama)
+├── extractor.py              # LLM-based profile extractor (qwen2.5:32b, v2, BM support)
 ├── document_manager.py       # Document upload/management
 ├── process_client_docs.py    # Client document ingestion into vector store
 ├── image_handler.py          # Image upload and processing
 ├── patient_app.html          # Patient-facing HTML UI
 ├── build_base_db.py          # Ingestion script for clinical PDFs into PGVector
-├── seed_patients.py          # Seeds mock patients into local DB
+├── seed_patients.py          # Seeds 8 mock Malaysian patients into local DB
 ├── create_api_key.py         # API key creation utility
 ├── reset_key.py              # API key reset utility
 ├── conftest.py               # Pytest fixtures
@@ -84,9 +97,15 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
 │       ├── extractor_v2.py           # v2 extractor draft (superseded by root extractor.py)
 │       └── encpt_schema.json         # Full 447-field eNCPT 2020 parse
 ├── scripts/
-│   ├── migrate_v2.py         # v2 supplementary fields DB migration
-│   ├── database_patch.py     # Ad-hoc DB patch script
-│   └── test_extractor_v2.py  # Extractor v2 test cases
+│   ├── generate_content.py          # Content generation: 43 niche cases → RAG tips → Excel
+│   ├── content_scheduler.py         # Daily cron: matches due patients to active materials
+│   ├── migrate_content_pipeline.py  # Idempotent migration for content pipeline tables
+│   ├── test_content_pipeline.py     # Smoke tests for content pipeline (4 tests)
+│   ├── migrate_v2.py                # v2 supplementary fields DB migration
+│   ├── database_patch.py            # Ad-hoc DB patch script
+│   ├── reembed_with_keywords.py     # Re-embed chunks with keyword metadata
+│   ├── enrich_v1_with_keywords.py   # Add doc_keywords/topics to existing chunks
+│   └── test_extractor_v2.py         # Extractor v2 test cases
 ├── finetune/
 │   ├── generate_training_data.py         # Synthetic ADIME training data generator
 │   ├── generate_embedding_training_data.py
@@ -96,7 +115,8 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
 │   └── Modelfile                         # Ollama Modelfile
 └── eval/
     ├── eval_ragas.py          # RAGAs evaluation harness
-    └── eval_dataset.json      # Evaluation dataset
+    ├── eval_dataset.json      # Evaluation dataset
+    └── results/               # Eval run outputs
 ```
 
 ---
@@ -109,25 +129,29 @@ PGVECTOR_URL=postgresql://postgres:postgres@localhost:5432/nutribot
 CLARA_BASE_URL=https://clara-internal-x9k2.computationalrd.com
 OLLAMA_BASE_URL=https://ollama-internal-x9k2.computationalrd.com
 OLLAMA_MODEL=qwen2.5:32b
-USE_CLARA=true
+USE_CLARA=false
+USE_CLARA_COMPRESS=true
 USE_OLLAMA=true
 ```
+
+**Active RAG mode: Option B** — `USE_CLARA=false`, `USE_CLARA_COMPRESS=true`. CLaRa is used only for `/compress` (text digest), Qwen generates the final answer.
 
 ---
 
 ## Patient Database (Mock / Dev)
 
-5 synthetic Malaysian patients in local Postgres:
+8 synthetic Malaysian patients in local Postgres:
 
-| ID | Name | Conditions | Level |
-|----|------|------------|-------|
-| 1 | Ahmad Fadzillah bin Roslan | Type 2 Diabetes, Hypertension | L2 |
-| 2 | Lim Siew Ching | CKD Stage 3, Hypertension | L2 |
-| 3 | Kavitha a/p Subramaniam | PCOS, Insulin Resistance | L1 |
-| 4 | Mohd Hafizuddin bin Salleh | Dyslipidaemia, Obesity Class I | L1 |
-| 5 | Tan Wei Loong | Hypertension, Hypercholesterolaemia, T2DM | L2 |
-| 6 | Nurul Ain binti Zulkifli | None (general wellness) | L0 |
-| 7 | Rajendran a/l Muthu | Post-CABG, Heart Failure (EF 35%), T2DM, HTN, CKD Stage 4 | L3 |
+| ID | Name | Username | Conditions | Level |
+|----|------|----------|------------|-------|
+| 1 | Ahmad Fadzillah bin Roslan | ahmad.fadzillah | Type 2 Diabetes, Hypertension | L2 |
+| 2 | Lim Siew Ching | lim.siewching | CKD Stage 3, Hypertension | L2 |
+| 3 | Kavitha a/p Subramaniam | kavitha.subra | PCOS, Insulin Resistance | L1 |
+| 4 | Mohd Hafizuddin bin Salleh | hafizuddin.salleh | Dyslipidaemia, Obesity Class I | L1 |
+| 5 | Tan Wei Loong | tan.weiloong | Hypertension, Hypercholesterolaemia, T2DM | L2 |
+| 10 | Nurul Ain binti Zulkifli | nuraini.zulkifli | None (general wellness) | L0 |
+| 11 | Rajendran a/l Muthu | rajendran.muthu | Post-CABG, Heart Failure (EF 35%), T2DM, HTN, CKD Stage 4 | L3 |
+| 12 | Siti Hajar binti Mohd Nasir | sitihajar.mnasir | Overweight, Pre-hypertension | L1 |
 
 **Production note:** All patient data in production must live on the hospital/university server. Local DB is dev/staging only. The `PatientStore` abstraction in `patient_store.py` is the designed swap point — implement `RemotePatientStore(PatientStore)` when the hospital API is available.
 
@@ -135,33 +159,81 @@ USE_OLLAMA=true
 
 ## Key Design Decisions
 
-### RAG Pipeline
-- **CLaRa-7B** (compression-16, Stage 2 Instruct) is the primary RAG model. It uses compressed-context retrieval — faster and better on domain-specific content than raw LLMs.
-- **qwen2.5:32b via Ollama** handles orchestration tasks: `identify_target_disease()`, the extractor, and fallback.
-- When `patient_id` is provided in the request, the patient's clinical profile is loaded from DB and injected into the CLaRa prompt. The LLM never needs to guess the condition.
-- **Embedding:** BAAI/bge-m3 + LoRA adapter at `/home/han/models/embedding_lora`
-- **Vector store:** 24,268 clean chunks from 58 clinical PDFs (Malaysian CPGs + international guidelines). Deduped and junk-filtered.
+### RAG Pipeline — Option B (Active)
+
+```
+Question + Patient Profile
+    ↓
+TopicBoostedRetriever (k=15 → rerank → top 5)
+    ↓
+CLaRa /compress  →  clinical digest (1000-1500 chars)
+    ↓
+Qwen2.5:32b generate  →  streamed answer
+    ↓ (fallback if CLaRa down)
+Raw chunks → Qwen2.5:32b generate
+```
+
+- **CLaRa-7B** used only for compression (fast summarization of retrieved chunks), not final generation
+- **qwen2.5:32b via Ollama** generates the patient-facing response with conversational tone
+- `keep_alive=-1` in `llm.py` keeps Qwen loaded in VRAM permanently
+- Patient profile injected via `_build_qwen_prompt()` in `rag.py`
+- Personalization level (L0–L3) injects level-specific safety instructions into all three pipeline paths
+
+### TopicBoostedRetriever
+
+- k=15 candidate pool from both `base_knowledge` and `client_{id}_knowledge` collections
+- Boost-rerank by condition-matched topic tags → top 5 returned
+- Condition-prefixed query rewriting: `"CKD, HTN: <question>"` ensures correct doc retrieval
+- `[TopicBoost]` log lines in `/var/log/nutribot.log` for debugging
+
+### Personalization Levels (L0–L3)
+
+| Level | Profile | Content scope |
+|-------|---------|---------------|
+| L0 | No risk, no history | Full spectrum including vigorous activity |
+| L1 | Emerging/moderate risk (early HTN, elevated BMI) | Structured, safety-aware, do/don't boundaries |
+| L2 | Established conditions, physical limitations, higher CV risk | Low-intensity, symptom monitoring, strict stop conditions |
+| L3 | High clinical risk, recent cardiac events | Medical oversight only, emergency education |
+
+### Content Drip Pipeline
+
+Scheduled educational content delivery for patients after their first chat:
+
+```
+first_chat_at  +  N days  →  content_scheduler.py  →  ContentDeliveryLog (queued)
+                                                    ↗
+generate_content.py  →  RAG tips  →  Excel (dev team polishes)  →  ContentMaterial (is_active=True)
+                                                    ↓
+                                         WhatsApp / in-app delivery (future)
+```
+
+- **Schedule days:** 3, 5, 7, 14, 21, 30 after `first_chat_at`
+- **43 niche cases:** T2DM(6), HTN(6), CKD(6), Cardiac(6), PCOS(6), Dyslipidaemia(6), General(6) — one per condition_group × day_offset
+- **Two-phase delivery:** (1) RAG→LLM→Excel for dev team review; (2) polished materials sent automatically when `is_active=True`
+- **Excel output:** `materials/` directory, one sheet per condition group
+- **DB tables:** `content_materials` (generated tips + approval state), `content_delivery_log` (per-patient audit trail)
 
 ### MPS Patches (Mac Studio only)
-CLaRa was patched to run on Apple MPS instead of CUDA. These patches are in:
-- `/Users/bing/.cache/huggingface/modules/transformers_modules/compression-16/modeling_clara.py`
-- Source: `/Users/bing/Desktop/clara_lyh/clara-nutri/` (the actual api.py)
 
-When deploying to production Linux + NVIDIA, **revert** these patches:
+CLaRa was patched to run on Apple MPS instead of CUDA. Patches in:
+- `/Users/bing/.cache/huggingface/modules/transformers_modules/compression-16/modeling_clara.py`
+
+When deploying to production Linux + NVIDIA, **revert**:
 - `.to('mps')` → `.to('cuda')`
 - `torch.backends.mps.is_available()` → `torch.cuda.is_available()`
 - `torch.mps.empty_cache()` → `torch.cuda.empty_cache()`
-- `bfloat16` can replace `float16` (CUDA supports bfloat16)
+- `bfloat16` can replace `float16`
 - Remove `PYTORCH_ENABLE_MPS_FALLBACK=1` env var
 
 ### Patient Store Abstraction
+
 ```python
 class PatientStore(ABC):
     def get_profile(self, patient_id: int) -> dict | None: ...
     def update_supplementary_fields(self, patient_id, updates, source_session_id) -> dict: ...
 ```
 - `LocalPatientStore` is the current implementation (dev only)
-- `SUPPLEMENTARY_FIELDS` whitelist in `patient_store.py` prevents extractor from overwriting clinical data
+- `SUPPLEMENTARY_FIELDS` whitelist prevents extractor from overwriting clinical data
 - All extractor writes include provenance metadata (`extractor_metadata` JSON column)
 
 ---
@@ -171,96 +243,82 @@ class PatientStore(ABC):
 ### Clinical (from hospital, never overwritten by extractor)
 `id, client_id, name, ic_number, age, gender, ethnicity, weight_kg, height_cm, conditions, medications, dietary_restrictions, allergies, notes, username, hashed_password`
 
-### Supplementary — v1 (extractor-filled, already migrated)
+### Supplementary — v1 (extractor-filled, migrated)
 `fluid_intake_ml, alcohol_per_week, supplements, religion, tobacco_status, meals_per_day, snacks_per_day, processed_food_freq, fast_food_freq, self_prepared_freq, caffeine_mg_per_day, sugar_drinks_ml, activity_freq, activity_minutes, activity_intensity, food_avoidance, nutrition_knowledge, readiness_to_change, sodium_awareness, extractor_metadata`
 
-### Supplementary — v2 cardiac (PENDING MIGRATION)
-```sql
-ALTER TABLE patients ADD COLUMN fat_intake_level VARCHAR;
-ALTER TABLE patients ADD COLUMN fat_type_sources JSON DEFAULT '[]'::json;
-ALTER TABLE patients ADD COLUMN medication_compliance VARCHAR;
-ALTER TABLE patients ADD COLUMN activity_type JSON DEFAULT '[]'::json;
-ALTER TABLE patients ADD COLUMN extractor_food_allergies JSON DEFAULT '[]'::json;
-```
-**Run:** `python /mnt/ssd/bare_NutriChatbot/scripts/migrate_v2.py`
+### Supplementary — v2 cardiac (DEPLOYED ✓)
+`fat_intake_level, fat_type_sources (JSON), medication_compliance, activity_type (JSON), extractor_food_allergies (JSON), personalization_level`
 
-### Pending (not yet added)
-`personalization_level` (VARCHAR: L0/L1/L2/L3 — see below)
+### Content pipeline (DEPLOYED ✓)
+`first_chat_at` — set once on first patient chat, drives the drip schedule.
+
+Tables: `content_materials`, `content_delivery_log`
+
+---
+
+## Completed Work (chronological)
+
+| Date | Work |
+|------|------|
+| May 2026 | Cloudflare tunnels, Option B hybrid pipeline, TopicBoostRetriever |
+| May 2026 | v2 cardiac schema (15 extractor fields + 5 DB columns) fully deployed |
+| May 2026 | Personalization levels L0–L3 wired end-to-end in all RAG paths |
+| May 2026 | CKD + KDOQI 2020 docs ingested; 24,268 chunks enriched with topic metadata |
+| May 2026 | Eval harness written: `eval/eval_ragas.py` + `eval/results/` |
+| 29 May 2026 | Project moved: `/mnt/ssd` → `/mnt/ext` (T7 Shield 100% full → MEEEE 910GB free) |
+| 29 May 2026 | Content drip pipeline: DB migration + `generate_content.py` + `content_scheduler.py` |
+| 29 May 2026 | Smoke tests `test_content_pipeline.py` — 3/4 passing (generation dry-run ✓, live test pending) |
 
 ---
 
 ## Pending Work — in priority order
 
-### 1. Deploy v2 cardiac schema (IMMEDIATE)
-Files generated, deployment not yet confirmed. Steps:
-
+### 1. Run content generation live test
 ```bash
-cd /mnt/ssd/bare_NutriChatbot
+cd /mnt/ext/bare_NutriChatbot
+NUTRIBOT_TEST_LIVE=1 python scripts/test_content_pipeline.py --test generation
+```
+Calls Ollama, verifies tips are returned. Then run full generation for all clients:
+```bash
+python scripts/generate_content.py --client-id 4
+```
+Dev team reviews Excel in `materials/`, marks materials `is_active=True` in DB.
 
-# Step 1: Replace build_curated_schema.py with v2 content, then:
-python data/encpt/build_curated_schema.py
-python data/encpt/json_to_md.py data/encpt/encpt_curated.json data/encpt/encpt_curated.md
-
-# Step 2: Replace extractor.py with v2 (15 fields, BM support, allowed_values)
-
-# Step 3: Add to database.py Patient class (after sodium_awareness line):
-#   fat_intake_level = Column(String, nullable=True)
-#   fat_type_sources = Column(JSON, default=list)
-#   medication_compliance = Column(String, nullable=True)
-#   activity_type = Column(JSON, default=list)
-#   extractor_food_allergies = Column(JSON, default=list)
-
-# Step 4: Add new fields to SUPPLEMENTARY_FIELDS in patient_store.py
-
-# Step 5: Run migration
-python scripts/migrate_v2.py
-
-# Step 6: Test extractor
-python -c "
-from extractor import extract_from_message
-print(extract_from_message('Saya makan nasi lemak setiap hari', {}))
-print(extract_from_message('I forgot my evening blood pressure pill sometimes', {}))
-"
-
-# Step 7: Restart bot
-sudo systemctl restart nutribot
+### 2. Set up content scheduler cron
+```
+0 8 * * * /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/content_scheduler.py
+```
+Add via `crontab -e`. First dry-run test:
+```bash
+python scripts/test_content_pipeline.py --seed-dates
+python scripts/test_content_pipeline.py --test scheduler
 ```
 
-### 2. Add personalization_level to Patient model (NEXT)
-Personalization levels (from dietitian, May 2026):
+### 3. Add /mnt/ext to /etc/fstab for auto-mount on boot
+```
+/dev/sdb1  /mnt/ext  exfat  rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro  0  0
+```
+Without this, drive must be manually mounted after every reboot and the bot will fail to start.
 
-| Level | Patient profile | Content scope |
-|-------|----------------|---------------|
-| L0 | No risk, no history, no limitations | Full spectrum including vigorous activity, performance goals |
-| L1 | Emerging/moderate risk (early HTN, elevated BMI), no functional limits | Structured, safety-aware, moderation, do/don't boundaries |
-| L2 | Established conditions, physical limitations, higher CV risk | Low-intensity, symptom monitoring, strict stop conditions |
-| L3 | High clinical risk, recent cardiac events, disability | Medical oversight only, emergency education, minimal activity |
+### 4. Persist conversation history to DB
+Currently `InMemoryChatMessageHistory` in `chain_factory.py` — history lost on bot restart.
+- Add `chat_messages` table (session_id, patient_id, role, content, created_at)
+- Swap `InMemoryChatMessageHistory` → `DBChatMessageHistory` adapter
+- Required for WhatsApp delivery
 
-**Implementation needed:**
-- Add `personalization_level = Column(String, nullable=True)` to Patient model
-- Add migration: `ALTER TABLE patients ADD COLUMN personalization_level VARCHAR`
-- Update `patient_to_profile_dict()` in `database.py` to include `personalization_level`
-- Update CLaRa prompt in `rag.py` to inject level-specific instructions
-- Assign levels to 7 mock patients: P1=L2, P2=L2, P3=L1, P4=L1, P5=L2, P6=L0, P7=L3 ✓ Done
+### 5. WhatsApp integration
+- Twilio or Meta API webhook → `/chat/whatsapp` endpoint
+- Phone number → patient_id mapping table
+- Requires conversation history persistence (item 4 above)
+- Content delivery via WhatsApp needs a send function wired to ContentDeliveryLog
 
-### 3. Test the bilingual extractor end-to-end
+### 6. Test bilingual extractor end-to-end
 - Send a Malay-language chat message through the public URL
-- Verify extractor captures fields correctly
+- Verify extractor captures fields correctly in BM
 - Check `extractor_metadata` is populated with correct provenance
 
-### 4. Build evaluation harness (before more extractor changes)
-```
-eval/
-├── test_extractor.py    # 20 test messages with expected extractions
-└── test_rag.py          # 10 nutrition questions with expected answer themes
-```
-Critical: without evals, future changes may regress silently.
-
-### 5. Persist conversation history to DB
-Currently `InMemoryChatMessageHistory` in `chain_factory.py` — history lost on bot restart. Required for WhatsApp delivery. Needs a `chat_messages` table.
-
-### 6. Cloudflare keep-alive cron (IMMEDIATE)
-First request after long idle can exceed Cloudflare's 100s timeout (model cold-start). Add to crontab on RTX 3050:
+### 7. Cloudflare keep-alive cron (IMMEDIATE)
+First request after long idle can exceed Cloudflare's 100s timeout (model cold-start).
 ```
 */4 * * * * curl -s -X POST -H "Content-Type: application/json" \
   -H "X-API-Key: nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3" \
@@ -268,16 +326,17 @@ First request after long idle can exceed Cloudflare's 100s timeout (model cold-s
   --max-time 90 https://nutribot.computationalrd.com/chat/get_response_sync > /dev/null 2>&1
 ```
 
-### 7. WhatsApp integration
-- Twilio or Meta API webhook → `/chat/whatsapp` endpoint
-- Phone number → patient_id mapping table
-- Requires conversation history persistence (item 5 above)
-
 ### 8. Replace LocalPatientStore with RemotePatientStore
 - Hospital/university server will host patient DB
 - Implement `RemotePatientStore(PatientStore)` that calls their REST/FHIR API
 - Swap in `website_chat_router.py` by changing one line:
   `patient_store = RemotePatientStore(base_url=os.getenv("HOSPITAL_API_URL"))`
+
+### 9. Re-ingest 3 missing PDFs
+- AHA 2021 Dietary Guidelines
+- Buku MDG Senaman
+- LE8 BP
+Run `build_base_db.py` after adding to `/home/han/documents_clean/`
 
 ---
 
@@ -293,7 +352,7 @@ tail -f /var/log/nutribot.log
 
 # Cloudflare tunnel (public URL + portfolio)
 sudo systemctl status cloudflared
-sudo cat /etc/cloudflared/config.yml   # routes portfolio + nutribot
+sudo cat /etc/cloudflared/config.yml
 
 # Postgres
 sudo docker ps | grep pgvector
@@ -301,6 +360,9 @@ sudo docker inspect pgvector-nutribot --format='{{.HostConfig.RestartPolicy.Name
 
 # Check all services
 sudo systemctl status nutribot cloudflared docker
+
+# Mount MEEEE drive if not auto-mounted
+sudo mount -t exfat -o rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro /dev/sdb1 /mnt/ext
 ```
 
 ### Mac Studio (SSH as bing, or AnyDesk as care-uitm)
@@ -335,7 +397,36 @@ curl -X POST https://nutribot.computationalrd.com/chat/get_response_sync \
   -d '{"question":"What should I eat for breakfast?","patient_id":2,"session_id":"smoke-test"}'
 ```
 
-Healthy response: clinical answer mentioning CKD + hypertension restrictions (low K, low P, fluid limit, low Na). Takes 30-60s first call, 10-30s warm.
+Healthy response: clinical answer mentioning CKD + hypertension restrictions (low K, low P, fluid limit, low Na). Takes 30–60s first call, 10–30s warm.
+
+---
+
+## Content Pipeline Quick Reference
+
+```bash
+cd /mnt/ext/bare_NutriChatbot
+
+# Generate all content for client 4 (calls Ollama, takes ~20 min)
+python scripts/generate_content.py --client-id 4
+
+# Generate one group only (faster test)
+python scripts/generate_content.py --client-id 4 --group General --day 3
+
+# Dry run (no LLM call, no DB write — just shows niche lookup)
+python scripts/generate_content.py --client-id 4 --dry-run
+
+# Daily scheduler (normally run by cron)
+python scripts/content_scheduler.py
+python scripts/content_scheduler.py --dry-run
+python scripts/content_scheduler.py --dry-run --as-of 2026-06-01
+
+# Tests
+python scripts/test_content_pipeline.py                    # all tests (dry-run mode)
+python scripts/test_content_pipeline.py --test migration   # DB tables check only
+python scripts/test_content_pipeline.py --seed-dates       # set first_chat_at on demo patients
+python scripts/test_content_pipeline.py --reset-dates      # clear first_chat_at
+NUTRIBOT_TEST_LIVE=1 python scripts/test_content_pipeline.py --test generation  # calls Ollama
+```
 
 ---
 
@@ -343,21 +434,26 @@ Healthy response: clinical answer mentioning CKD + hypertension restrictions (lo
 
 | Issue | Impact | Mitigation |
 |-------|--------|------------|
-| Cloudflare 100s timeout on cold start | 524 error for first request after idle | Keep-alive cron (item 6 above) |
+| `/mnt/ext` not in fstab | Bot fails to start after reboot | Add fstab entry (Pending Work #3) |
+| Cloudflare 100s timeout on cold start | 524 error for first request after idle | Keep-alive cron (Pending Work #7) |
 | CLaRa sometimes recommends bananas to CKD patients | Clinical risk | Prompt engineering, more training data |
-| Conversation history in-memory only | Lost on restart | Needs DB persistence (item 5) |
+| Conversation history in-memory only | Lost on restart | Needs DB persistence (Pending Work #4) |
 | Mac Studio SSH via `studio-ssh.mrbing.dev` broken | Can't SSH as bing directly | Use AnyDesk as care-uitm, or local LAN |
-| exFAT on /mnt/ssd breaks Python venvs | Must use miniconda, not .venv | Documented, use /home/han/miniconda3/bin/python |
+| exFAT on /mnt/ext breaks Python venvs | Must use miniconda, not .venv | Use /home/han/miniconda3/bin/python |
 | UiTM network blocks Tailscale | Can't use Tailscale on Mac Studio | Replaced with Cloudflare tunnels |
+| T7 Shield (/mnt/ssd) 100% full | Cannot write new files there | Project moved to MEEEE (/mnt/ext) |
 
 ---
 
 ## Document / Knowledge Base
 
-Clinical PDFs ingested: 58 docs, 24,268 chunks in PGVector `base_knowledge` collection.
-Sources: Malaysian CPGs, NICE guidelines, WHO nutrition guidance, MDGV.
+Clinical PDFs ingested: 58 docs + CKD CPG + KDOQI 2020 = 24,268 chunks in PGVector `base_knowledge`.
+Sources: Malaysian CPGs, NICE guidelines, WHO nutrition guidance, MDGV, KDOQI.
 Location on server: `/home/han/documents_clean/`
 Ingestion script: `build_base_db.py` (run with `BASE_DOCS_DIR=/home/han/documents_clean python build_base_db.py`)
+
+Chunk enrichment: all chunks have `doc_keywords`, `doc_topics`, `doc_topic_summary`, `doc_language` metadata.
+Enrichment script: `scripts/enrich_v1_with_keywords.py --mapping data/encpt/doc_keyword_mapping.json`
 
 ---
 
@@ -388,14 +484,16 @@ Pending dietitian review: `data/encpt/encpt_curated.md` (send to supervising die
 |----------|---------|
 | Run the bot locally | `/home/han/miniconda3/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000` |
 | Run extractor test | `/home/han/miniconda3/bin/python -c "from extractor import extract_from_message; ..."` |
-| Run migration | `/home/han/miniconda3/bin/python scripts/migrate_v2.py` |
+| Run v2 migration | `/home/han/miniconda3/bin/python scripts/migrate_v2.py` |
+| Run content pipeline migration | `/home/han/miniconda3/bin/python scripts/migrate_content_pipeline.py` |
 | Run build schema | `/home/han/miniconda3/bin/python data/encpt/build_curated_schema.py` |
 | Check DB | `/home/han/miniconda3/bin/python -c "import database as db; ..."` |
+| Generate content | `/home/han/miniconda3/bin/python scripts/generate_content.py --client-id 4` |
 
 ---
 
 ## Git
 
-Repo: on GitHub (main branch, up to date as of session start).
+Repo: on GitHub (main branch).
 The Mac Studio has a clone at `/Users/bing/Desktop/clara_lyh/clara-nutri/` (CLaRa inference only — not the bot codebase).
-The bot codebase at `/mnt/ssd/bare_NutriChatbot/` is the source of truth.
+**The bot codebase at `/mnt/ext/bare_NutriChatbot/` is the source of truth** (moved from `/mnt/ssd` on 29 May 2026).

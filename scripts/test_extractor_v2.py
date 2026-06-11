@@ -3,7 +3,7 @@ Smoke test for the v2 cardiac extractor.
 Run on the RTX 3050 server to verify the new fields extract correctly.
 """
 import sys
-sys.path.insert(0, '/mnt/ssd/bare_NutriChatbot')
+sys.path.insert(0, '/mnt/ext/bare_NutriChatbot')
 
 from extractor import extract_from_message
 

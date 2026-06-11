@@ -1,0 +1,101 @@
+{
+  "summary": {
+    "passed": 9,
+    "failed": 1,
+    "total": 10
+  },
+  "cases": [
+    {
+      "id": 1,
+      "desc": "CKD+HTN: foods to avoid",
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "You need to be careful about a few things in your diet given your conditions. Here\u2019s what you should avoid:\n\n1. **High Potassium Foods**: You should stay away from foods like avocados, bananas, melons, tomatoes, and potatoes. These can push your potassium levels too high.\n\n2. **High Phosphorus Foods**: Dairy products, nuts, seeds, and beans are all high in phosphorus and you need to limit these.\n\n3. **Shellfish**: Since you have an allergy to shellfish, it\u2019s very important that you avoid any kind of shellfish entirely.\n\n4. **Salty or High Sodium Foods**: Processed meats, pickles, olives, and soy sauce are all high in sodium and should be avoided as much as possible.\n\n5. **Herbal Soups with High Potassium Stock**: Be mindful of the soups you consume, especially if they have a stock that might be high in potassium.\n\nSticking to these guidelines will help manage your dietary restrictions effectively and support your overall health. If you\u2019re unsure about any food item, it\u2019s best to check before eating it.",
+      "elapsed_s": 44.0
+    },
+    {
+      "id": 2,
+      "desc": "CKD+HTN: can I eat bananas?",
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, you can enjoy bananas in moderation. Since you have chronic kidney disease stage 3 and need to limit your potassium intake, it's important not to overdo it with high-potassium foods like bananas. A small banana is generally fine as an occasional treat, but try to keep track of how many you eat each day and avoid having more than one per day unless advised otherwise by your healthcare provider. Also, consider spacing out when you consume them throughout the week rather than eating multiple in a short span of time. Let me know if you need help tracking or planning this into your diet.",
+      "elapsed_s": 109.9
+    },
+    {
+      "id": 3,
+      "desc": "T2DM+HTN: can I eat white rice?",
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, you can eat white rice. It\u2019s a staple in many Malaysian dishes and doesn't have specific restrictions for your conditions of type 2 diabetes or hypertension according to the WHO guidelines. However, it's important to keep an eye on portion sizes since white rice is high in carbohydrates and low in fiber. Try to balance your meals with more whole grains like brown rice when possible, as well as include plenty of vegetables and pulses to help manage your blood sugar levels better. Also, be mindful of what you eat with the rice; opt for dishes that are lower in sodium and avoid adding extra salt or salty condiments. Keep motivated by making small changes gradually, and remember to stay active within your limits.",
+      "elapsed_s": 26.1
+    },
+    {
+      "id": 4,
+      "desc": "L3 Post-CABG+HF: can I exercise? (must require supervision)",
+      "patient_id": 11,
+      "passed": true,
+      "failures": [],
+      "answer": "Given your current health status and the recent CABG surgery along with heart failure (EF 35%), it\u2019s important to follow a medically supervised cardiac rehabilitation program for any physical activity. This ensures that you can safely increase your level of activity without risking further complications. Please discuss with your healthcare provider or the team at your cardiac rehab programme about starting an exercise plan tailored specifically for you. Remember, unsupervised physical activity is not recommended due to your high fall risk and heart condition.",
+      "elapsed_s": 36.5
+    },
+    {
+      "id": 5,
+      "desc": "HTN+Hypercholesterol+T2DM: cooking oil",
+      "patient_id": 5,
+      "passed": false,
+      "failures": [
+        "Required terms: found 1/2 minimum (found=['saturated'], missing=['olive', 'canola', 'trans fat', 'avoid', 'limit'])"
+      ],
+      "answer": "For your cooking needs, it's best to use a blend of palm oil or any polyunsaturated cooking oils like corn, soybean, or sunflower oil. These options are healthier and fit well within the guidelines for managing hypertension, hypercholesterolemia, and type 2 diabetes. Just remember not to deep-fry with these oils, as that can increase your intake of unhealthy fats. Stick to methods like steaming, boiling, or stir-frying with a small amount of oil. This approach will help you keep your saturated fat intake low and support better heart health.",
+      "elapsed_s": 88.7
+    },
+    {
+      "id": 6,
+      "desc": "PCOS+IR: foods for insulin resistance",
+      "patient_id": 3,
+      "passed": true,
+      "failures": [],
+      "answer": "To help manage your insulin resistance, focus on incorporating these types of foods into your diet:\n\n1. **Magnesium-rich Foods**: Think almonds, spinach, pumpkin seeds, and black beans. These can be great additions to salads or as snacks.\n\n2. **Chromium-rich Foods**: Broccoli is a good option here, as well as potatoes with skin (make sure they're not fried). You could also include green beans in your diet.\n\n3. **Fiber-Rich Foods**: Beans and lentils are excellent choices. You can add these to your curries or make a side dish. Fruits like apples and berries, along with vegetables and whole grains, will also help increase your fiber intake.\n\n4. **Omega-3 Rich Foods**: Incorporate fatty fish like salmon into your meals if you enjoy it. Flaxseeds and chia seeds can be sprinkled on yogurt or mixed into smoothies (if you don't have any dairy issues), and walnuts are a great snack option.\n\n5. **Cinnamon**: A small amount of cinnamon in your food or beverages might help improve insulin sensitivity. It\u2019s easy to sprinkle some on your thosai or add it to curries for flavor.\n\nRemember, aim for at least 5 servings of fruits and vegetables daily, and try to spread out your carbohydrate intake throughout the day rather than having large amounts all at once. Keep in mind that you should avoid peanuts due to your allergy, so opt for other nuts like almonds or walnuts instead. \n\nAlso, try not to skip meals; aim for regular meal times to help manage blood sugar levels and support your insulin sensitivity.",
+      "elapsed_s": 43.8
+    },
+    {
+      "id": 7,
+      "desc": "Dyslipidaemia+Obesity: portion control",
+      "patient_id": 4,
+      "passed": true,
+      "failures": [],
+      "answer": "It's important to focus on portion control to help manage your weight and cholesterol levels. Since you have a BMI of 32.3, which falls into the obesity category, keeping an eye on how much you eat is key. You don't need to count every calorie, but being mindful of serving sizes can really make a difference.\n\nFor someone with your health profile, aiming for around 1800-2000 calories per day would be appropriate, depending on your activity level and the goal to reduce weight gradually. This range helps in managing cholesterol levels while providing enough energy for daily activities like jogging or walking.\n\nRemember, it's not just about how much you eat but also what you eat. Try to choose foods that are low in saturated fats and cholesterol. For example, instead of murtabak or roti canai with curry from roadside stalls, opt for grilled chicken or fish with plenty of vegetables. When eating out, ask for dishes that are prepared without lard or palm oil.\n\nAlso, try to eat at regular intervals throughout the day to avoid overeating later on. This might help you stick to your calorie goals and improve your overall meal schedule.\n\nLastly, since you mentioned that dietary changes have been tough in the past, it's okay to start small. Even slight adjustments can make a big difference over time. Keep this in mind as we work together towards better heart health.",
+      "elapsed_s": 16.7
+    },
+    {
+      "id": 8,
+      "desc": "L0 general wellness: healthy breakfast (no over-restriction)",
+      "patient_id": 10,
+      "passed": true,
+      "failures": [],
+      "answer": "A healthy breakfast for you could include whole grain bread, rice or other Halal-certified cereals, legumes like chickpeas, fruits such as bananas, vegetables like spinach, lean proteins like tofu or eggs, and Halal-certified dairy products if you consume them. Here\u2019s an example:\n\n- Whole grain bread: 1 slice\n- Rice: 1/2 cup cooked\n- Chickpeas: 1/2 cup cooked\n- Banana: 1 medium fruit\n- Spinach: 1 cup\n- Scrambled eggs: 1 egg (about 1/4 cup cooked)\n- Halal-certified milk: 1/2 cup\n\nThis breakfast provides a good balance of carbohydrates, protein, and healthy fats to help fuel your active lifestyle and long-distance running. It also fits within your dietary restrictions for being Halal.",
+      "elapsed_s": 38.6
+    },
+    {
+      "id": 9,
+      "desc": "Voice test: second-person throughout",
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "For breakfast, it's important to choose foods that are low in sodium and simple carbohydrates but high in fiber. You could start your day with a bowl of oatmeal made from whole grain oats. Add some fresh berries like blueberries or strawberries for natural sweetness and extra nutrients. If you prefer something more savory, you can have an omelet made with eggs and vegetables such as spinach, tomatoes, and mushrooms. This is rich in protein and fiber but low in sodium if you use salt-free seasonings.\n\nIf you enjoy a quick breakfast, consider having a slice of whole grain bread or a small bowl of brown rice mixed with some boiled egg whites for added protein. You could also sprinkle some flax seeds or chia seeds on top to boost your omega-3 intake and fiber content.\n\nAvoid eating foods like fried items or those high in saturated fats such as bacon, sausages, or butter-laden dishes. Also, stay away from sugary cereals or sweetened beverages that can spike blood sugar levels. \n\nRemember, it\u2019s important to keep your meals balanced and varied to ensure you\u2019re getting a range of nutrients while keeping within the dietary restrictions related to your conditions.",
+      "elapsed_s": 48.3
+    },
+    {
+      "id": 10,
+      "desc": "CKD Stage 4 (P11): protein restriction guidance",
+      "patient_id": 11,
+      "passed": true,
+      "failures": [],
+      "answer": "You should aim for a daily protein intake of at least 1.2 grams per kilogram of your body weight for the first 6 months after your surgery, and then increase that to about an extra 13 grams per day for the next 6 months. Given your weight of 67 kilograms, this means you should start by eating around 80 grams of protein a day for the first 6 months, and then aim for approximately 94 grams of protein daily for the following 6 months.\n\nRemember to choose lean sources of protein such as skinless chicken breast, fish (avoiding high-fat options), egg whites, and low-fat dairy products. This will help you meet your protein needs while also adhering to your dietary restrictions on sodium, potassium, phosphorus, and simple carbohydrates. Always ensure that any changes in your diet are discussed with your healthcare provider or a dietitian who understands all of your health conditions.",
+      "elapsed_s": 32.6
+    }
+  ]
+}

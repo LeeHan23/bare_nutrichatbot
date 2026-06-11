@@ -7,6 +7,7 @@ load_dotenv()
 USE_CLARA = os.getenv("USE_CLARA", "false").lower() in ("true", "1", "yes")
 USE_CLARA_COMPRESS = os.getenv("USE_CLARA_COMPRESS", "false").lower() in ("true", "1", "yes")
 USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("true", "1", "yes")
+USE_AGENT_TOOLS = os.getenv("USE_AGENT_TOOLS", "false").lower() in ("true", "1", "yes")
 
 # --- CLaRa config (main RAG model on Mac Studio) ---
 CLARA_BASE_URL = os.getenv("CLARA_BASE_URL", "http://localhost:8001")
@@ -41,6 +42,7 @@ def get_llm():
             temperature=0.3,
             num_predict=512,
             keep_alive=-1,
+            timeout=90,
         )
     else:
         from langchain_openai import ChatOpenAI
@@ -58,9 +60,13 @@ def get_llm():
 def get_direct_llm_response(question: str) -> str:
     """Direct response from the orchestration LLM, no RAG.
     Used for small auxiliary tasks like disease identification."""
-    llm = get_llm()
-    response = llm.invoke(question)
-    return response.content
+    try:
+        llm = get_llm()
+        response = llm.invoke(question)
+        return response.content
+    except Exception as e:
+        print(f"[LLM error] get_direct_llm_response: {e}")
+        return ""
 
 
 def call_clara_api(prompt: str, documents: list = None) -> str:
