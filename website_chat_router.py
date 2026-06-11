@@ -83,6 +83,17 @@ def _resolve_patient_profile(
     return db.patient_to_profile_dict(patient)
 
 
+async def _record_first_chat(patient_id: int):
+    """Set first_chat_at on the patient record the first time they chat."""
+    try:
+        loop = asyncio.get_event_loop()
+        session = db.SessionLocal()
+        await loop.run_in_executor(None, lambda: db.set_first_chat_at(session, patient_id))
+        session.close()
+    except Exception as e:
+        logger.error(f"[first_chat_at] Failed to set for patient {patient_id}: {e}")
+
+
 async def _run_extractor_background(
     patient_id: int,
     message: str,
@@ -144,9 +155,8 @@ async def get_chat_response(
     if is_patient_self is None:
         is_patient_self = request.patient_id is not None
 
-    # Schedule the extractor as a background task BEFORE we start streaming.
-    # asyncio.create_task() runs concurrently with the streaming response.
     if request.patient_id is not None and resolved_profile is not None:
+        asyncio.create_task(_record_first_chat(request.patient_id))
         asyncio.create_task(
             _run_extractor_background(
                 patient_id=request.patient_id,
@@ -185,6 +195,7 @@ async def get_chat_response_sync(
         is_patient_self = request.patient_id is not None
 
     if request.patient_id is not None and resolved_profile is not None:
+        asyncio.create_task(_record_first_chat(request.patient_id))
         asyncio.create_task(
             _run_extractor_background(
                 patient_id=request.patient_id,

@@ -5,6 +5,7 @@ from llm import (
     call_ollama_generate,
     USE_CLARA,
     USE_CLARA_COMPRESS,
+    USE_AGENT_TOOLS,
 )
 from image_handler import parse_response_for_image
 from chain_factory import create_conversational_chain
@@ -195,7 +196,15 @@ def _build_qwen_prompt(
             "- NEVER use their name; never say 'the patient', 'they', 'she', 'he'\n"
             "- NEVER use generic framings like 'an adult with BMI X should...'\n"
             "- Be warm, conversational, and practical — skip definitions and preamble\n"
-            "- Verify every food recommendation against their conditions; flag anything contraindicated"
+            "- Verify every food recommendation against their conditions; flag anything contraindicated\n"
+            "\n## Conversation Style — strictly follow this structure\n"
+            "You are having a back-and-forth conversation, NOT writing a health article.\n"
+            "ALWAYS follow this 3-part structure:\n"
+            "  1. ONE short, direct answer to the question (2–4 sentences max). Pick the single most relevant point from the evidence digest.\n"
+            "  2. ONE practical tip or example the person can act on immediately.\n"
+            "  3. ONE follow-up question to learn more about their specific situation before giving further advice.\n"
+            "Do NOT list multiple tips in a single reply. Do NOT use bullet points or numbered lists. "
+            "Keep the entire reply under 100 words. Save the rest for after you hear their answer."
         )
     else:
         parts.append(
@@ -256,6 +265,26 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         print(f"[DEBUG] Using patient profile: {target_disease}")
     else:
         target_disease = identify_target_disease(question)
+
+    # ============================================================
+    # Agent path — Qwen with MCP tool calling (USE_AGENT_TOOLS=true)
+    # ============================================================
+    if USE_AGENT_TOOLS:
+        print("[DEBUG] Using agent path: Qwen with MCP tool calling")
+        from agent import get_agent_response
+        answer = get_agent_response(
+            question=question,
+            client_id=client_id,
+            patient_context=patient_context,
+            is_patient_self=is_patient_self,
+            profile=profile,
+        )
+        if not answer:
+            answer = (
+                "I'm sorry, I couldn't generate a response right now. "
+                "Please try again shortly."
+            )
+        return parse_response_for_image(answer)
 
     # ============================================================
     # CLaRa primary path — main RAG generation on Mac Studio
@@ -367,7 +396,11 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
             print("[DEBUG] CLaRa compress failed — using raw chunks as fallback digest")
             digest = "Clinical context from guidelines:\n\n" + "\n\n---\n\n".join(doc_texts)
 
-        food_context = get_food_context(question)
+        try:
+            food_context = get_food_context(question)
+        except Exception as e:
+            print(f"[Food context error] {e}")
+            food_context = ""
 
         qwen_prompt = _build_qwen_prompt(
             question, patient_context, digest, food_context, profile, is_patient_self

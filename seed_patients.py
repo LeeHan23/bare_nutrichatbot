@@ -137,6 +137,41 @@ PATIENTS = [
         password="demo1234",
         personalization_level="L2",
     ),
+    # L1 — cardiac disease (stable IHD), female
+    dict(
+        name="Siti Hajar binti Mohd Nasir",
+        ic_number="750623-03-5891",
+        age=50,
+        gender="Female",
+        ethnicity="Malay",
+        weight_kg=71.0,
+        height_cm=157.0,
+        conditions=[
+            "Ischaemic Heart Disease (stable, single-vessel LAD disease)",
+            "Hypertension",
+            "Hypercholesterolaemia",
+        ],
+        medications=[
+            "Aspirin 100mg OD",
+            "Bisoprolol 5mg OD",
+            "Perindopril 5mg OD",
+            "Atorvastatin 40mg ON",
+        ],
+        dietary_restrictions=["Halal only", "Low saturated fat", "Low sodium", "Heart-healthy diet"],
+        allergies=[],
+        notes=(
+            "Secondary school librarian, predominantly sedentary. BMI 28.8. "
+            "Diagnosed with stable IHD 8 months ago after exertional chest discomfort climbing stairs. "
+            "Coronary angiogram: 50% LAD stenosis, managed medically (no stenting). "
+            "Echo: EF 58%, mild LVH. Asymptomatic on current medications. No prior MI or cardiac events. "
+            "Motivated to improve diet post-diagnosis; husband and children supportive. "
+            "Primarily home-cooked Malay food — frequent santan dishes, fried foods, white rice. "
+            "Referred for cardiac nutrition counselling by cardiologist at HKL."
+        ),
+        username="sitihajar.mnasir",
+        password="demo1234",
+        personalization_level="L1",
+    ),
     # L0 — no risk, no history
     dict(
         name="Nurul Ain binti Zulkifli",

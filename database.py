@@ -1,6 +1,6 @@
 import os
 import secrets
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, JSON, Float
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, JSON, Float, Boolean
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -119,6 +119,12 @@ class Patient(Base):
     # Demo auth
     username        = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+
+    # WhatsApp delivery
+    phone_number    = Column(String, nullable=True)   # e.g. +60123456789
+
+    # Content delivery tracking — set on first chat message
+    first_chat_at   = Column(DateTime, nullable=True)
 
     # Relationship back to the B2B client
     client = relationship("ApiClient", back_populates="patients")
@@ -241,6 +247,56 @@ def delete_document_metadata(db_session, document_id: int, client_id: int = None
         return True
     return False
 
+# --- Content Material Model ---
+class ContentMaterial(Base):
+    """
+    A single educational content item for a condition group + day offset.
+    raw_tips holds LLM-generated JSON tips.
+    file_path points to the polished file uploaded by the dev team.
+    is_active = True once a polished file is ready for delivery.
+    """
+    __tablename__ = "content_materials"
+
+    id              = Column(Integer, primary_key=True, index=True)
+    condition_group = Column(String, nullable=False, index=True)   # e.g. "T2DM", "CKD"
+    condition_tags  = Column(JSON, default=list)                   # e.g. ["Type 2 Diabetes"]
+    day_offset      = Column(Integer, nullable=True, index=True)   # 3,5,7,14,21,30 (NULL for weekly EKA)
+    content_type    = Column(String(1), nullable=True, index=True) # "E" | "K" | "A" | NULL (legacy nutrition)
+    week_number     = Column(Integer, nullable=True, index=True)   # ISO week number (weekly EKA only)
+    topic           = Column(String, nullable=False)               # "breakfast_choices"
+    title           = Column(String, nullable=False)               # human-readable
+    raw_tips        = Column(JSON, default=list)                   # [{tip_number,tip,source_hint}] or EKA structured dict
+    file_path       = Column(String, nullable=True)                # polished file (dev team uploads)
+    file_type       = Column(String, nullable=True)                # pdf / word / image
+    is_active       = Column(Boolean, default=False)               # True once dev team approves
+    created_at      = Column(DateTime, nullable=False)
+    expires_at      = Column(DateTime, nullable=True, index=True)  # EKA: created_at + 14 days; NULL = never expires (legacy)
+
+    delivery_logs = relationship("ContentDeliveryLog", back_populates="material")
+
+
+# --- Content Delivery Log Model ---
+class ContentDeliveryLog(Base):
+    """
+    Tracks scheduled and sent content deliveries per patient.
+    One row per (patient, day_offset, material) combination.
+    status: queued → sent | failed | no_material
+    """
+    __tablename__ = "content_delivery_log"
+
+    id             = Column(Integer, primary_key=True, index=True)
+    patient_id     = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
+    material_id    = Column(Integer, ForeignKey("content_materials.id"), nullable=True)
+    condition_group = Column(String, nullable=False)               # denormalised for easy querying
+    day_offset     = Column(Integer, nullable=False)
+    scheduled_date = Column(DateTime, nullable=False, index=True)
+    status         = Column(String, default="queued")              # queued | sent | failed | no_material
+    sent_at        = Column(DateTime, nullable=True)
+    channel        = Column(String, nullable=True)                 # whatsapp | email | in_app
+
+    material = relationship("ContentMaterial", back_populates="delivery_logs")
+
+
 # Tables are created at app startup (see app.py startup_event).
 # Call create_db_and_tables() explicitly in scripts that need it.
 
@@ -317,6 +373,200 @@ def check_patient_login(db_session, username: str, password: str):
     if patient and check_password_hash(patient.hashed_password, password):
         return patient
     return None
+
+
+def set_first_chat_at(db_session, patient_id: int):
+    """Set first_chat_at to now if not already set. Safe to call on every message."""
+    from datetime import datetime
+    patient = get_patient(db_session, patient_id)
+    if patient and patient.first_chat_at is None:
+        patient.first_chat_at = datetime.utcnow()
+        db_session.commit()
+
+
+def get_all_patients_with_first_chat(db_session):
+    """Return all patients that have chatted at least once."""
+    return db_session.query(Patient).filter(Patient.first_chat_at.isnot(None)).all()
+
+
+def upsert_content_material(db_session, condition_group: str, condition_tags: list,
+                             day_offset: int, topic: str, title: str, raw_tips: list) -> "ContentMaterial":
+    """Insert a new ContentMaterial row. Always creates a new row (generation is idempotent via the scheduler check)."""
+    from datetime import datetime
+    mat = ContentMaterial(
+        condition_group=condition_group,
+        condition_tags=condition_tags,
+        day_offset=day_offset,
+        topic=topic,
+        title=title,
+        raw_tips=raw_tips,
+        is_active=False,
+        created_at=datetime.utcnow(),
+    )
+    db_session.add(mat)
+    db_session.commit()
+    db_session.refresh(mat)
+    return mat
+
+
+def get_active_materials_for_conditions(db_session, condition_groups: list, day_offset: int):
+    """Find is_active=True materials matching any of the condition groups at this day offset."""
+    return db_session.query(ContentMaterial).filter(
+        ContentMaterial.day_offset == day_offset,
+        ContentMaterial.condition_group.in_(condition_groups),
+        ContentMaterial.is_active == True,
+    ).all()
+
+
+def get_all_materials(db_session, day_offset: int = None, condition_group: str = None):
+    """List materials, optionally filtered."""
+    q = db_session.query(ContentMaterial)
+    if day_offset is not None:
+        q = q.filter(ContentMaterial.day_offset == day_offset)
+    if condition_group:
+        q = q.filter(ContentMaterial.condition_group == condition_group)
+    return q.order_by(ContentMaterial.condition_group, ContentMaterial.day_offset).all()
+
+
+def log_content_delivery(db_session, patient_id: int, day_offset: int,
+                         condition_group: str, scheduled_date, material_id: int = None,
+                         status: str = "queued") -> "ContentDeliveryLog":
+    from datetime import datetime
+    entry = ContentDeliveryLog(
+        patient_id=patient_id,
+        material_id=material_id,
+        condition_group=condition_group,
+        day_offset=day_offset,
+        scheduled_date=scheduled_date,
+        status=status,
+    )
+    db_session.add(entry)
+    db_session.commit()
+    db_session.refresh(entry)
+    return entry
+
+
+def get_delivery_log(db_session, patient_id: int = None, status: str = None, scheduled_date=None):
+    """Query delivery log with optional filters."""
+    q = db_session.query(ContentDeliveryLog)
+    if patient_id:
+        q = q.filter(ContentDeliveryLog.patient_id == patient_id)
+    if status:
+        q = q.filter(ContentDeliveryLog.status == status)
+    if scheduled_date:
+        from datetime import datetime, timedelta
+        day_start = datetime.combine(scheduled_date, datetime.min.time())
+        day_end = day_start + timedelta(days=1)
+        q = q.filter(ContentDeliveryLog.scheduled_date >= day_start,
+                     ContentDeliveryLog.scheduled_date < day_end)
+    return q.order_by(ContentDeliveryLog.scheduled_date).all()
+
+
+EKA_EXPIRY_DAYS = 14  # EKA materials expire 14 days after creation (deleted on 3rd-week Monday run)
+
+
+def upsert_eka_material(db_session, condition_group: str, condition_tags: list,
+                        content_type: str, week_number: int, topic: str, title: str,
+                        raw_content: dict, force: bool = False) -> "ContentMaterial":
+    """Insert a weekly E/K/A material. Skips if (group, type, week, topic) already exists unless force=True."""
+    from datetime import datetime, timedelta
+    existing = db_session.query(ContentMaterial).filter(
+        ContentMaterial.condition_group == condition_group,
+        ContentMaterial.content_type == content_type,
+        ContentMaterial.week_number == week_number,
+        ContentMaterial.topic == topic,
+    ).first()
+    if existing and not force:
+        return existing
+    if existing and force:
+        existing.raw_tips = raw_content
+        existing.title = title
+        existing.condition_tags = condition_tags
+        db_session.commit()
+        db_session.refresh(existing)
+        return existing
+    now = datetime.utcnow()
+    mat = ContentMaterial(
+        condition_group=condition_group,
+        condition_tags=condition_tags,
+        content_type=content_type,
+        week_number=week_number,
+        day_offset=None,
+        topic=topic,
+        title=title,
+        raw_tips=raw_content,
+        is_active=False,
+        created_at=now,
+        expires_at=now + timedelta(days=EKA_EXPIRY_DAYS),
+    )
+    db_session.add(mat)
+    db_session.commit()
+    db_session.refresh(mat)
+    return mat
+
+
+def cleanup_expired_eka_materials(db_session) -> int:
+    """
+    Delete EKA materials whose expires_at has passed.
+    Called at the start of each weekly scheduler run.
+    Returns the number of rows deleted.
+    """
+    from datetime import datetime
+    expired = db_session.query(ContentMaterial).filter(
+        ContentMaterial.content_type.isnot(None),
+        ContentMaterial.expires_at.isnot(None),
+        ContentMaterial.expires_at < datetime.utcnow(),
+    ).all()
+    count = len(expired)
+    for mat in expired:
+        db_session.delete(mat)
+    if count:
+        db_session.commit()
+    return count
+
+
+def get_materials_by_filters(db_session, content_type: str = None, week_number: int = None,
+                              condition_group: str = None, is_active: bool = None,
+                              include_expired: bool = False,
+                              limit: int = 100, offset: int = 0) -> list:
+    """
+    List ContentMaterials with optional filters.
+    By default excludes expired EKA materials (include_expired=False).
+    """
+    from datetime import datetime
+    q = db_session.query(ContentMaterial)
+    if not include_expired:
+        q = q.filter(
+            (ContentMaterial.expires_at.is_(None)) |
+            (ContentMaterial.expires_at >= datetime.utcnow())
+        )
+    if content_type is not None:
+        q = q.filter(ContentMaterial.content_type == content_type)
+    if week_number is not None:
+        q = q.filter(ContentMaterial.week_number == week_number)
+    if condition_group is not None:
+        q = q.filter(ContentMaterial.condition_group == condition_group)
+    if is_active is not None:
+        q = q.filter(ContentMaterial.is_active == is_active)
+    return q.order_by(ContentMaterial.condition_group, ContentMaterial.content_type, ContentMaterial.week_number).offset(offset).limit(limit).all()
+
+
+def get_weekly_feed_for_conditions(db_session, condition_groups: list, week_number: int,
+                                    content_type: str = None, is_active: bool = True) -> list:
+    """Return this week's E/K/A materials for given condition groups. Expired materials are excluded."""
+    from datetime import datetime
+    q = db_session.query(ContentMaterial).filter(
+        ContentMaterial.week_number == week_number,
+        ContentMaterial.condition_group.in_(condition_groups),
+        ContentMaterial.content_type.isnot(None),
+        (ContentMaterial.expires_at.is_(None)) |
+        (ContentMaterial.expires_at >= datetime.utcnow()),
+    )
+    if content_type:
+        q = q.filter(ContentMaterial.content_type == content_type)
+    if is_active is not None:
+        q = q.filter(ContentMaterial.is_active == is_active)
+    return q.order_by(ContentMaterial.content_type, ContentMaterial.condition_group).all()
 
 
 def patient_to_profile_dict(patient) -> dict:

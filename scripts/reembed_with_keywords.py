@@ -30,13 +30,13 @@ from pathlib import Path
 from typing import Iterator
 
 # Add the bot codebase to path so we can import its helpers
-sys.path.insert(0, '/mnt/ssd/bare_NutriChatbot')
+sys.path.insert(0, '/mnt/ext/bare_NutriChatbot')
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
-load_dotenv('/mnt/ssd/bare_NutriChatbot/.env')
+load_dotenv('/mnt/ext/bare_NutriChatbot/.env')
 
 from langchain_community.vectorstores.pgvector import PGVector
 from langchain_core.documents import Document

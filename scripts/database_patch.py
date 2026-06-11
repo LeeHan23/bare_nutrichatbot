@@ -4,8 +4,8 @@ model and updates the SUPPLEMENTARY_FIELDS whitelist.
 """
 import re
 
-DB_PATH = '/mnt/ssd/bare_NutriChatbot/database.py'
-PSTORE_PATH = '/mnt/ssd/bare_NutriChatbot/patient_store.py'
+DB_PATH = '/mnt/ext/bare_NutriChatbot/database.py'
+PSTORE_PATH = '/mnt/ext/bare_NutriChatbot/patient_store.py'
 
 # ── 1. Patch database.py — add new columns after sodium_awareness ─────
 content = open(DB_PATH).read()

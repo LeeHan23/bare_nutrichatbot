@@ -763,7 +763,9 @@ python data/encpt/json_to_md.py data/encpt/encpt_curated.json data/encpt/encpt_c
 | L2 | Established conditions, physical limitations, higher CV risk | Low-intensity, symptom monitoring, strict stop conditions |
 | L3 | High clinical risk, recent cardiac events, disability | Medical oversight only; emergency education; minimal activity guidance |
 
-Mock patient assignments: P1 (Ahmad) = L2, P2 (Lim) = L2, P3 (Kavitha) = L1, P4 (Hafizuddin) = L1, P5 (Tan) = L2, P6 (Nurul) = L0, P7 (Rajendran) = L3.
+Mock patient assignments: P1 (Ahmad) = L2, P2 (Lim) = L2, P3 (Kavitha) = L1, P4 (Hafizuddin) = L1, P5 (Tan) = L2, P6 (Siti Hajar) = L1, P7 (Nurul) = L0, P8 (Rajendran) = L3.
+
+New in May 2026: **Siti Hajar binti Mohd Nasir** (id=12, `sitihajar.mnasir`) — female, age 50, stable IHD (single-vessel LAD disease), Hypertension, Hypercholesterolaemia, L1. Referred for cardiac nutrition counselling post-diagnosis. Home-cooked Malay food (frequent santan dishes). Added to validate the female cardiac L1 pathway.
 
 ---
 
@@ -771,7 +773,33 @@ Mock patient assignments: P1 (Ahmad) = L2, P2 (Lim) = L2, P3 (Kavitha) = L1, P4 
 
 **File:** `rag.py`
 
-`get_rag_response(question, client_id, chat_session_id, profile=None)` orchestrates four steps:
+`get_rag_response(question, client_id, chat_session_id, profile=None)` orchestrates the chat response. Two pipelines are available, selected by environment flags:
+
+### Option A — LangChain LCEL Chain (fallback, `USE_CLARA=false`)
+
+Standard chain: `MergedRetriever` → `ChatPromptTemplate` → `ChatOllama`/`ChatOpenAI`. See §8.2–8.4 for details.
+
+### Option B — CLaRa Hybrid (production, `USE_CLARA=true USE_OLLAMA=true`)
+
+Three-step pipeline bypassing LangChain:
+
+```
+1. get_food_context(question)          — ChatOllama: extract food-relevant query terms
+2. call_clara_compress(chunks, ...)    — CLaRa /compress: produce 300–500 token clinical digest
+3. _build_qwen_prompt(...)             — Build prompt with patient context + digest
+4. call_ollama_generate(prompt)        — Ollama qwen2.5:32b: generate final patient response
+```
+
+`get_food_context()` uses `get_llm()` (ChatOllama) with `timeout=90s`. On timeout/error it returns `""` gracefully — the pipeline continues with a bare query. `call_clara_compress()` has a `timeout=120s`; `call_ollama_generate()` has `timeout=180s`.
+
+**Conversational style (patient-self mode, added May 2026):** When `is_patient_self=True`, `_build_qwen_prompt()` injects a "Conversation Style" block enforcing a strict 3-part structure:
+1. One short direct answer (2–4 sentences)
+2. One practical tip or example
+3. One follow-up question to gather specifics
+
+Hard cap: 100 words, no bullet points, no numbered lists. This prevents the bot from returning comprehensive health articles in response to simple questions.
+
+`get_rag_response()` then orchestrates four additional steps:
 
 ### 8.1 Disease Identification
 
@@ -802,12 +830,21 @@ Wrapped in `RunnableWithMessageHistory` for per-session memory.
 
 **File:** `llm.py`
 
-- **Default:** `ChatOpenAI(model="gpt-4-turbo", temperature=0.5, max_tokens=1500)`
-- **Local:** `ChatOllama(model=OLLAMA_MODEL, temperature=0.5, num_predict=1500)`
+Two distinct LLM roles in the current production setup:
 
-`temperature=0.5`: Balances factual precision (important for medical advice) with natural conversational variation. Pure 0.0 produces robotic repetitive responses; 0.7+ risks hallucination on clinical details.
+**Orchestration LLM (`get_llm()`)** — used for small auxiliary tasks: `identify_target_disease()`, `get_food_context()`, the extractor.
+- `USE_OLLAMA=true`: `ChatOllama(model="qwen2.5:32b", temperature=0.3, num_predict=512, timeout=90)`
+- `USE_OLLAMA=false`: `ChatOpenAI(model="gpt-4-turbo", temperature=0.3, max_tokens=512)`
 
-`max_tokens=1500`: Sufficient for 2–4 paragraph dietitian responses. Capped to prevent runaway costs and avoid context-window exhaustion during long sessions.
+`timeout=90` (added May 2026): Prevents indefinite hangs when Ollama is slow/unresponsive. `get_direct_llm_response()` wraps all calls in try/except — returns `""` on failure rather than raising.
+
+**Generation LLM (`call_ollama_generate()`)** — used by Option B to produce the final patient-facing response.
+- `POST OLLAMA_BASE_URL/api/generate`, model=qwen2.5:32b, temperature=0.5, num_predict=800, timeout=180s
+- Larger token budget (800 vs 512) — sufficient for a short conversational response with follow-up question.
+
+**Legacy Option A LLM** — used only when `USE_CLARA=false`:
+- `ChatOpenAI(model="gpt-4-turbo", temperature=0.5, max_tokens=1500)` or ChatOllama equivalent
+- Fed through `chain_factory.py` LCEL chain
 
 ### 8.5 Fallback Mechanism
 
@@ -1356,7 +1393,7 @@ A single chat request from a logged-in patient (patient_id provided):
 | `process_client_docs.py` | Per-client document ingestion pipeline | `process_client_document`, `calculate_file_hash` |
 | `build_base_db.py` | Shared base knowledge ingestion (Malay OCR, NUL sanitisation) | `build_base_database`, `process_single_file` |
 | `image_handler.py` | `[IMAGE:]` marker parsing, CSV annotation lookup | `parse_response_for_image`, `find_image_url` |
-| `seed_patients.py` | Seeds 5 demo Malaysian patients (idempotent) | `main` |
+| `seed_patients.py` | Seeds 8 demo Malaysian patients (idempotent) | `main` |
 | `generate_embedding_training_data.py` | Generates (query, passage) pairs from pgvector chunks via LLM | `main`, `fetch_all_chunks`, `_ollama_generate` |
 | `finetune_embeddings.py` | LoRA fine-tuning of bge-m3 / gte-Qwen2 on RTX 3050 | `run_training`, `build_dataset` |
 | `generate_training_data.py` | Synthetic ADIME conversation generation for LLM fine-tuning | `generate_conversation` |

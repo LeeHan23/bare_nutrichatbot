@@ -68,6 +68,10 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .pmeta{font-family:system-ui,sans-serif;font-size:.74rem;opacity:.58;line-height:1.7}
 .bmic{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:20px;padding:4px 12px;font-family:system-ui,sans-serif;font-size:.72rem;margin-top:10px}
 .bmin{font-family:Georgia,serif;font-size:.98rem;font-weight:700}
+.blvl{display:none;align-items:center;gap:8px;margin-top:10px;font-family:system-ui,sans-serif;font-size:.72rem}
+.blvl.show{display:flex}
+.blvl-badge{font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.04em}
+.blvl-label{opacity:.6}
 .sbs{padding:15px 22px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
 .sbst{font-family:system-ui,sans-serif;font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;opacity:.42;margin-bottom:9px}
 .pills{display:flex;flex-wrap:wrap;gap:5px}
@@ -203,6 +207,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       <div class="pname" id="pn">—</div>
       <div class="pmeta" id="pmt">—</div>
       <div class="bmic" id="bmic" style="display:none">BMI&nbsp;<span class="bmin" id="bmiv">—</span>&nbsp;<span id="bmicat" style="opacity:.58;font-family:system-ui,sans-serif;font-size:.68rem">—</span></div>
+      <div class="blvl" id="blvl"><span class="blvl-badge" id="blvlb"></span><span class="blvl-label" id="blvll"></span></div>
     </div>
     <div class="sbs"><div class="sbst">Conditions</div><div class="pills" id="s-c"><span class="sbe">None recorded</span></div></div>
     <div class="sbs"><div class="sbst">Medications</div><div class="pills" id="s-m"><span class="sbe">None recorded</span></div></div>
@@ -302,6 +307,23 @@ function goDash(data){
     document.getElementById('bmiv').textContent=bmi;document.getElementById('bmicat').textContent=cat;document.getElementById('bmic').style.display='inline-flex';
   }
   fillP('s-c',data.conditions,'pc');fillP('s-m',data.medications,'pm');fillP('s-d',data.dietary_restrictions,'pd');fillP('s-a',data.allergies,'pa');
+  var lvlMap={
+    'L0':{bg:'rgba(34,197,94,.2)',color:'#4ade80',label:'General Wellness'},
+    'L1':{bg:'rgba(96,165,250,.2)',color:'#93c5fd',label:'Moderate Risk'},
+    'L2':{bg:'rgba(245,158,11,.25)',color:'#fcd34d',label:'Elevated Risk'},
+    'L3':{bg:'rgba(239,68,68,.25)',color:'#f87171',label:'Clinical Risk'}
+  };
+  var lvl=data.personalization_level;
+  var blvl=document.getElementById('blvl');
+  if(lvl&&lvlMap[lvl]){
+    var lc=lvlMap[lvl];
+    var badge=document.getElementById('blvlb');
+    badge.textContent=lvl;
+    badge.style.background=lc.bg;
+    badge.style.color=lc.color;
+    document.getElementById('blvll').textContent=lc.label;
+    blvl.classList.add('show');
+  }else{blvl.classList.remove('show');}
   var fn=name.split(' ')[0];
   document.getElementById('csub').textContent='Personalised advice for '+fn;
   document.getElementById('msgs').innerHTML='';
@@ -359,6 +381,7 @@ function signOut(){
   pat=null;sid='';pendingName='';
   document.getElementById('ln').value='';document.getElementById('vi').value='';
   clrSt('ls');clrSt('vs');document.getElementById('bmic').style.display='none';
+  document.getElementById('blvl').classList.remove('show');
   closeSB();showScr('scr-login');setTimeout(function(){document.getElementById('ln').focus();},350);
 }
 function openSB(){document.getElementById('sb').classList.add('open');document.getElementById('mask').style.display='block';}

@@ -18,13 +18,13 @@ import os
 import sys
 import time
 
-sys.path.insert(0, '/mnt/ssd/bare_NutriChatbot')
+sys.path.insert(0, '/mnt/ext/bare_NutriChatbot')
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
-load_dotenv('/mnt/ssd/bare_NutriChatbot/.env')
+load_dotenv('/mnt/ext/bare_NutriChatbot/.env')
 
 PGVECTOR_URL = os.getenv("PGVECTOR_URL")
 if not PGVECTOR_URL:

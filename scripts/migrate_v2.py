@@ -10,7 +10,7 @@ New columns:
   - personalization_level  (L0/L1/L2/L3 — dietitian-assigned)
 """
 import sys
-sys.path.insert(0, '/mnt/ssd/bare_NutriChatbot')
+sys.path.insert(0, '/mnt/ext/bare_NutriChatbot')
 
 from sqlalchemy import text, inspect
 import database as db

@@ -20,6 +20,7 @@ import database as db
 from dependencies import get_db, get_api_client
 from website_chat_router import chat_router
 from admin_router import router as admin_router
+from content_api_router import router as content_router
 from process_client_docs import process_client_document, calculate_file_hash
 
 # --- Load Environment Variables ---
@@ -400,9 +401,16 @@ app.include_router(
 
 # The chat router endpoints handle authentication individually
 app.include_router(
-    chat_router, 
-    prefix="/chat", 
+    chat_router,
+    prefix="/chat",
     tags=["Chat"]
+)
+
+# Weekly E/K/A content API (X-API-Key authenticated)
+app.include_router(
+    content_router,
+    prefix="/content",
+    tags=["Content Library"]
 )
 
 # --- NEW: Batch File Upload Endpoint ---
@@ -607,10 +615,13 @@ async def patient_login(
                 "age": p.age,
                 "gender": p.gender,
                 "ethnicity": p.ethnicity,
+                "weight_kg": p.weight_kg,
+                "height_cm": p.height_cm,
                 "conditions": p.conditions or [],
                 "medications": p.medications or [],
                 "dietary_restrictions": p.dietary_restrictions or [],
                 "allergies": p.allergies or [],
+                "personalization_level": p.personalization_level,
             }
         # IC provided but not matched — fall through to create new
         matches = []
@@ -625,10 +636,13 @@ async def patient_login(
             "age": p.age,
             "gender": p.gender,
             "ethnicity": p.ethnicity,
+            "weight_kg": p.weight_kg,
+            "height_cm": p.height_cm,
             "conditions": p.conditions or [],
             "medications": p.medications or [],
             "dietary_restrictions": p.dietary_restrictions or [],
             "allergies": p.allergies or [],
+            "personalization_level": p.personalization_level,
         }
 
     if len(matches) > 1:
