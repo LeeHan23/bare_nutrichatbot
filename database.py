@@ -121,7 +121,8 @@ class Patient(Base):
     hashed_password = Column(String)
 
     # WhatsApp delivery
-    phone_number    = Column(String, nullable=True)   # e.g. +60123456789
+    phone_number       = Column(String, nullable=True)   # e.g. +60123456789
+    whatsapp_opted_out = Column(Boolean, default=False)   # True after patient replies STOP
 
     # Content delivery tracking — set on first chat message
     first_chat_at   = Column(DateTime, nullable=True)
@@ -349,6 +350,20 @@ def get_patient(db_session, patient_id: int):
 def get_patient_by_username(db_session, username: str):
     """Fetch a patient by username."""
     return db_session.query(Patient).filter(Patient.username == username).first()
+
+
+def normalise_phone_number(phone_number: str) -> str:
+    """Normalise to +<country><number> — strip 'whatsapp:' prefix, spaces, dashes."""
+    cleaned = phone_number.replace("whatsapp:", "").strip().replace(" ", "").replace("-", "")
+    if not cleaned.startswith("+"):
+        cleaned = "+" + cleaned
+    return cleaned
+
+
+def get_patient_by_phone(db_session, phone_number: str):
+    """Look up a patient by their WhatsApp phone number (any format; normalised before lookup)."""
+    normalised = normalise_phone_number(phone_number)
+    return db_session.query(Patient).filter(Patient.phone_number == normalised).first()
 
 
 def get_patients_by_name(db_session, name: str, client_id: int):

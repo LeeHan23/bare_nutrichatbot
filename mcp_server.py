@@ -721,6 +721,10 @@ async def _send_patient_content(
 
         # Dispatch via WhatsApp when requested
         if channel == "whatsapp":
+            if patient.whatsapp_opted_out:
+                result["whatsapp"] = {"success": False, "error": "Patient has opted out of WhatsApp content (replied STOP)."}
+                return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
             import whatsapp as wa
             first_name = patient.name.split()[0] if patient.name else "there"
             if material.content_type:
@@ -954,10 +958,7 @@ async def _submit_dev_material(
 async def _set_patient_phone(patient_id: int, phone_number: str) -> list[types.TextContent]:
     import database as db
 
-    # Normalise: ensure + prefix, strip spaces/dashes
-    normalised = phone_number.strip().replace(" ", "").replace("-", "")
-    if not normalised.startswith("+"):
-        normalised = "+" + normalised
+    normalised = db.normalise_phone_number(phone_number)
 
     session = db.SessionLocal()
     try:
@@ -967,6 +968,7 @@ async def _set_patient_phone(patient_id: int, phone_number: str) -> list[types.T
                 {"error": f"Patient {patient_id} not found"}
             ))]
         patient.phone_number = normalised
+        patient.whatsapp_opted_out = False
         session.commit()
         return [types.TextContent(type="text", text=json.dumps({
             "updated": True,
