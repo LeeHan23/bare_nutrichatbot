@@ -406,6 +406,15 @@ app.include_router(
     tags=["Chat"]
 )
 
+# WhatsApp inbound webhooks (Twilio + Meta) — authenticated via provider
+# signature/verify-token, not X-API-Key.
+from whatsapp_router import whatsapp_router
+app.include_router(
+    whatsapp_router,
+    prefix="/chat",
+    tags=["WhatsApp"]
+)
+
 # Weekly E/K/A content API (X-API-Key authenticated)
 app.include_router(
     content_router,

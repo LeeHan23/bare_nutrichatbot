@@ -16,6 +16,9 @@ SQLAlchemy
 pytest
 libmagic
 
+#--- WhatsApp (Twilio provider) ---
+twilio
+
 #--- Web UI ---
 streamlit
 

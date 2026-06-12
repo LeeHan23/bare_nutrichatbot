@@ -66,6 +66,8 @@ UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_u
 ├── vector_store.py           # PGVector TopicBoostedRetriever, LoRA embedding model
 ├── embeddings.py             # Embedding utilities (BAAI/bge-m3 + LoRA)
 ├── website_chat_router.py    # /chat/get_response (streaming) + /chat/get_response_sync
+├── whatsapp_router.py        # /chat/whatsapp (Twilio) + /chat/whatsapp/meta (Meta Cloud API) inbound webhooks
+├── whatsapp.py                # WhatsApp send_message + EKA/tips message formatters
 ├── admin_router.py           # Admin API routes
 ├── client_portal_router.py   # Client-facing portal routes
 ├── mcp_server.py             # MCP server for Claude Desktop integration
@@ -103,6 +105,7 @@ UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_u
 │   ├── test_content_pipeline.py     # Smoke tests for content pipeline (4 tests)
 │   ├── migrate_v2.py                # v2 supplementary fields DB migration
 │   ├── migrate_chat_history.py      # Creates chat_messages table (conversation history persistence)
+│   ├── migrate_whatsapp_columns.py  # Adds whatsapp_opted_out column to patients
 │   ├── database_patch.py            # Ad-hoc DB patch script
 │   ├── reembed_with_keywords.py     # Re-embed chunks with keyword metadata
 │   ├── enrich_v1_with_keywords.py   # Add doc_keywords/topics to existing chunks
@@ -255,6 +258,11 @@ class PatientStore(ABC):
 
 Tables: `content_materials`, `content_delivery_log`
 
+### WhatsApp (DEPLOYED ✓)
+`phone_number` (e.g. `+60123456789`, set via `set_patient_phone` MCP tool), `whatsapp_opted_out` (Boolean, set by replying STOP/BERHENTI to a WhatsApp message).
+
+Table: `chat_messages` (session_id, patient_id, role, content, created_at) — also used for WhatsApp sessions (`session_id=f"whatsapp-{patient_id}"`).
+
 ---
 
 ## Completed Work (chronological)
@@ -300,11 +308,16 @@ Added 12 June 2026. New `chat_messages` table (`id, session_id, patient_id, role
 - `session_id == "keepalive"` (used by the Cloudflare keep-alive cron) is excluded from history load/persist to avoid polluting the table
 - Verified end-to-end: a second turn referencing "what we just discussed" correctly pulled context from turn 1, surviving a full `systemctl restart nutribot`
 
-### 5. WhatsApp integration
-- Twilio or Meta API webhook → `/chat/whatsapp` endpoint
-- Phone number → patient_id mapping table
-- Conversation history persistence (item 4) is now done — this is unblocked
-- Content delivery via WhatsApp needs a send function wired to ContentDeliveryLog
+### 5. ✅ DONE (inbound webhook) — WhatsApp integration
+Added 12 June 2026. `whatsapp_router.py`, mounted under `/chat` (no X-API-Key — auth is via provider signature/verify-token):
+- `POST /chat/whatsapp` — Twilio inbound webhook (form-encoded). Validates `X-Twilio-Signature` via `twilio.request_validator.RequestValidator` (skipped with a warning if `TWILIO_AUTH_TOKEN` is unset). Replies with empty TwiML; the real reply is sent async via the REST API.
+- `GET /chat/whatsapp/meta` — Meta Cloud API verification handshake (`hub.verify_token` checked against `META_VERIFY_TOKEN`).
+- `POST /chat/whatsapp/meta` — Meta Cloud API inbound webhook (JSON).
+- Both providers resolve the sender via `database.get_patient_by_phone()` / `normalise_phone_number()` (strips `whatsapp:` prefix, spaces, dashes; ensures `+` prefix — `+60123456789`).
+- STOP/BERHENTI and START/MULA set/clear `Patient.whatsapp_opted_out` (new column, migrated via `scripts/migrate_whatsapp_columns.py`). Opt-out only gates scheduled content (`_send_patient_content` in `mcp_server.py` now checks it before sending) — direct chat replies still work.
+- Normal messages run in a `BackgroundTask` (`_process_and_reply`): calls `rag.get_rag_response()` with `session_id=f"whatsapp-{patient_id}"` (so conversation history from item 4 carries over), runs the extractor in the background too, truncates replies to 1500 chars, and sends via `whatsapp.send_message()`.
+- Outbound delivery (`whatsapp.py` formatters, `_send_patient_content` dispatch, `phone_number`/`set_patient_phone`) was already built in a prior session.
+- **Still pending**: set `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_WHATSAPP_FROM` (or `META_WHATSAPP_TOKEN` / `META_WHATSAPP_PHONE_ID` / `META_VERIFY_TOKEN`) in `.env`, configure the webhook URL with the provider (`https://nutribot.computationalrd.com/chat/whatsapp`), and link patient phone numbers via `set_patient_phone` (MCP tool).
 
 ### 6. Test bilingual extractor end-to-end
 - Send a Malay-language chat message through the public URL
@@ -478,6 +491,7 @@ Pending dietitian review: `data/encpt/encpt_curated.md` (send to supervising die
 | Run v2 migration | `/home/han/miniconda3/bin/python scripts/migrate_v2.py` |
 | Run content pipeline migration | `/home/han/miniconda3/bin/python scripts/migrate_content_pipeline.py` |
 | Run chat history migration | `/home/han/miniconda3/bin/python scripts/migrate_chat_history.py` |
+| Run WhatsApp columns migration | `/home/han/miniconda3/bin/python scripts/migrate_whatsapp_columns.py` |
 | Run build schema | `/home/han/miniconda3/bin/python data/encpt/build_curated_schema.py` |
 | Check DB | `/home/han/miniconda3/bin/python -c "import database as db; ..."` |
 | Generate content | `/home/han/miniconda3/bin/python scripts/generate_content.py --client-id 4` |
