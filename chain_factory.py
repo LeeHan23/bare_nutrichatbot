@@ -2,19 +2,54 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from llm import get_llm
 from vector_store import get_retriever
-
-# In-process session memory store: session_id -> InMemoryChatMessageHistory
-# This resets on server restart. Use Redis-backed history for persistence across restarts.
-_session_store: dict[str, InMemoryChatMessageHistory] = {}
+import database as db
 
 
-def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
-    if session_id not in _session_store:
-        _session_store[session_id] = InMemoryChatMessageHistory()
-    return _session_store[session_id]
+class DBChatMessageHistory(BaseChatMessageHistory):
+    """Conversation history backed by the chat_messages table.
+
+    Survives bot restarts, unlike the old InMemoryChatMessageHistory.
+    patient_id is best-effort (NULL if unknown) — used only for analytics/filtering.
+    """
+
+    def __init__(self, session_id: str, patient_id: int | None = None):
+        self.session_id = session_id
+        self.patient_id = patient_id
+
+    @property
+    def messages(self) -> list[BaseMessage]:
+        session = db.SessionLocal()
+        try:
+            rows = db.get_chat_history(session, self.session_id)
+        finally:
+            session.close()
+        return [
+            HumanMessage(content=row.content) if row.role == "user" else AIMessage(content=row.content)
+            for row in rows
+        ]
+
+    def add_message(self, message: BaseMessage) -> None:
+        role = "user" if isinstance(message, HumanMessage) else "assistant"
+        session = db.SessionLocal()
+        try:
+            db.add_chat_message(session, self.session_id, self.patient_id, role, message.content)
+        finally:
+            session.close()
+
+    def clear(self) -> None:
+        session = db.SessionLocal()
+        try:
+            db.clear_chat_history(session, self.session_id)
+        finally:
+            session.close()
+
+
+def get_session_history(session_id: str) -> DBChatMessageHistory:
+    return DBChatMessageHistory(session_id)
 
 
 def _format_docs(docs) -> str:

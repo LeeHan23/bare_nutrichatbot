@@ -35,6 +35,7 @@ async def stream_rag_response(
     session_id: str,
     profile: dict | None = None,
     is_patient_self: bool = False,
+    patient_id: int | None = None,
 ):
     """Streams the RAG response using the client's knowledge base."""
     try:
@@ -44,6 +45,7 @@ async def stream_rag_response(
             chat_session_id=session_id,
             profile=profile,
             is_patient_self=is_patient_self,
+            patient_id=patient_id,
         )
         for chunk in response_data.get("answer", ""):
             yield chunk
@@ -173,6 +175,7 @@ async def get_chat_response(
             request.session_id,
             resolved_profile,
             is_patient_self=is_patient_self,
+            patient_id=request.patient_id,
         ),
         media_type="text/event-stream",
     )
@@ -212,6 +215,7 @@ async def get_chat_response_sync(
         request.session_id,
         resolved_profile,
         is_patient_self=is_patient_self,
+        patient_id=request.patient_id,
     ):
         full_response += chunk
 

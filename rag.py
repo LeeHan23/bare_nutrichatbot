@@ -10,6 +10,7 @@ from llm import (
 from image_handler import parse_response_for_image
 from chain_factory import create_conversational_chain
 from vector_store import get_retriever
+import database as db
 
 _LEVEL_INSTRUCTIONS = {
     "L0": (
@@ -158,6 +159,7 @@ def _build_qwen_prompt(
     food_context: str,
     profile: dict | None,
     is_patient_self: bool,
+    history_text: str = "",
 ) -> str:
     """Build the Qwen generation prompt for Option B (CLaRa-compress → Qwen-generate).
 
@@ -189,6 +191,9 @@ def _build_qwen_prompt(
     if food_context:
         parts.append(f"\n## Food Context\n{food_context}")
 
+    if history_text:
+        parts.append(f"\n## Conversation So Far\n{history_text}")
+
     if is_patient_self:
         parts.append(
             "\n## Voice Rules — apply to every word of your reply\n"
@@ -219,7 +224,36 @@ def _build_qwen_prompt(
     return "\n".join(parts)
 
 
-def get_rag_response(question: str, client_id: int, chat_session_id: str, profile: dict | None = None, is_patient_self: bool = False) -> dict:
+def _load_history_text(chat_session_id: str) -> str:
+    """Load persisted conversation history for a session as a plain text transcript."""
+    if not chat_session_id or chat_session_id == "keepalive":
+        return ""
+    db_session = db.SessionLocal()
+    try:
+        rows = db.get_chat_history(db_session, chat_session_id)
+    finally:
+        db_session.close()
+    if not rows:
+        return ""
+    return "\n".join(
+        f"{'Patient' if row.role == 'user' else 'NutriBot'}: {row.content}"
+        for row in rows
+    )
+
+
+def _persist_turn(chat_session_id: str, patient_id: int | None, question: str, answer: str) -> None:
+    """Persist one user/assistant exchange so history survives bot restarts."""
+    if not chat_session_id or chat_session_id == "keepalive":
+        return
+    db_session = db.SessionLocal()
+    try:
+        db.add_chat_message(db_session, chat_session_id, patient_id, "user", question)
+        db.add_chat_message(db_session, chat_session_id, patient_id, "assistant", answer)
+    finally:
+        db_session.close()
+
+
+def get_rag_response(question: str, client_id: int, chat_session_id: str, profile: dict | None = None, is_patient_self: bool = False, patient_id: int | None = None) -> dict:
     patient_context = ""
     if profile:
         # --- Existing keys (backward-compatible with raw profile dicts) ---
@@ -266,6 +300,9 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
     else:
         target_disease = identify_target_disease(question)
 
+    # Load persisted conversation history (survives bot restarts).
+    history_text = _load_history_text(chat_session_id)
+
     # ============================================================
     # Agent path — Qwen with MCP tool calling (USE_AGENT_TOOLS=true)
     # ============================================================
@@ -284,6 +321,7 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
                 "I'm sorry, I couldn't generate a response right now. "
                 "Please try again shortly."
             )
+        _persist_turn(chat_session_id, patient_id, question, answer)
         return parse_response_for_image(answer)
 
     # ============================================================
@@ -353,10 +391,12 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
                     "Be concise and practical; skip definitions and unnecessary preamble."
                 )
             food_block = f"\n\nFood context: {food_context}" if food_context else ""
-            clara_prompt = f"{header}{food_block}\n\nInstruction: {instruction}\n\nQuestion: {question}\n\nAnswer:"
+            history_block = f"\n\nConversation so far:\n{history_text}" if history_text else ""
+            clara_prompt = f"{header}{food_block}{history_block}\n\nInstruction: {instruction}\n\nQuestion: {question}\n\nAnswer:"
         else:
             food_block = f"Food context: {food_context}\n\n" if food_context else ""
-            clara_prompt = f"{food_block}Instruction: Be conversational and practical; skip definitions and unnecessary preamble.\n\nQuestion: {question}\n\nAnswer:"
+            history_block = f"Conversation so far:\n{history_text}\n\n" if history_text else ""
+            clara_prompt = f"{food_block}{history_block}Instruction: Be conversational and practical; skip definitions and unnecessary preamble.\n\nQuestion: {question}\n\nAnswer:"
 
         answer = call_clara_api(clara_prompt, documents=doc_texts)
 
@@ -366,6 +406,7 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
                 "The nutrition assistant may be temporarily unavailable. Please try again shortly."
             )
 
+        _persist_turn(chat_session_id, patient_id, question, answer)
         return parse_response_for_image(answer)
 
     # ============================================================
@@ -403,7 +444,7 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
             food_context = ""
 
         qwen_prompt = _build_qwen_prompt(
-            question, patient_context, digest, food_context, profile, is_patient_self
+            question, patient_context, digest, food_context, profile, is_patient_self, history_text
         )
         print(f"[DEBUG] Qwen prompt length: {len(qwen_prompt)} chars")
 
@@ -415,6 +456,7 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
                 "Please try again shortly."
             )
 
+        _persist_turn(chat_session_id, patient_id, question, answer)
         return parse_response_for_image(answer)
 
     # ============================================================

@@ -1,6 +1,6 @@
 import os
 import secrets
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, JSON, Float, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, JSON, Float, Boolean, Text
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -295,6 +295,23 @@ class ContentDeliveryLog(Base):
     channel        = Column(String, nullable=True)                 # whatsapp | email | in_app
 
     material = relationship("ContentMaterial", back_populates="delivery_logs")
+
+
+# --- Chat Message Model ---
+class ChatMessage(Base):
+    """
+    Persisted conversation history, keyed by session_id.
+    Survives bot restarts (unlike the old InMemoryChatMessageHistory) and
+    gives WhatsApp / multi-channel delivery a shared history per patient session.
+    """
+    __tablename__ = "chat_messages"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=True, index=True)
+    role       = Column(String, nullable=False)   # "user" | "assistant"
+    content    = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, index=True)
 
 
 # Tables are created at app startup (see app.py startup_event).
@@ -594,3 +611,39 @@ def patient_to_profile_dict(patient) -> dict:
         "activity_types":          patient.activity_types          or [],
         "extractor_food_allergies": patient.extractor_food_allergies or [],
     }
+
+
+# --- Chat History Functions ---
+
+def add_chat_message(db_session, session_id: str, patient_id: int | None, role: str, content: str):
+    """Append one message (role: 'user' or 'assistant') to a session's history."""
+    from datetime import datetime
+    msg = ChatMessage(
+        session_id=session_id,
+        patient_id=patient_id,
+        role=role,
+        content=content,
+        created_at=datetime.utcnow(),
+    )
+    db_session.add(msg)
+    db_session.commit()
+    return msg
+
+
+def get_chat_history(db_session, session_id: str, limit: int = 12):
+    """Return the most recent `limit` messages for a session, oldest first."""
+    rows = (
+        db_session.query(ChatMessage)
+        .filter(ChatMessage.session_id == session_id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return list(reversed(rows))
+
+
+def clear_chat_history(db_session, session_id: str) -> int:
+    """Delete all messages for a session. Returns the number of rows deleted."""
+    count = db_session.query(ChatMessage).filter(ChatMessage.session_id == session_id).delete()
+    db_session.commit()
+    return count
