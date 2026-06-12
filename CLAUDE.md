@@ -46,9 +46,9 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
 | /dev/sdb1 | /mnt/ext | MEEEE | exFAT | 932GB | **Active project drive** (~910GB free) |
 | /dev/nvme0n1p3 | / | — | ext4 | 465GB | OS drive |
 
-**IMPORTANT:** `/mnt/ssd` is full. The project codebase lives on `/mnt/ext`. `/mnt/sdb1` must be mounted on boot — add to `/etc/fstab` if not already:
+**IMPORTANT:** `/mnt/ssd` is full. The project codebase lives on `/mnt/ext`. `/dev/sdb1` is mounted on boot via `/etc/fstab` (added 12 June 2026, by UUID with `nofail`):
 ```
-/dev/sdb1  /mnt/ext  exfat  rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro  0  0
+UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro,nofail 0 0
 ```
 
 ---
@@ -102,6 +102,7 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
 │   ├── migrate_content_pipeline.py  # Idempotent migration for content pipeline tables
 │   ├── test_content_pipeline.py     # Smoke tests for content pipeline (4 tests)
 │   ├── migrate_v2.py                # v2 supplementary fields DB migration
+│   ├── migrate_chat_history.py      # Creates chat_messages table (conversation history persistence)
 │   ├── database_patch.py            # Ad-hoc DB patch script
 │   ├── reembed_with_keywords.py     # Re-embed chunks with keyword metadata
 │   ├── enrich_v1_with_keywords.py   # Add doc_keywords/topics to existing chunks
@@ -273,43 +274,36 @@ Tables: `content_materials`, `content_delivery_log`
 
 ## Pending Work — in priority order
 
-### 1. Run content generation live test
-```bash
-cd /mnt/ext/bare_NutriChatbot
-NUTRIBOT_TEST_LIVE=1 python scripts/test_content_pipeline.py --test generation
-```
-Calls Ollama, verifies tips are returned. Then run full generation for all clients:
-```bash
-python scripts/generate_content.py --client-id 4
-```
-Dev team reviews Excel in `materials/`, marks materials `is_active=True` in DB.
+### 1. ✅ DONE — Run content generation live test
+Superseded by the weekly EKA pipeline (§25 of ARCHITECTURE.md). Weeks 22-24 EKA materials generated and approved (63 items, 11 June 2026); one item (id=68) flagged for dietitian review — see `materials/eka_dietitian_review_flags.md`.
 
-### 2. Set up content scheduler cron
+### 2. ✅ DONE — Content scheduler cron
+Both schedulers are in crontab:
 ```
-0 8 * * * /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/content_scheduler.py
-```
-Add via `crontab -e`. First dry-run test:
-```bash
-python scripts/test_content_pipeline.py --seed-dates
-python scripts/test_content_pipeline.py --test scheduler
+0 8 * * * /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/content_scheduler.py >> /mnt/ext/bare_NutriChatbot/logs/content_scheduler.log 2>&1
+0 6 * * 1 /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/weekly_eka_scheduler.py >> /mnt/ext/bare_NutriChatbot/logs/weekly_eka.log 2>&1
 ```
 
-### 3. Add /mnt/ext to /etc/fstab for auto-mount on boot
+### 3. ✅ DONE — Add /mnt/ext to /etc/fstab for auto-mount on boot
+Added 12 June 2026:
 ```
-/dev/sdb1  /mnt/ext  exfat  rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro  0  0
+UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro,nofail 0 0
 ```
-Without this, drive must be manually mounted after every reboot and the bot will fail to start.
+Verified with `sudo mount -fav` → `/mnt/ext : already mounted`.
 
-### 4. Persist conversation history to DB
-Currently `InMemoryChatMessageHistory` in `chain_factory.py` — history lost on bot restart.
-- Add `chat_messages` table (session_id, patient_id, role, content, created_at)
-- Swap `InMemoryChatMessageHistory` → `DBChatMessageHistory` adapter
-- Required for WhatsApp delivery
+### 4. ✅ DONE — Persist conversation history to DB
+Added 12 June 2026. New `chat_messages` table (`id, session_id, patient_id, role, content, created_at`), created via `scripts/migrate_chat_history.py` (auto-creates the table — no ALTER needed).
+- `database.add_chat_message()` / `get_chat_history()` / `clear_chat_history()` — CRUD helpers
+- `chain_factory.DBChatMessageHistory` replaces `InMemoryChatMessageHistory` for the legacy LangChain path (`RunnableWithMessageHistory` reads/writes via this class automatically)
+- Active Option B path (`rag.get_rag_response`): `_load_history_text()` loads the last 12 messages and injects them as a "## Conversation So Far" block into the Qwen prompt; `_persist_turn()` saves the new user/assistant exchange after generation. Same wiring added to the CLaRa-primary and agent-tool paths.
+- `get_rag_response()` now takes an optional `patient_id` param (passed through from `website_chat_router.py` and `mcp_server.py`) so rows can be filtered per patient
+- `session_id == "keepalive"` (used by the Cloudflare keep-alive cron) is excluded from history load/persist to avoid polluting the table
+- Verified end-to-end: a second turn referencing "what we just discussed" correctly pulled context from turn 1, surviving a full `systemctl restart nutribot`
 
 ### 5. WhatsApp integration
 - Twilio or Meta API webhook → `/chat/whatsapp` endpoint
 - Phone number → patient_id mapping table
-- Requires conversation history persistence (item 4 above)
+- Conversation history persistence (item 4) is now done — this is unblocked
 - Content delivery via WhatsApp needs a send function wired to ContentDeliveryLog
 
 ### 6. Test bilingual extractor end-to-end
@@ -317,8 +311,8 @@ Currently `InMemoryChatMessageHistory` in `chain_factory.py` — history lost on
 - Verify extractor captures fields correctly in BM
 - Check `extractor_metadata` is populated with correct provenance
 
-### 7. Cloudflare keep-alive cron (IMMEDIATE)
-First request after long idle can exceed Cloudflare's 100s timeout (model cold-start).
+### 7. ✅ DONE — Cloudflare keep-alive cron
+Already in crontab, runs every 4 minutes:
 ```
 */4 * * * * curl -s -X POST -H "Content-Type: application/json" \
   -H "X-API-Key: nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3" \
@@ -434,10 +428,7 @@ NUTRIBOT_TEST_LIVE=1 python scripts/test_content_pipeline.py --test generation  
 
 | Issue | Impact | Mitigation |
 |-------|--------|------------|
-| `/mnt/ext` not in fstab | Bot fails to start after reboot | Add fstab entry (Pending Work #3) |
-| Cloudflare 100s timeout on cold start | 524 error for first request after idle | Keep-alive cron (Pending Work #7) |
 | CLaRa sometimes recommends bananas to CKD patients | Clinical risk | Prompt engineering, more training data |
-| Conversation history in-memory only | Lost on restart | Needs DB persistence (Pending Work #4) |
 | Mac Studio SSH via `studio-ssh.mrbing.dev` broken | Can't SSH as bing directly | Use AnyDesk as care-uitm, or local LAN |
 | exFAT on /mnt/ext breaks Python venvs | Must use miniconda, not .venv | Use /home/han/miniconda3/bin/python |
 | UiTM network blocks Tailscale | Can't use Tailscale on Mac Studio | Replaced with Cloudflare tunnels |
@@ -486,6 +477,7 @@ Pending dietitian review: `data/encpt/encpt_curated.md` (send to supervising die
 | Run extractor test | `/home/han/miniconda3/bin/python -c "from extractor import extract_from_message; ..."` |
 | Run v2 migration | `/home/han/miniconda3/bin/python scripts/migrate_v2.py` |
 | Run content pipeline migration | `/home/han/miniconda3/bin/python scripts/migrate_content_pipeline.py` |
+| Run chat history migration | `/home/han/miniconda3/bin/python scripts/migrate_chat_history.py` |
 | Run build schema | `/home/han/miniconda3/bin/python data/encpt/build_curated_schema.py` |
 | Check DB | `/home/han/miniconda3/bin/python -c "import database as db; ..."` |
 | Generate content | `/home/han/miniconda3/bin/python scripts/generate_content.py --client-id 4` |

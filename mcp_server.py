@@ -565,7 +565,7 @@ async def _get_nutrition_advice(
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
         None,
-        lambda: get_rag_response(question, client_id, session_id, profile),
+        lambda: get_rag_response(question, client_id, session_id, profile, patient_id=patient_id),
     )
     return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
