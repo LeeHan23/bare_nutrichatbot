@@ -723,12 +723,24 @@ async def _send_patient_content(
         if channel == "whatsapp":
             import whatsapp as wa
             first_name = patient.name.split()[0] if patient.name else "there"
-            body = wa.format_tips_message(
-                patient_first_name=first_name,
-                title=material.title,
-                tips=material.raw_tips or [],
-                day_offset=material.day_offset,
-            )
+            if material.content_type:
+                # Weekly EKA material (Exercise / Knowledge / Activity)
+                body = wa.format_eka_message(
+                    content_type=material.content_type,
+                    patient_first_name=first_name,
+                    title=material.title,
+                    content=material.raw_tips or {},
+                    week_number=material.week_number,
+                    personalization_level=patient.personalization_level,
+                )
+            else:
+                # Legacy day-offset nutrition tips
+                body = wa.format_tips_message(
+                    patient_first_name=first_name,
+                    title=material.title,
+                    tips=material.raw_tips or [],
+                    day_offset=material.day_offset,
+                )
             media_url = material.file_path if material.file_path and material.file_path.startswith("http") else None
             wa_result = wa.send_message(
                 to_phone=patient.phone_number or "",

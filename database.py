@@ -288,7 +288,7 @@ class ContentDeliveryLog(Base):
     patient_id     = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
     material_id    = Column(Integer, ForeignKey("content_materials.id"), nullable=True)
     condition_group = Column(String, nullable=False)               # denormalised for easy querying
-    day_offset     = Column(Integer, nullable=False)
+    day_offset     = Column(Integer, nullable=True)                 # NULL for weekly EKA deliveries
     scheduled_date = Column(DateTime, nullable=False, index=True)
     status         = Column(String, default="queued")              # queued | sent | failed | no_material
     sent_at        = Column(DateTime, nullable=True)

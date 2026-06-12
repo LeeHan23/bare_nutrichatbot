@@ -1,6 +1,6 @@
 # NutriChatbot — Full Architecture Document
 
-> Last updated: May 2026
+> Last updated: June 2026
 
 ## Table of Contents
 
@@ -57,6 +57,15 @@
 22. [Environment Variables Reference](#22-environment-variables-reference)
 23. [Data Flow: End-to-End Request Trace](#23-data-flow-end-to-end-request-trace)
 24. [Module Reference Table](#24-module-reference-table)
+25. [Content Drip Pipeline — Weekly EKA Content](#25-content-drip-pipeline--weekly-eka-content)
+    - 25.1 [Two-Pipeline Model](#251-two-pipeline-model)
+    - 25.2 [Data Model Changes](#252-data-model-changes)
+    - 25.3 [Weekly Generation (`generate_weekly_eka.py`)](#253-weekly-generation-generate_weekly_ekapy)
+    - 25.4 [Scheduler (`weekly_eka_scheduler.py`)](#254-scheduler-weekly_eka_schedulerpy)
+    - 25.5 [Content API (`content_api_router.py`)](#255-content-api-content_api_routerpy)
+    - 25.6 [Dev Review & Approval Workflow](#256-dev-review--approval-workflow)
+    - 25.7 [WhatsApp Delivery](#257-whatsapp-delivery)
+    - 25.8 [Patient App — "This Week" Tab](#258-patient-app--this-week-tab)
 
 ---
 
@@ -1257,6 +1266,8 @@ Self-contained single-page application — no CDN dependencies, no build step. A
 - **URL param API key (`?key=`)**: Clinics can distribute pre-authenticated URLs to patients (e.g., via QR code) without requiring patients to type an API key manually. The login screen shows a "Connected to clinic" badge when a key is present.
 - **IC auto-formatting**: The `fmtIC()` JS function formats input as `YYMMDD-SS-XXXX` as the user types, preventing manual format errors.
 
+**Added June 2026 — "This Week" tab:** Screen 3 now has a `Chat` / `This Week` tab switcher in the chat header. The "This Week" tab fetches `/content/patient-feed/{patient_id}` and renders the patient's personalised weekly Exercise/Knowledge/Activity (EKA) content as styled cards. See §25.8 for details.
+
 **Three screens:**
 
 **Screen 1 — Login:**
@@ -1567,3 +1578,250 @@ A single chat request from a logged-in patient (patient_id provided):
 | `test_bot_accuracy.py` | Integration test: answer quality | — |
 | `test_bot_culture.py` | Integration test: Malaysian culture handling | — |
 | `create_api_key.py` | CLI script to generate B2B API keys | — |
+| `content_api_router.py` | REST API for E/K/A weekly content (`/content/*`, X-API-Key auth) | `_serialize_material`, `patient_feed`, `weekly_feed`, `approve_material` |
+| `scripts/generate_content.py` | Legacy day-offset content generation (43 niche cases, day 3/5/7/14/21/30) | `generate_content`, `conditions_to_groups`, `CONDITION_MAP` |
+| `scripts/content_scheduler.py` | Daily cron: matches due patients (by `first_chat_at` + day_offset) to active legacy materials | `main` |
+| `scripts/generate_weekly_eka.py` | Weekly Exercise/Knowledge/Activity content generation (4-week rotating templates) | `generate_weekly_eka`, `build_eka_cases`, `_generate_exercise/_knowledge/_activity` |
+| `scripts/weekly_eka_scheduler.py` | Monday cron: expires old EKA materials, generates current week's E/K/A | `run`, `_cleanup`, `_week_already_generated` |
+| `scripts/migrate_eka_columns.py` | Adds `content_type`/`week_number`/`expires_at` to `content_materials`; makes `day_offset` nullable | `migrate` |
+| `scripts/migrate_content_delivery_log.py` | Makes `content_delivery_log.day_offset` nullable (for EKA deliveries) | `migrate` |
+| `whatsapp.py` | WhatsApp content delivery (Twilio/Meta), formats legacy tips and EKA E/K/A messages | `send_message`, `format_tips_message`, `format_eka_message` |
+
+---
+
+## 25. Content Drip Pipeline — Weekly EKA Content
+
+**Added June 2026.** Extends the original day-offset content drip (May 2026) with a second, parallel pipeline that delivers a rotating weekly programme of **Exercise (E)**, **Knowledge (K)**, and **Activity (A)** content, matched to each patient's condition group and personalization level (L0–L3).
+
+### 25.1 Two-Pipeline Model
+
+Both pipelines share the same `content_materials` / `content_delivery_log` tables, distinguished by the `content_type` column:
+
+| | Legacy day-offset pipeline (May 2026) | Weekly EKA pipeline (June 2026) |
+|---|---|---|
+| **Generator** | `scripts/generate_content.py` | `scripts/generate_weekly_eka.py` |
+| **Scheduler** | `scripts/content_scheduler.py` (daily cron) | `scripts/weekly_eka_scheduler.py` (Monday cron) |
+| **`content_type`** | `NULL` | `"E"` \| `"K"` \| `"A"` |
+| **`day_offset`** | `3, 5, 7, 14, 21, 30` (from `first_chat_at`) | `NULL` |
+| **`week_number`** | `NULL` | ISO week number |
+| **`raw_tips` shape** | `list[{tip_number, tip, source_hint}]` | structured `dict` (schema differs per E/K/A) |
+| **`expires_at`** | `NULL` (never expires) | `created_at + 14 days` |
+| **Niche cases** | 43 (7 condition groups × day offsets) | 21/week (7 condition groups × E/K/A), rotating over a 4-week template cycle |
+| **Delivery trigger** | One-off, tied to `first_chat_at` per patient | Recurring, same content for all patients in a condition group each week |
+
+Both pipelines are dispatched through the same `ContentDeliveryLog` table and the same `send_patient_content` MCP tool / WhatsApp formatter, which branch on `material.content_type` to pick the correct rendering path (see §25.7).
+
+### 25.2 Data Model Changes
+
+**File:** `database.py` — `ContentMaterial` / `ContentDeliveryLog` (§10, `content_materials` / `content_delivery_log` tables)
+
+New/changed columns (applied via `scripts/migrate_eka_columns.py` and `scripts/migrate_content_delivery_log.py`, both idempotent):
+
+```
+content_materials
+├── content_type   VARCHAR(1)  NULL   — "E" | "K" | "A" | NULL (legacy)
+├── week_number    INTEGER     NULL   — ISO week number (EKA only)
+├── expires_at     TIMESTAMP   NULL   — created_at + 14 days (EKA only); NULL = never expires
+└── day_offset     INTEGER     NULL   — now nullable (was NOT NULL; EKA rows have no day offset)
+
+content_delivery_log
+└── day_offset     INTEGER     NULL   — now nullable (EKA deliveries log day_offset=NULL)
+```
+
+**Key functions added to `database.py`:**
+
+| Function | Description |
+|---|---|
+| `upsert_eka_material(db, condition_group, condition_tags, content_type, week_number, topic, title, raw_content, force=False)` | Idempotent insert keyed on `(condition_group, content_type, week_number, topic)`; `force=True` overwrites |
+| `cleanup_expired_eka_materials(db)` | Deletes EKA rows where `expires_at < now`; returns count deleted |
+| `get_materials_by_filters(db, content_type=, week_number=, condition_group=, is_active=, include_expired=False, ...)` | General-purpose filtered query, excludes expired EKA rows by default |
+| `get_weekly_feed_for_conditions(db, condition_groups, week_number, content_type=None, is_active=True)` | Returns this week's E/K/A materials for the given condition groups |
+
+`EKA_EXPIRY_DAYS = 14` — chosen so that each Monday's scheduler run cleans up content from two weeks prior, keeping at most ~2 weeks of EKA materials live at once.
+
+### 25.3 Weekly Generation (`generate_weekly_eka.py`)
+
+**`_TEMPLATES`** is a nested dict: `condition_group → content_type ("E"/"K"/"A") → 4 topic-template tuples` (one per 4-week rotation slot). Covers the same 7 condition groups as the legacy pipeline: **T2DM, HTN, CKD, Cardiac, PCOS, Dyslipidaemia, General**.
+
+```
+build_eka_cases(iso_week):
+    rotation = ((iso_week - 1) % 4) + 1        # 1-4, cycles every 4 weeks
+    → 7 groups × 3 types = 21 cases for this week,
+      each picking the rotation-th template tuple
+```
+
+**Per-case generation pipeline:**
+
+```
+niche case (group, content_type, week_number, topic, title, rag_query, prompt_topic)
+    │
+    ▼
+_retrieve_chunks(rag_query, client_id)
+    ← PGVector similarity_search on base_knowledge (top 8) + client_{id}_knowledge (top 3, deduped)
+    ← shared with generate_content.py's retrieval helper
+    │
+    ▼
+_GENERATORS[content_type](niche, chunks)   — one of:
+    _generate_exercise()   → Ollama prompt includes _PERSONALIZATION_GUIDANCE (L0-L3 rules)
+    _generate_knowledge()
+    _generate_activity()
+    │
+    ▼
+_call_and_parse(prompt, max_tokens)
+    ← call_ollama_generate() via llm.py
+    ← strips ```json fences, json.loads()
+    ← on failure: {"raw_output": "...", "parse_error": true}
+    │
+    ▼
+upsert_eka_material(db, ..., raw_content=content, force=force)
+    ← is_active=False, expires_at=created_at+14 days
+```
+
+**Content JSON schemas (stored in `raw_tips`):**
+
+- **Exercise (E):** `{exercise_type, duration_min, frequency_per_week, intensity, warmup:[...], main_activity:[...], cooldown:[...], level_modifications:{L0,L1,L2,L3}, safety_stop_signs:[...], equipment_needed:[...], malaysian_context}`
+  - `level_modifications` is the bridge to the personalization system (§7.6) — each patient sees the modification matching their `personalization_level`.
+- **Knowledge (K):** `{topic_summary, learning_points:[{point, explanation, why_it_matters}] × 6, key_takeaway, local_context}`
+- **Activity (A):** `{task_name, description, instructions:[...], tracking_method, weekly_goal, micro_actions:[...] (Mon-Weekend), self_monitoring_prompts:[...], success_looks_like}`
+
+**Excel export:** `materials/eka_week{N}_{date}.xlsx` — one sheet per type (Exercise/Knowledge/Activity, colour-coded), one row per generated field per item, with a "Status" column for the dev team's review notes. Generated automatically at the end of every non-dry-run generation.
+
+**CLI:**
+```bash
+python scripts/generate_weekly_eka.py                          # current ISO week, all 21 items
+python scripts/generate_weekly_eka.py --week 24                 # specific week
+python scripts/generate_weekly_eka.py --group CKD --type K      # single item (fast test)
+python scripts/generate_weekly_eka.py --dry-run                  # no LLM call, no DB write
+python scripts/generate_weekly_eka.py --force                    # overwrite existing rows for that week
+```
+
+### 25.4 Scheduler (`weekly_eka_scheduler.py`)
+
+Cron entry point, runs every Monday at 06:00:
+
+```
+0 6 * * 1 /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/weekly_eka_scheduler.py
+```
+
+**Each run:**
+
+1. **Cleanup** — `cleanup_expired_eka_materials()` deletes EKA rows with `expires_at < now` (i.e. materials generated 2 weeks ago).
+2. **Idempotency check** — `_week_already_generated(iso_week)`: if any EKA material already exists for the current ISO week, skip (unless `--force`).
+3. **Generate** — calls `generate_weekly_eka()` for all 21 items, saved with `is_active=False`.
+4. Prints a reminder: approve via `POST /content/materials/{id}/approve` (requires `X-Admin-Password`).
+
+**Expiry lifecycle example:**
+```
+Mon week 22: cleanup (nothing old)        → generate week 22 (expires end of week 23)
+Mon week 23: cleanup (nothing old yet)    → generate week 23 (expires end of week 24)
+Mon week 24: cleanup DELETES week 22      → generate week 24
+```
+
+```bash
+python scripts/weekly_eka_scheduler.py              # normal run
+python scripts/weekly_eka_scheduler.py --dry-run     # show what would happen, no writes
+python scripts/weekly_eka_scheduler.py --force       # regenerate current week even if it exists
+python scripts/weekly_eka_scheduler.py --week 22     # backfill a specific week
+```
+
+### 25.5 Content API (`content_api_router.py`)
+
+Mounted in `app.py` at prefix `/content` (tags: "Content Library"), authenticated via `X-API-Key` (same as `/chat`).
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/content/materials` | API key | List materials, filterable by `content_type`, `week_number`, `condition_group`, `is_active`, `include_expired` |
+| GET | `/content/materials/{id}` | API key | Single material with full structured `content` |
+| GET | `/content/weekly-feed?conditions=T2DM,HTN` | API key | This week's E+K+A for given condition groups |
+| GET | `/content/patient-feed/{patient_id}` | API key | This week's feed matched to a specific patient (see below) |
+| POST | `/content/materials/{id}/approve` | API key + `X-Admin-Password` | Sets `is_active=True` |
+| POST | `/content/materials/{id}/unapprove` | API key + `X-Admin-Password` | Sets `is_active=False` |
+| POST | `/content/generate-weekly` | API key + `X-Admin-Password` | Background-triggers `generate_weekly_eka()` for current/specified week |
+| GET | `/content/summary` | API key | Per-type counts (total/active/pending) for a given week — dashboard stats |
+
+**`GET /content/patient-feed/{patient_id}`** is the endpoint consumed by `patient_app.html` (§25.8):
+
+```
+patient_feed(patient_id):
+    patient = db.get_patient(patient_id)            # 404 if missing, 403 if wrong client
+    groups  = conditions_to_groups(patient.conditions)   # from scripts/generate_content.py
+    materials = get_weekly_feed_for_conditions(groups, week_number=current_iso_week, is_active=True)
+    → {
+        week_number, patient_id, patient_name, condition_groups,
+        personalization_level: patient.personalization_level,
+        feed: {E: [...], K: [...], A: [...]},
+        total
+      }
+```
+
+`_serialize_material()` is the shared serializer used by every endpoint above:
+```
+{id, content_type, content_type_label, condition_group, condition_tags,
+ week_number, day_offset, topic, title, is_active,
+ content (= raw_tips), created_at, expires_at, is_expired}
+```
+
+### 25.6 Dev Review & Approval Workflow
+
+```
+weekly_eka_scheduler.py (Mon 06:00)
+    → 21 ContentMaterial rows, is_active=False, expires_at=+14 days
+    → materials/eka_week{N}_{date}.xlsx  (3 sheets: Exercise / Knowledge / Activity)
+        ↓
+Dev team reviews Excel, flags issues in materials/eka_dietitian_review_flags.md
+        ↓
+POST /content/materials/{id}/approve  (X-Admin-Password)
+        ↓
+Material now appears in /content/weekly-feed, /content/patient-feed/{id},
+and becomes eligible for WhatsApp delivery via send_patient_content
+```
+
+`materials/eka_dietitian_review_flags.md` tracks individual items pending supervising-dietitian sign-off before approval (e.g. an item recommending lentils to a CKD patient — flagged for potassium/phosphorus review).
+
+### 25.7 WhatsApp Delivery
+
+**File:** `whatsapp.py`
+
+`format_eka_message(content_type, patient_first_name, title, content, week_number=None, personalization_level=None)` dispatches on `content_type`:
+
+- **E** → `_format_exercise_message()`: title, `{exercise_type} • {duration_min} min • {frequency_per_week}x/week • {intensity} intensity`, Warm-up/Main activity/Cool-down lists, `_For you:_ {level_modifications[personalization_level]}` (personalised per patient), `⚠️ Stop and rest if you feel:` (safety_stop_signs), 🇲🇾 malaysian_context
+- **K** → `_format_knowledge_message()`: topic_summary, numbered learning_points with explanation + "Why it matters", 💡 key_takeaway, 🇲🇾 local_context
+- **A** → `_format_activity_message()`: task_name + description, numbered instructions, weekly_goal, Mon–Weekend micro_actions, 📝 tracking_method, ✅ success_looks_like
+
+If `content` is not a dict or has `parse_error: true`, a fallback "we hit a hiccup" message is sent instead (the patient is never shown raw JSON or an error).
+
+**File:** `mcp_server.py` — `_send_patient_content()` (MCP tool `send_patient_content`)
+
+When `channel="whatsapp"`, branches on `material.content_type`:
+```python
+if material.content_type:        # EKA — E/K/A
+    body = wa.format_eka_message(content_type=..., content=material.raw_tips,
+                                  week_number=..., personalization_level=patient.personalization_level)
+else:                              # legacy day-offset nutrition tips
+    body = wa.format_tips_message(patient_first_name=..., title=..., tips=material.raw_tips, day_offset=...)
+```
+
+This required `content_delivery_log.day_offset` to become nullable (§25.2), since `_send_patient_content` logs a `ContentDeliveryLog` row with `day_offset=material.day_offset`, which is `None` for EKA materials. Patient phone numbers are stored in `patients.phone_number` (set via the `set_patient_phone` MCP tool).
+
+### 25.8 Patient App — "This Week" Tab
+
+**File:** `patient_app.html` (Screen 3 — Dashboard + Chat)
+
+A `Chat` / `This Week` tab switcher (`#tab-chat` / `#tab-week`) was added to the chat header. Selecting "This Week":
+
+1. Hides the chat message list and input bar; shows a new `#wf` panel.
+2. On first activation (`wf.dataset.loaded` not set), calls `loadWeeklyFeed()`:
+   ```javascript
+   GET /content/patient-feed/{patient_id}   (X-API-Key header)
+   → { feed: {E:[...], K:[...], A:[...]}, personalization_level, ... }
+   ```
+3. Renders each material as a card via `renderE()` / `renderK()` / `renderA()`:
+   - **Exercise cards** (`.wf-card`): badge "Exercise · Week N", title, type/duration/frequency/intensity meta line, Warm-up/Main Activity/Cool-down sections, a `For you:` line picked from `level_modifications[personalization_level]`, "Stop & rest if you feel" safety signs, 🇲🇾 Malaysian context
+   - **Knowledge cards** (`.wf-card.tk`, blue accent): badge "Knowledge · Week N", topic summary, numbered learning points with "Why it matters" sub-text, 💡 key takeaway, 🇲🇾 local context
+   - **Activity cards** (`.wf-card.ta`, amber accent): badge "Activity · Week N", task name + description, "How to do it" instructions, 🎯 weekly goal, "Daily Plan" micro-actions, 📝 tracking method, ✅ success criteria
+   - Materials with `content.parse_error` are silently skipped (not rendered)
+4. If the feed is empty: "No content available for this week yet. Check back soon!"
+
+`switchTab()` / `loadWeeklyFeed()` / `wfList()` / `renderE/K/A()` are reset (cache cleared) on `goDash()` and `signOut()` so a new login always re-fetches the feed.
+
+No backend changes were required for this UI — it consumes the existing `/content/patient-feed/{patient_id}` endpoint from §25.5.
