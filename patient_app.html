@@ -115,6 +115,28 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .bsend{width:38px;height:38px;background:var(--g700);color:#fff;border:none;border-radius:9px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .18s}
 .bsend:hover{background:var(--g900)}
 .bsend:disabled{opacity:.32;cursor:default;transform:none}
+.ctabs{display:flex;gap:6px;font-family:system-ui,sans-serif}
+.ctab{padding:6px 14px;border-radius:8px;font-size:.78rem;font-weight:600;color:var(--muted);background:transparent;border:1.5px solid transparent;cursor:pointer;transition:all .18s;white-space:nowrap}
+.ctab:hover{color:var(--g700)}
+.ctab.active{color:var(--g700);background:var(--g100);border-color:var(--g200)}
+.wf{flex:1;overflow-y:auto;padding:24px 28px;display:none;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.wf.active{display:flex}
+.wf-empty{font-family:system-ui,sans-serif;font-size:.85rem;color:var(--muted);text-align:center;padding:40px 20px}
+.wf-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow-sm);padding:20px 24px;border-top:3px solid var(--g500)}
+.wf-card.tk{border-top-color:#60a5fa}
+.wf-card.ta{border-top-color:var(--amber)}
+.wf-badge{display:inline-block;font-family:system-ui,sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;background:var(--g100);color:var(--g700);margin-bottom:8px}
+.wf-badge.tk{background:rgba(96,165,250,.15);color:#2563eb}
+.wf-badge.ta{background:var(--amber-bg);color:#92400e}
+.wf-title{font-size:1.05rem;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
+.wf-meta{font-family:system-ui,sans-serif;font-size:.78rem;color:var(--muted);margin-bottom:12px}
+.wf-section{margin-bottom:10px}
+.wf-section h4{font-family:system-ui,sans-serif;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--g700);margin-bottom:5px}
+.wf-list{font-family:system-ui,sans-serif;font-size:.85rem;line-height:1.7;padding-left:18px}
+.wf-point{font-family:system-ui,sans-serif;font-size:.85rem;line-height:1.6;margin-bottom:8px}
+.wf-why{color:var(--muted);font-size:.78rem;font-style:italic}
+.wf-sub{font-family:system-ui,sans-serif;font-size:.8rem;color:var(--muted);margin-top:8px;line-height:1.5}
+.wf-take{font-family:system-ui,sans-serif;font-size:.84rem;background:var(--g100);border:1px solid var(--g200);border-radius:8px;padding:10px 13px;margin-top:8px;line-height:1.5}
 .sbo-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199}
 .sbtog{display:none;position:fixed;bottom:74px;right:18px;width:42px;height:42px;background:var(--g700);color:#fff;border:none;border-radius:50%;box-shadow:0 4px 16px rgba(26,107,69,.4);cursor:pointer;z-index:100;align-items:center;justify-content:center;transition:all .18s}
 .sbtog:hover{background:var(--g900)}
@@ -124,7 +146,9 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
   .sbtog{display:flex}
   .msgs{padding:20px 16px 12px}
   .cinbar{padding:12px 14px 16px}
-  .ctop{padding:13px 16px}
+  .ctop{padding:13px 16px;flex-wrap:wrap}
+  .ctabs{order:3;width:100%}
+  .wf{padding:18px 16px}
 }
 @media(max-width:480px){.card{padding:36px 24px}}
 </style>
@@ -226,13 +250,18 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
   <main class="chat-area">
     <div class="ctop">
       <div><h2>Nutrition Consultation</h2><div class="ctsub" id="csub">Personalised dietary guidance</div></div>
-      <button class="bnew" onclick="newChat()">
+      <div class="ctabs">
+        <button class="ctab active" id="tab-chat" onclick="switchTab('chat')">Chat</button>
+        <button class="ctab" id="tab-week" onclick="switchTab('week')">This Week</button>
+      </div>
+      <button class="bnew" id="btn-newchat" onclick="newChat()">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         New chat
       </button>
     </div>
     <div class="msgs" id="msgs"></div>
-    <div class="cinbar">
+    <div class="wf" id="wf"></div>
+    <div class="cinbar" id="cinbar">
       <div class="inbox">
         <input id="ci" type="text" placeholder="Ask a nutrition question..." onkeydown="if(event.key==='Enter')sendMsg()">
         <button class="bsend" id="bsd" onclick="sendMsg()">
@@ -327,6 +356,8 @@ function goDash(data){
   var fn=name.split(' ')[0];
   document.getElementById('csub').textContent='Personalised advice for '+fn;
   document.getElementById('msgs').innerHTML='';
+  document.getElementById('wf').innerHTML='';delete document.getElementById('wf').dataset.loaded;
+  switchTab('chat');
   var conds=(data.conditions||[]).join(', ');
   var g;
   if(data.is_new){g='Hello, '+fn+'! Welcome to NutriBot. I am here to help build a personalised nutrition plan. Could you tell me about any health conditions or dietary goals you have?';}
@@ -382,7 +413,86 @@ function signOut(){
   document.getElementById('ln').value='';document.getElementById('vi').value='';
   clrSt('ls');clrSt('vs');document.getElementById('bmic').style.display='none';
   document.getElementById('blvl').classList.remove('show');
+  document.getElementById('wf').innerHTML='';delete document.getElementById('wf').dataset.loaded;
+  switchTab('chat');
   closeSB();showScr('scr-login');setTimeout(function(){document.getElementById('ln').focus();},350);
+}
+function switchTab(tab){
+  var msgs=document.getElementById('msgs'),wf=document.getElementById('wf'),cinbar=document.getElementById('cinbar');
+  document.getElementById('tab-chat').classList.toggle('active',tab==='chat');
+  document.getElementById('tab-week').classList.toggle('active',tab==='week');
+  document.getElementById('btn-newchat').style.display=(tab==='chat')?'flex':'none';
+  if(tab==='chat'){
+    msgs.style.display='flex';cinbar.style.display='block';wf.classList.remove('active');
+  }else{
+    msgs.style.display='none';cinbar.style.display='none';wf.classList.add('active');
+    if(!wf.dataset.loaded){wf.dataset.loaded='1';loadWeeklyFeed();}
+  }
+}
+async function loadWeeklyFeed(){
+  var wf=document.getElementById('wf');
+  wf.innerHTML='<div class="wf-empty">Loading this week\'s content...</div>';
+  if(!pat){return;}
+  try{
+    var pid=pat.patient_id||pat.id;
+    var r=await fetch('/content/patient-feed/'+pid,{headers:{'X-API-Key':KEY}});
+    var d=await r.json();
+    if(!r.ok){wf.innerHTML='<div class="wf-empty">Could not load this week\'s content. Please try again later.</div>';return;}
+    var feed=d.feed||{E:[],K:[],A:[]};
+    var lvl=d.personalization_level;
+    var html='';
+    (feed.E||[]).forEach(function(m){html+=renderE(m,lvl);});
+    (feed.K||[]).forEach(function(m){html+=renderK(m);});
+    (feed.A||[]).forEach(function(m){html+=renderA(m);});
+    wf.innerHTML=html||'<div class="wf-empty">No content available for this week yet. Check back soon!</div>';
+  }catch(e){wf.innerHTML='<div class="wf-empty">Network error loading weekly content.</div>';}
+}
+function wfList(items){return '<ul class="wf-list">'+(items||[]).map(function(i){return '<li>'+esc(i)+'</li>';}).join('')+'</ul>';}
+function renderE(m,lvl){
+  var c=m.content||{};
+  if(c.parse_error)return '';
+  var html='<div class="wf-card"><span class="wf-badge">Exercise · Week '+esc(m.week_number)+'</span>';
+  html+='<div class="wf-title">'+esc(m.title)+'</div>';
+  html+='<div class="wf-meta">'+esc(c.exercise_type||'')+' · '+esc(c.duration_min||'?')+' min · '+esc(c.frequency_per_week||'?')+'x/week · '+esc(c.intensity||'')+' intensity</div>';
+  if((c.warmup||[]).length)html+='<div class="wf-section"><h4>Warm-up</h4>'+wfList(c.warmup)+'</div>';
+  if((c.main_activity||[]).length)html+='<div class="wf-section"><h4>Main Activity</h4>'+wfList(c.main_activity)+'</div>';
+  if((c.cooldown||[]).length)html+='<div class="wf-section"><h4>Cool-down</h4>'+wfList(c.cooldown)+'</div>';
+  var lvlMod=c.level_modifications&&lvl?c.level_modifications[lvl]:null;
+  if(lvlMod)html+='<div class="wf-take">For you: '+esc(lvlMod)+'</div>';
+  if((c.safety_stop_signs||[]).length)html+='<div class="wf-section"><h4>Stop &amp; rest if you feel</h4>'+wfList(c.safety_stop_signs)+'</div>';
+  if(c.malaysian_context)html+='<div class="wf-sub">🇲🇾 '+esc(c.malaysian_context)+'</div>';
+  html+='</div>';
+  return html;
+}
+function renderK(m){
+  var c=m.content||{};
+  if(c.parse_error)return '';
+  var html='<div class="wf-card tk"><span class="wf-badge tk">Knowledge · Week '+esc(m.week_number)+'</span>';
+  html+='<div class="wf-title">'+esc(m.title)+'</div>';
+  if(c.topic_summary)html+='<div class="wf-meta">'+esc(c.topic_summary)+'</div>';
+  (c.learning_points||[]).forEach(function(lp,i){
+    html+='<div class="wf-point"><b>'+(i+1)+'. '+esc(lp.point||'')+'</b> — '+esc(lp.explanation||'');
+    if(lp.why_it_matters)html+='<div class="wf-why">Why it matters: '+esc(lp.why_it_matters)+'</div>';
+    html+='</div>';
+  });
+  if(c.key_takeaway)html+='<div class="wf-take">💡 '+esc(c.key_takeaway)+'</div>';
+  if(c.local_context)html+='<div class="wf-sub">🇲🇾 '+esc(c.local_context)+'</div>';
+  html+='</div>';
+  return html;
+}
+function renderA(m){
+  var c=m.content||{};
+  if(c.parse_error)return '';
+  var html='<div class="wf-card ta"><span class="wf-badge ta">Activity · Week '+esc(m.week_number)+'</span>';
+  html+='<div class="wf-title">'+esc(m.title)+(c.task_name?': '+esc(c.task_name):'')+'</div>';
+  if(c.description)html+='<div class="wf-meta">'+esc(c.description)+'</div>';
+  if((c.instructions||[]).length)html+='<div class="wf-section"><h4>How to do it</h4>'+wfList(c.instructions)+'</div>';
+  if(c.weekly_goal)html+='<div class="wf-take">🎯 This week\'s goal: '+esc(c.weekly_goal)+'</div>';
+  if((c.micro_actions||[]).length)html+='<div class="wf-section"><h4>Daily Plan</h4>'+wfList(c.micro_actions)+'</div>';
+  if(c.tracking_method)html+='<div class="wf-sub">📝 Track via: '+esc(c.tracking_method)+'</div>';
+  if(c.success_looks_like)html+='<div class="wf-sub">✅ Success looks like: '+esc(c.success_looks_like)+'</div>';
+  html+='</div>';
+  return html;
 }
 function openSB(){document.getElementById('sb').classList.add('open');document.getElementById('mask').style.display='block';}
 function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('mask').style.display='none';}

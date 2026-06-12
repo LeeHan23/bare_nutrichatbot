@@ -100,3 +100,6 @@ cloudflared
 Food Group .pdf
 Malaysian food portion size photo album copy.pdf
 .env.backup
+
+# Cron job logs (created at runtime, not source)
+logs/
