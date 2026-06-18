@@ -23,7 +23,7 @@ import database as db
 import rag
 import whatsapp as wa
 from extractor import extract_from_message
-from local_patient_store import LocalPatientStore
+from patient_store import get_patient_store
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +190,7 @@ def _process_and_reply(patient_id: int, client_id: int, question: str, to_phone:
         try:
             new_fields = extract_from_message(question, profile)
             if new_fields:
-                LocalPatientStore().update_supplementary_fields(
+                get_patient_store().update_supplementary_fields(
                     patient_id=patient_id,
                     updates=new_fields,
                     source_session_id=session_id,

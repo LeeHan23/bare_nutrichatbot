@@ -9,15 +9,15 @@ import database as db
 import rag
 from dependencies import get_api_client, get_db
 from extractor import extract_from_message
-from local_patient_store import LocalPatientStore
+from patient_store import get_patient_store
 
 logger = logging.getLogger(__name__)
 
 # --- Router Initialization ---
 chat_router = APIRouter()
 
-# --- Single PatientStore instance — swap to RemotePatientStore for production ---
-patient_store = LocalPatientStore()
+# --- Single PatientStore instance — RemotePatientStore if HOSPITAL_API_URL is set, else LocalPatientStore ---
+patient_store = get_patient_store()
 
 
 # --- Pydantic Model ---

@@ -435,7 +435,7 @@ async function loadWeeklyFeed(){
   if(!pat){return;}
   try{
     var pid=pat.patient_id||pat.id;
-    var r=await fetch('/content/patient-feed/'+pid,{headers:{'X-API-Key':KEY}});
+    var r=await fetch('/content/patient-feed/'+pid+'?week_number=24',{headers:{'X-API-Key':KEY}});  // TEMP DEMO: pin to week 24 (approved); remove after demo
     var d=await r.json();
     if(!r.ok){wf.innerHTML='<div class="wf-empty">Could not load this week\'s content. Please try again later.</div>';return;}
     var feed=d.feed||{E:[],K:[],A:[]};

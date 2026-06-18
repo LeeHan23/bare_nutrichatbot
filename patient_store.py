@@ -5,8 +5,8 @@ The bot depends on this interface, never on a concrete storage implementation.
 This means swapping from local DB (dev) to a hospital API (prod) is a one-line
 config change in app.py.
 """
+import os
 from abc import ABC, abstractmethod
-from typing import Protocol
 
 
 class PatientStore(ABC):
@@ -73,3 +73,17 @@ SUPPLEMENTARY_FIELDS = {
     "activity_types",
     "extractor_food_allergies",
 }
+
+
+def get_patient_store() -> "PatientStore":
+    """
+    Factory: returns RemotePatientStore if HOSPITAL_API_URL is configured
+    (production, hospital-hosted patient data), else LocalPatientStore
+    (dev/staging, local Postgres).
+    """
+    hospital_api_url = os.getenv("HOSPITAL_API_URL")
+    if hospital_api_url:
+        from remote_patient_store import RemotePatientStore
+        return RemotePatientStore(base_url=hospital_api_url, api_key=os.getenv("HOSPITAL_API_KEY"))
+    from local_patient_store import LocalPatientStore
+    return LocalPatientStore()
