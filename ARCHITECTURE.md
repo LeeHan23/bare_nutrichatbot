@@ -1,6 +1,6 @@
 # NutriChatbot — Full Architecture Document
 
-> Last updated: June 2026
+> Last updated: 15 June 2026
 
 ## Table of Contents
 
@@ -66,6 +66,7 @@
     - 25.6 [Dev Review & Approval Workflow](#256-dev-review--approval-workflow)
     - 25.7 [WhatsApp Delivery](#257-whatsapp-delivery)
     - 25.8 [Patient App — "This Week" Tab](#258-patient-app--this-week-tab)
+26. [WhatsApp Inbound Integration](#26-whatsapp-inbound-integration)
 
 ---
 
@@ -472,6 +473,15 @@ On startup:
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | `/chat/get_response` | `X-API-Key` | Streaming SSE chat response |
+| POST | `/chat/get_response_sync` | `X-API-Key` | Non-streaming chat response (used by the 4-minute keep-alive cron, §22) |
+
+### WhatsApp Webhooks — `whatsapp_router.py` (mounted under `/chat`, §26)
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/chat/whatsapp` | Twilio signature (`X-Twilio-Signature`) | Twilio inbound webhook (form-encoded) |
+| GET | `/chat/whatsapp/meta` | `hub.verify_token` vs `META_VERIFY_TOKEN` | Meta Cloud API verification handshake |
+| POST | `/chat/whatsapp/meta` | Meta payload signature | Meta Cloud API inbound webhook (JSON) |
 
 **Request body (`ChatRequest`):**
 ```json
@@ -643,8 +653,19 @@ class PatientStore(ABC):
 
 | Implementation | File | Status |
 |---|---|---|
-| `LocalPatientStore` | `local_patient_store.py` | Current (dev/staging) — wraps SQLAlchemy ORM |
-| `RemotePatientStore` | *(not yet built)* | Future — will call hospital REST/FHIR API |
+| `LocalPatientStore` | `local_patient_store.py` | Current default (dev/staging) — wraps SQLAlchemy ORM |
+| `RemotePatientStore` | `remote_patient_store.py` | **Scaffold built 12 June 2026** — calls hospital REST API (placeholder contract, see below) |
+
+**Swap point — `get_patient_store()` factory** (`patient_store.py`): both `website_chat_router.py` and `whatsapp_router.py` call `patient_store = get_patient_store()`. The factory returns `RemotePatientStore` if the `HOSPITAL_API_URL` env var is set, else `LocalPatientStore`. No env var is set today, so dev/staging behaviour is unchanged — flipping to the hospital backend in production is a single `.env` edit.
+
+**`RemotePatientStore` placeholder REST contract** (flat JSON, not FHIR — adjust `_to_profile_dict()`, `_PATIENT_PATH`, `_SUPPLEMENTARY_PATH` once the real hospital schema is known):
+- `GET {HOSPITAL_API_URL}/patients/{patient_id}` → 200 flat profile dict (same shape as `LocalPatientStore.get_profile()`) or 404
+- `PATCH {HOSPITAL_API_URL}/patients/{patient_id}/supplementary` with `{"updates": {...}, "source_session_id": "..."}` → 200 `{"applied": {...}}` or 404
+- Env vars: `HOSPITAL_API_URL`, `HOSPITAL_API_KEY` (Bearer token), `HOSPITAL_API_TIMEOUT_S` (default 10s)
+
+**`mock_hospital_api.py`** — standalone FastAPI app implementing the contract above with an in-memory patient (seeded with patient 1's shape), used to test `RemotePatientStore` before the real hospital API exists. **`scripts/test_remote_patient_store.py`** spins this up on port 8500 and exercises `RemotePatientStore` end-to-end (get_profile found/404, update with allowed/rejected fields, persistence check) — all assertions pass.
+
+**Known gap:** the *read* path (`_resolve_patient_profile` in website, `_process_and_reply` in WhatsApp) still builds the RAG profile via `db.patient_to_profile_dict(patient)` directly from the local DB, not via `patient_store.get_profile()`. Only the *write* path (`update_supplementary_fields`) is fully routed through `patient_store` so far. Full read-path swap-over is future work for when real hospital endpoints exist.
 
 **`SUPPLEMENTARY_FIELDS` whitelist** (defined in `patient_store.py`): an explicit set of every DB column the extractor is allowed to write. Any key not in this set is silently rejected by `update_supplementary_fields`. This prevents the extractor from ever touching clinical fields (`conditions`, `medications`, `allergies`, etc.) that are owned by the hospital system.
 
@@ -1205,16 +1226,22 @@ Patient records are also scoped: `GET /patients/` and `GET /patients/{id}` both 
 
 ## 13. Conversation Memory
 
-**File:** `chain_factory.py`
+**Status (12 June 2026): persisted to Postgres.** Conversation history survives restarts and is shared across all entry points (website chat, WhatsApp, MCP).
 
-Module-level in-memory dict:
-```python
-_session_store: dict[str, InMemoryChatMessageHistory] = {}
-```
+**Table:** `chat_messages` (`id, session_id, patient_id, role, content, created_at`) — created by `scripts/migrate_chat_history.py` (auto-creates the table, no `ALTER` needed). CRUD helpers in `database.py`: `add_chat_message()`, `get_chat_history()`, `clear_chat_history()`.
 
-`RunnableWithMessageHistory` injects history as `chat_history` before each invocation and appends the new turn after.
+**Legacy LangChain path (`chain_factory.py`):** `DBChatMessageHistory` (a `BaseChatMessageHistory` subclass backed by `chat_messages`) replaces the old in-memory `InMemoryChatMessageHistory`. `RunnableWithMessageHistory` reads/writes via this class automatically — no change to the chain wiring itself.
 
-**Limitations:** Non-persistent (lost on restart), process-local (one Gunicorn worker only). Production systems should replace with a Redis-backed `BaseChatMessageHistory`.
+**Active Option B path (`rag.get_rag_response`):**
+- `_load_history_text()` loads the last 12 messages for the session and renders them as a `## Conversation So Far` block injected into the Qwen prompt.
+- `_persist_turn()` saves the new user/assistant exchange after generation completes.
+- Same wiring is applied to the CLaRa-primary and agent-tool paths.
+- `get_rag_response()` takes an optional `patient_id` so rows can be filtered/attributed per patient (passed through from `website_chat_router.py`, `whatsapp_router.py`, and `mcp_server.py`).
+- `session_id == "keepalive"` (used by the 4-minute Cloudflare keep-alive cron, §22) is excluded from history load/persist so it doesn't pollute the table.
+
+**WhatsApp sessions** reuse this same table with `session_id = f"whatsapp-{patient_id}"` (§26), so a patient's WhatsApp and website conversations are continuous if both surface the same `session_id` convention is followed.
+
+**Verified:** a second turn referencing "what we just discussed" correctly pulled context from turn 1, surviving a full `systemctl restart nutribot`.
 
 ---
 
@@ -1556,8 +1583,11 @@ A single chat request from a logged-in patient (patient_id provided):
 | `embeddings.py` | Singleton embedding model, LoRA adapter loading | `get_embedding_function`, `_load_lora_embedding` |
 | `llm.py` | LLM factory (OpenAI / Ollama) | `get_llm`, `get_direct_llm_response` |
 | `database.py` | SQLAlchemy ORM models + CRUD | `ApiClient`, `DocumentMetadata`, `Patient`, `patient_to_profile_dict` |
-| `patient_store.py` | PatientStore ABC + `SUPPLEMENTARY_FIELDS` whitelist | `PatientStore`, `SUPPLEMENTARY_FIELDS` |
+| `patient_store.py` | PatientStore ABC + `SUPPLEMENTARY_FIELDS` whitelist + factory | `PatientStore`, `SUPPLEMENTARY_FIELDS`, `get_patient_store` |
 | `local_patient_store.py` | LocalPatientStore (dev/staging) — wraps SQLAlchemy | `LocalPatientStore` |
+| `remote_patient_store.py` | RemotePatientStore (prod scaffold) — calls hospital REST API | `RemotePatientStore` |
+| `mock_hospital_api.py` | Standalone mock of the hospital API for testing `RemotePatientStore` | `app` |
+| `whatsapp_router.py` | WhatsApp inbound webhooks (Twilio + Meta), mounted under `/chat` (§26) | `whatsapp_webhook`, `whatsapp_meta_verify`, `whatsapp_meta_webhook`, `_process_and_reply` |
 | `extractor.py` | Passively extracts supplementary fields from patient messages via qwen2.5:32b | `extract_from_message`, `call_ollama_extractor`, `_validate_extraction`, `_filter_already_filled` |
 | `dependencies.py` | FastAPI dependency injection | `get_db`, `get_api_client` |
 | `document_manager.py` | Vector store document deletion | `delete_document_from_vectorstore` |
@@ -1586,6 +1616,9 @@ A single chat request from a logged-in patient (patient_id provided):
 | `scripts/migrate_eka_columns.py` | Adds `content_type`/`week_number`/`expires_at` to `content_materials`; makes `day_offset` nullable | `migrate` |
 | `scripts/migrate_content_delivery_log.py` | Makes `content_delivery_log.day_offset` nullable (for EKA deliveries) | `migrate` |
 | `whatsapp.py` | WhatsApp content delivery (Twilio/Meta), formats legacy tips and EKA E/K/A messages | `send_message`, `format_tips_message`, `format_eka_message` |
+| `scripts/migrate_chat_history.py` | Creates `chat_messages` table (conversation history persistence, §13) | `migrate` |
+| `scripts/migrate_whatsapp_columns.py` | Adds `phone_number` / `whatsapp_opted_out` columns to `patients` | `migrate` |
+| `scripts/test_remote_patient_store.py` | E2E test: `RemotePatientStore` against `mock_hospital_api.py` (§7.4) | `main` |
 
 ---
 
@@ -1825,3 +1858,26 @@ A `Chat` / `This Week` tab switcher (`#tab-chat` / `#tab-week`) was added to the
 `switchTab()` / `loadWeeklyFeed()` / `wfList()` / `renderE/K/A()` are reset (cache cleared) on `goDash()` and `signOut()` so a new login always re-fetches the feed.
 
 No backend changes were required for this UI — it consumes the existing `/content/patient-feed/{patient_id}` endpoint from §25.5.
+
+---
+
+## 26. WhatsApp Inbound Integration
+
+**File:** `whatsapp_router.py`, mounted under `/chat`. **Added 12 June 2026.** Lets a patient have the *full* RAG chat conversation over WhatsApp, not just receive scheduled content (§25.7 covers outbound delivery only).
+
+**Auth model:** no `X-API-Key` — these are public provider webhooks, authenticated by provider-specific signatures instead:
+- `POST /chat/whatsapp` (Twilio) — validates `X-Twilio-Signature` via `twilio.request_validator.RequestValidator`. Skipped with a warning if `TWILIO_AUTH_TOKEN` is unset.
+- `GET /chat/whatsapp/meta` (Meta Cloud API) — verification handshake, checks `hub.verify_token` against `META_VERIFY_TOKEN`.
+- `POST /chat/whatsapp/meta` (Meta Cloud API) — JSON inbound webhook.
+
+**Patient resolution:** both providers resolve the sender via `database.get_patient_by_phone()` / `normalise_phone_number()` (strips `whatsapp:` prefix, spaces, dashes; ensures a `+` prefix, e.g. `+60123456789`). Phone numbers are linked to patients via the `set_patient_phone` MCP tool, stored in `patients.phone_number`.
+
+**Opt-out:** replying `STOP` / `BERHENTI` sets `Patient.whatsapp_opted_out = true`; `START` / `MULA` clears it (column added via `scripts/migrate_whatsapp_columns.py`). Opt-out only gates *scheduled* content (`_send_patient_content` in `mcp_server.py` checks the flag) — direct chat replies always work, since a patient messaging in is implicit consent for that conversation.
+
+**Message processing (`_process_and_reply`, runs as a `BackgroundTask`):**
+1. Calls `rag.get_rag_response()` with `session_id=f"whatsapp-{patient_id}"` — this is the same `chat_messages` table as the website (§13), so conversation history carries over per patient regardless of channel.
+2. Runs the profile extractor (§7.5) in the background on the inbound message, same as the website path.
+3. Truncates the reply to 1500 chars (WhatsApp message limit) and sends via `whatsapp.send_message()`.
+4. Twilio webhook replies immediately with empty TwiML (200 OK); the actual RAG reply is sent async via the WhatsApp REST API a few seconds later.
+
+**Still pending for go-live:** set `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_WHATSAPP_FROM` (or `META_WHATSAPP_TOKEN` / `META_WHATSAPP_PHONE_ID` / `META_VERIFY_TOKEN`) in `.env`, register the webhook URL with the provider (`https://nutribot.computationalrd.com/chat/whatsapp`), and link patient phone numbers via `set_patient_phone`.

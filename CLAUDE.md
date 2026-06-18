@@ -71,8 +71,10 @@ UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_u
 ├── admin_router.py           # Admin API routes
 ├── client_portal_router.py   # Client-facing portal routes
 ├── mcp_server.py             # MCP server for Claude Desktop integration
-├── patient_store.py          # PatientStore ABC + SUPPLEMENTARY_FIELDS whitelist
+├── patient_store.py          # PatientStore ABC + SUPPLEMENTARY_FIELDS whitelist + get_patient_store() factory
 ├── local_patient_store.py    # LocalPatientStore (dev/staging, wraps SQLAlchemy)
+├── remote_patient_store.py   # RemotePatientStore (prod, hospital REST API — placeholder contract)
+├── mock_hospital_api.py       # Standalone mock of the hospital API, for testing RemotePatientStore
 ├── extractor.py              # LLM-based profile extractor (qwen2.5:32b, v2, BM support)
 ├── document_manager.py       # Document upload/management
 ├── process_client_docs.py    # Client document ingestion into vector store
@@ -109,7 +111,8 @@ UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_u
 │   ├── database_patch.py            # Ad-hoc DB patch script
 │   ├── reembed_with_keywords.py     # Re-embed chunks with keyword metadata
 │   ├── enrich_v1_with_keywords.py   # Add doc_keywords/topics to existing chunks
-│   └── test_extractor_v2.py         # Extractor v2 test cases
+│   ├── test_extractor_v2.py         # Extractor v2 test cases
+│   └── test_remote_patient_store.py # E2E test: RemotePatientStore against mock_hospital_api.py
 ├── finetune/
 │   ├── generate_training_data.py         # Synthetic ADIME training data generator
 │   ├── generate_embedding_training_data.py
@@ -319,10 +322,21 @@ Added 12 June 2026. `whatsapp_router.py`, mounted under `/chat` (no X-API-Key �
 - Outbound delivery (`whatsapp.py` formatters, `_send_patient_content` dispatch, `phone_number`/`set_patient_phone`) was already built in a prior session.
 - **Still pending**: set `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_WHATSAPP_FROM` (or `META_WHATSAPP_TOKEN` / `META_WHATSAPP_PHONE_ID` / `META_VERIFY_TOKEN`) in `.env`, configure the webhook URL with the provider (`https://nutribot.computationalrd.com/chat/whatsapp`), and link patient phone numbers via `set_patient_phone` (MCP tool).
 
-### 6. Test bilingual extractor end-to-end
-- Send a Malay-language chat message through the public URL
-- Verify extractor captures fields correctly in BM
-- Check `extractor_metadata` is populated with correct provenance
+### 6. ✅ DONE — Test bilingual extractor end-to-end
+Tested 12 June 2026 against patient 3 (Kavitha, PCOS/Insulin Resistance, previously empty supplementary fields), `session_id=bm-extractor-test-1`. Sent:
+> "Saya minum air kira-kira 6 gelas sehari. Saya tidak merokok. Saya bersenam berjalan kaki 3 kali seminggu, selama 30 minit setiap kali, agak senang je."
+
+RAG replied in English referencing "6 glasses of water" and "walking" — correctly understood the BM input. Background extractor then wrote 6 fields, all validated correctly:
+- `fluid_intake_ml: 1500` (6 gelas × 250mL)
+- `tobacco_status: "Never smoked"` (tidak merokok)
+- `activity_freq: "3 times a week"` (3 kali seminggu)
+- `activity_minutes: 30` (30 minit)
+- `activity_types: ["walking"]` (berjalan kaki)
+- `activity_intensity: "light"` (agak senang je)
+
+`extractor_metadata` populated correctly for all 6 fields with `source_session_id: "bm-extractor-test-1"` and matching timestamps.
+
+**Note**: request was sent to `localhost:8000` directly — the public Cloudflare URL timed out client-side (>100s) on the same request, consistent with the existing cold-start/long-request behaviour noted elsewhere. The `[Extractor] Ollama call failed: Connection aborted/Read timed out` errors seen frequently in `/var/log/nutribot.log` (from the 4-minute keepalive cron's background extractor calls contending with Ollama) are a pre-existing issue, unrelated to this fix — extractor failures there are silently swallowed (`return {}`) and don't affect the user-facing reply.
 
 ### 7. ✅ DONE — Cloudflare keep-alive cron
 Already in crontab, runs every 4 minutes:
@@ -333,11 +347,37 @@ Already in crontab, runs every 4 minutes:
   --max-time 90 https://nutribot.computationalrd.com/chat/get_response_sync > /dev/null 2>&1
 ```
 
-### 8. Replace LocalPatientStore with RemotePatientStore
-- Hospital/university server will host patient DB
-- Implement `RemotePatientStore(PatientStore)` that calls their REST/FHIR API
-- Swap in `website_chat_router.py` by changing one line:
-  `patient_store = RemotePatientStore(base_url=os.getenv("HOSPITAL_API_URL"))`
+### 8. ✅ DONE (scaffold) — Replace LocalPatientStore with RemotePatientStore
+Added 12 June 2026. Hospital API spec doesn't exist yet, so built a generic
+REST scaffold + mock server that's testable today and adjustable once the
+real spec arrives:
+- `patient_store.get_patient_store()` — factory used by both `website_chat_router.py`
+  and `whatsapp_router.py`. Returns `RemotePatientStore` if `HOSPITAL_API_URL` is set,
+  else `LocalPatientStore` (current default — no env var set, so dev/staging unaffected).
+- `remote_patient_store.py` — `RemotePatientStore(PatientStore)`. Assumed placeholder
+  contract (flat JSON, not FHIR — adjust when the real spec is known):
+  - `GET {base_url}/patients/{patient_id}` → 200 flat profile dict (same shape as
+    `LocalPatientStore.get_profile()`) or 404
+  - `PATCH {base_url}/patients/{patient_id}/supplementary` with
+    `{"updates": {...}, "source_session_id": "..."}` → 200 `{"applied": {...}}` or 404
+  - Env vars: `HOSPITAL_API_URL`, `HOSPITAL_API_KEY` (Bearer token), `HOSPITAL_API_TIMEOUT_S` (default 10)
+  - `_to_profile_dict()`, `_PATIENT_PATH`, `_SUPPLEMENTARY_PATH` are the marked
+    adaptation points for the real hospital schema (possibly FHIR Patient/Observation)
+- `mock_hospital_api.py` — standalone FastAPI app implementing the contract above
+  with an in-memory patient (seeded with patient 1's shape), for local testing.
+- `scripts/test_remote_patient_store.py` — spins up the mock API on port 8500 and
+  exercises `RemotePatientStore` end-to-end (get_profile found/404, update with
+  allowed/rejected fields, persistence check). All assertions pass.
+- **Known gap**: `_resolve_patient_profile` (website) and `_process_and_reply`
+  (WhatsApp) still build the RAG profile via `db.patient_to_profile_dict(patient)`
+  directly from the local DB, not via `patient_store.get_profile()`. Only the
+  *write* path (`update_supplementary_fields`) is fully routed through
+  `patient_store` so far — full read-path swap-over is future work once real
+  hospital endpoints exist.
+- **Still pending (real deployment)**: hospital provides actual API spec → update
+  `_PATIENT_PATH` / `_SUPPLEMENTARY_PATH` / `_to_profile_dict()` in
+  `remote_patient_store.py`, then set `HOSPITAL_API_URL` (and `HOSPITAL_API_KEY`
+  if needed) in `.env` on the production server.
 
 ### 9. Re-ingest 3 missing PDFs
 - AHA 2021 Dietary Guidelines
@@ -495,6 +535,7 @@ Pending dietitian review: `data/encpt/encpt_curated.md` (send to supervising die
 | Run build schema | `/home/han/miniconda3/bin/python data/encpt/build_curated_schema.py` |
 | Check DB | `/home/han/miniconda3/bin/python -c "import database as db; ..."` |
 | Generate content | `/home/han/miniconda3/bin/python scripts/generate_content.py --client-id 4` |
+| Test RemotePatientStore (mock hospital API) | `/home/han/miniconda3/bin/python scripts/test_remote_patient_store.py` |
 
 ---
 
