@@ -1,16 +1,16 @@
+import database as db
+from chain_factory import create_conversational_chain
+from image_handler import parse_response_for_image
 from llm import (
-    get_direct_llm_response,
+    USE_AGENT_TOOLS,
+    USE_CLARA,
+    USE_CLARA_COMPRESS,
     call_clara_api,
     call_clara_compress,
     call_ollama_generate,
-    USE_CLARA,
-    USE_CLARA_COMPRESS,
-    USE_AGENT_TOOLS,
+    get_direct_llm_response,
 )
-from image_handler import parse_response_for_image
-from chain_factory import create_conversational_chain
 from vector_store import get_retriever
-import database as db
 
 _LEVEL_INSTRUCTIONS = {
     "L0": (
@@ -106,9 +106,12 @@ def _to_second_person_profile(patient_context: str) -> str:
     primed for second-person responses by the input itself.
     """
     import re
+
     replacements = [
-        (r"^Name:\s*(.+)$",
-            r"Your name: \1  (do NOT repeat this name back — address them as 'you')"),
+        (
+            r"^Name:\s*(.+)$",
+            r"Your name: \1  (do NOT repeat this name back — address them as 'you')",
+        ),
         (r"^Age:", r"Your age:"),
         (r"^Gender:", r"Your gender:"),
         (r"^Ethnicity:", r"Your ethnicity:"),
@@ -241,19 +244,30 @@ def _load_history_text(chat_session_id: str) -> str:
     )
 
 
-def _persist_turn(chat_session_id: str, patient_id: int | None, question: str, answer: str) -> None:
+def _persist_turn(
+    chat_session_id: str, patient_id: int | None, question: str, answer: str
+) -> None:
     """Persist one user/assistant exchange so history survives bot restarts."""
     if not chat_session_id or chat_session_id == "keepalive":
         return
     db_session = db.SessionLocal()
     try:
         db.add_chat_message(db_session, chat_session_id, patient_id, "user", question)
-        db.add_chat_message(db_session, chat_session_id, patient_id, "assistant", answer)
+        db.add_chat_message(
+            db_session, chat_session_id, patient_id, "assistant", answer
+        )
     finally:
         db_session.close()
 
 
-def get_rag_response(question: str, client_id: int, chat_session_id: str, profile: dict | None = None, is_patient_self: bool = False, patient_id: int | None = None) -> dict:
+def get_rag_response(
+    question: str,
+    client_id: int,
+    chat_session_id: str,
+    profile: dict | None = None,
+    is_patient_self: bool = False,
+    patient_id: int | None = None,
+) -> dict:
     patient_context = ""
     if profile:
         # --- Existing keys (backward-compatible with raw profile dicts) ---
@@ -265,16 +279,25 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         # --- Build richer patient_context block from extended profile fields ---
         # Conditions first — CLaRa must see the medical constraints before demographics
         parts = []
-        if conditions: parts.append(f"Conditions: {conditions}")
-        if meds: parts.append(f"Medications: {meds}")
-        if restrictions: parts.append(f"Dietary restrictions: {restrictions}")
+        if conditions:
+            parts.append(f"Conditions: {conditions}")
+        if meds:
+            parts.append(f"Medications: {meds}")
+        if restrictions:
+            parts.append(f"Dietary restrictions: {restrictions}")
         allergies_str = ", ".join(profile.get("allergies", []))
-        if allergies_str: parts.append(f"Allergies: {allergies_str}")
-        if profile.get("notes"): parts.append(f"Clinical notes: {profile['notes']}")
-        if profile.get("name"): parts.append(f"Name: {profile['name']}")
-        if profile.get("age"): parts.append(f"Age: {profile['age']}")
-        if profile.get("gender"): parts.append(f"Gender: {profile['gender']}")
-        if profile.get("ethnicity"): parts.append(f"Ethnicity: {profile['ethnicity']}")
+        if allergies_str:
+            parts.append(f"Allergies: {allergies_str}")
+        if profile.get("notes"):
+            parts.append(f"Clinical notes: {profile['notes']}")
+        if profile.get("name"):
+            parts.append(f"Name: {profile['name']}")
+        if profile.get("age"):
+            parts.append(f"Age: {profile['age']}")
+        if profile.get("gender"):
+            parts.append(f"Gender: {profile['gender']}")
+        if profile.get("ethnicity"):
+            parts.append(f"Ethnicity: {profile['ethnicity']}")
         w, h = profile.get("weight_kg"), profile.get("height_cm")
         if w and h:
             bmi = w / ((h / 100) ** 2)
@@ -309,6 +332,7 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
     if USE_AGENT_TOOLS:
         print("[DEBUG] Using agent path: Qwen with MCP tool calling")
         from agent import get_agent_response
+
         answer = get_agent_response(
             question=question,
             client_id=client_id,
@@ -340,8 +364,8 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
 
         # Show preview of each retrieved doc to verify relevance
         for i, doc in enumerate(doc_texts):
-            preview = doc[:150].replace('\n', ' ')
-            print(f"  [Doc {i+1}]: {preview}...")
+            preview = doc[:150].replace("\n", " ")
+            print(f"  [Doc {i + 1}]: {preview}...")
 
         # Enrich with food context if the question mentions a specific dish/food
         food_context = get_food_context(question)
@@ -349,7 +373,9 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         # Build the prompt with optional patient context
         if patient_context:
             level = profile.get("personalization_level") if profile else None
-            level_map = _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
+            level_map = (
+                _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
+            )
             level_instruction = level_map.get(level, "") if level else ""
             if is_patient_self:
                 self_ctx = _to_second_person_profile(patient_context)
@@ -391,11 +417,15 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
                     "Be concise and practical; skip definitions and unnecessary preamble."
                 )
             food_block = f"\n\nFood context: {food_context}" if food_context else ""
-            history_block = f"\n\nConversation so far:\n{history_text}" if history_text else ""
+            history_block = (
+                f"\n\nConversation so far:\n{history_text}" if history_text else ""
+            )
             clara_prompt = f"{header}{food_block}{history_block}\n\nInstruction: {instruction}\n\nQuestion: {question}\n\nAnswer:"
         else:
             food_block = f"Food context: {food_context}\n\n" if food_context else ""
-            history_block = f"Conversation so far:\n{history_text}\n\n" if history_text else ""
+            history_block = (
+                f"Conversation so far:\n{history_text}\n\n" if history_text else ""
+            )
             clara_prompt = f"{food_block}{history_block}Instruction: Be conversational and practical; skip definitions and unnecessary preamble.\n\nQuestion: {question}\n\nAnswer:"
 
         answer = call_clara_api(clara_prompt, documents=doc_texts)
@@ -428,14 +458,16 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         print(f"[DEBUG] Retrieved {len(doc_texts)} docs for CLaRa compress")
 
         for i, doc in enumerate(doc_texts):
-            print(f"  [Doc {i+1}]: {doc[:120].replace(chr(10), ' ')}...")
+            print(f"  [Doc {i + 1}]: {doc[:120].replace(chr(10), ' ')}...")
 
         digest = call_clara_compress(doc_texts, question, patient_context)
 
         if not digest:
             # Graceful fallback: join raw chunks so Qwen still has clinical grounding
             print("[DEBUG] CLaRa compress failed — using raw chunks as fallback digest")
-            digest = "Clinical context from guidelines:\n\n" + "\n\n---\n\n".join(doc_texts)
+            digest = "Clinical context from guidelines:\n\n" + "\n\n---\n\n".join(
+                doc_texts
+            )
 
         try:
             food_context = get_food_context(question)
@@ -444,7 +476,13 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
             food_context = ""
 
         qwen_prompt = _build_qwen_prompt(
-            question, patient_context, digest, food_context, profile, is_patient_self, history_text
+            question,
+            patient_context,
+            digest,
+            food_context,
+            profile,
+            is_patient_self,
+            history_text,
         )
         print(f"[DEBUG] Qwen prompt length: {len(qwen_prompt)} chars")
 
@@ -470,10 +508,14 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
         level_map = _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
         level_instruction = level_map.get(level, "") if level else ""
         if level_instruction:
-            lc_patient_context += f"\n\nPersonalization Level {level}: {level_instruction}"
+            lc_patient_context += (
+                f"\n\nPersonalization Level {level}: {level_instruction}"
+            )
 
     qa_chain = create_conversational_chain(
-        client_id, target_disease, lc_patient_context,
+        client_id,
+        target_disease,
+        lc_patient_context,
         is_patient_self=is_patient_self,
         patient_conditions=profile.get("condition", []) if profile else [],
     )
@@ -483,6 +525,8 @@ def get_rag_response(question: str, client_id: int, chat_session_id: str, profil
     )
 
     if not answer:
-        answer = "I'm sorry, I couldn't generate a response right now. Please try again."
+        answer = (
+            "I'm sorry, I couldn't generate a response right now. Please try again."
+        )
 
     return parse_response_for_image(answer)

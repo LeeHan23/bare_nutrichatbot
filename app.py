@@ -1,43 +1,59 @@
 import os
 import sys
 
+# MHR Router (Phase 3 Integration)
+import myheartrisk_router
+
 # Fix for ChromaDB sqlite version issues (must be before other imports)
 try:
-    __import__('pysqlite3')
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+    __import__("pysqlite3")
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 except ImportError:
     pass
 
-import uvicorn
 import shutil
+
+import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Security, status
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Security,
+    UploadFile,
+    status,
+)
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+
 import database as db
-from dependencies import get_db, get_api_client
-from website_chat_router import chat_router
 from admin_router import router as admin_router
 from content_api_router import router as content_router
-from process_client_docs import process_client_document, calculate_file_hash
+from dependencies import get_api_client, get_db
+from process_client_docs import calculate_file_hash, process_client_document
+from website_chat_router import chat_router
 
 # --- Load Environment Variables ---
 load_dotenv()
 
 # --- FastAPI App Initialization ---
-# --- FastAPI App Initialization ---
 app = FastAPI()
 
 # Mount static images directory
 try:
-    images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "images")
+    images_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "images"
+    )
     os.makedirs(images_dir, exist_ok=True)
     app.mount("/images", StaticFiles(directory=images_dir), name="images")
     print(f"✅ Mounted /images pointing to: {images_dir}")
 except Exception as e:
     print(f"❌ Failed to mount /images: {e}")
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -47,33 +63,34 @@ async def startup_event():
     db.create_db_and_tables()
 
     data_dir = "data"
-    seed_dir = "/app/data_seed" # Absolute path in Docker container
-    
+    seed_dir = "/app/data_seed"  # Absolute path in Docker container
+
     # Only run if seed directory exists (i.e., in Docker)
     if os.path.exists(seed_dir):
         print(f"🔍 Checking if seeding is needed from {seed_dir}...")
-        
+
         # Ensure data dir exists
         os.makedirs(data_dir, exist_ok=True)
-        
+
         # Check for users.db
         target_db = os.path.join(data_dir, "users.db")
         if not os.path.exists(target_db):
             print("📦 Seeding users.db...")
             shutil.copy2(os.path.join(seed_dir, "users.db"), target_db)
-            
+
         # Check for vectorstores
         seed_vs = os.path.join(seed_dir, "vectorstores_client")
         target_vs = os.path.join(data_dir, "vectorstores_client")
-        
+
         if os.path.exists(seed_vs) and not os.path.exists(target_vs):
             print("📦 Seeding vectorstores...")
             shutil.copytree(seed_vs, target_vs, dirs_exist_ok=True)
-            
+
         print("✅ Startup checks complete.")
 
+
 # --- CORS Middleware ---
-origins = ["*"] # Allow all for a public API, or restrict as needed
+origins = ["*"]  # Allow all for a public API, or restrict as needed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -82,12 +99,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/", response_class=HTMLResponse)
 async def home():
     """Patient app — login, verify, chat."""
-    _app_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), "patient_app.html")
+    _app_html = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "patient_app.html"
+    )
     with open(_app_html, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
+
 
 @app.get("/dev", response_class=HTMLResponse)
 async def dev_ui():
@@ -153,7 +174,6 @@ _TEST_UI_HTML = """<!DOCTYPE html>
 
 <div class="container">
 
-  <!-- Step 1: API Key (clinic setup) -->
   <div class="card" id="apiSection">
     <h2>Step 1 — Clinic API Key</h2>
     <label>X-API-Key</label>
@@ -165,19 +185,16 @@ _TEST_UI_HTML = """<!DOCTYPE html>
     <div id="status"></div>
   </div>
 
-  <!-- Step 2: Patient login by name -->
   <div class="card" id="loginSection" style="display:none">
     <h2>Step 2 — Patient Login</h2>
     <p style="font-size:.85rem;color:#4a5568;margin-bottom:12px">Enter your full name as it appears on your MyKad (IC). If you are a new patient, a profile will be created for you.</p>
 
-    <!-- Name input (shown first) -->
     <div id="nameInputSection">
       <label>Full Name (as per IC)</label>
       <input id="patientName" type="text" placeholder="e.g. Ahmad Fadzillah bin Roslan" onkeydown="if(event.key==='Enter')loginPatient()" />
       <button onclick="loginPatient()">Continue</button>
     </div>
 
-    <!-- IC number input (shown only when multiple matches found) -->
     <div id="icInputSection" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
       <p id="icPromptText" style="font-size:.85rem;font-weight:600;color:#744210;margin-bottom:8px"></p>
       <label>IC Number (e.g. 731015-14-5231)</label>
@@ -191,7 +208,6 @@ _TEST_UI_HTML = """<!DOCTYPE html>
     <div id="loginStatus" style="font-size:.8rem;margin-top:8px;min-height:18px"></div>
   </div>
 
-  <!-- Step 3: Chat -->
   <div class="card" id="chatSection" style="display:none">
     <h2>Chat</h2>
     <div id="patientBadge" style="margin-bottom:10px;font-size:.85rem;color:#2d6a4f;font-weight:600"></div>
@@ -203,7 +219,6 @@ _TEST_UI_HTML = """<!DOCTYPE html>
     <button class="sec" style="margin-top:8px;font-size:.8rem" onclick="clearChat()">New conversation</button>
   </div>
 
-  <!-- Raw API explorer -->
   <div class="card">
     <h2>Raw API Explorer (optional)</h2>
     <label>Endpoint</label>
@@ -385,92 +400,78 @@ async function runRaw() {
 
 # --- API Routers ---
 # Admin router (no authentication required - uses password in the form)
-app.include_router(
-    admin_router,
-    prefix="/admin",
-    tags=["Admin"]
-)
+app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 
 # Client portal router (session-based authentication)
 from client_portal_router import router as portal_router
-app.include_router(
-    portal_router,
-    prefix="/portal",
-    tags=["Client Portal"]
-)
+
+app.include_router(portal_router, prefix="/portal", tags=["Client Portal"])
 
 # The chat router endpoints handle authentication individually
-app.include_router(
-    chat_router,
-    prefix="/chat",
-    tags=["Chat"]
-)
+app.include_router(chat_router, prefix="/chat", tags=["Chat"])
 
 # WhatsApp inbound webhooks (Twilio + Meta) — authenticated via provider
 # signature/verify-token, not X-API-Key.
 from whatsapp_router import whatsapp_router
-app.include_router(
-    whatsapp_router,
-    prefix="/chat",
-    tags=["WhatsApp"]
-)
+
+app.include_router(whatsapp_router, prefix="/chat", tags=["WhatsApp"])
 
 # Weekly E/K/A content API (X-API-Key authenticated)
-app.include_router(
-    content_router,
-    prefix="/content",
-    tags=["Content Library"]
-)
+app.include_router(content_router, prefix="/content", tags=["Content Library"])
+
+# Register the new MHR Screening Router
+app.include_router(myheartrisk_router.router)
+
 
 # --- NEW: Batch File Upload Endpoint ---
 @app.post("/upload_documents/", tags=["Document Upload"])
 async def upload_documents(
     files: list[UploadFile] = File(...),
-    client = Depends(get_api_client),
-    database: Session = Depends(get_db)
+    client=Depends(get_api_client),
+    database: Session = Depends(get_db),
 ):
     """
     Endpoint for B2B clients to upload multiple documents for their knowledge base.
     Requires a valid 'X-API-Key' in the header.
     """
-    from process_client_docs import process_client_document, calculate_file_hash
-    
+    from process_client_docs import calculate_file_hash, process_client_document
+
     # Create a temporary directory to store uploaded files
     temp_dir = "temp_uploads"
     os.makedirs(temp_dir, exist_ok=True)
-    
+
     results = []
-    
+
     for file in files:
         temp_filepath = os.path.join(temp_dir, file.filename)
-        
+
         try:
             # Save the uploaded file temporarily
             with open(temp_filepath, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
-            
+
             # Calculate file hash for deduplication
             file_hash = calculate_file_hash(temp_filepath)
             file_size = os.path.getsize(temp_filepath)
-            
+
             # Check if document already exists for this client
             existing_doc = db.get_document_by_hash(database, client.id, file_hash)
             if existing_doc:
-                results.append({
-                    "filename": file.filename,
-                    "status": "skipped",
-                    "message": "Document already exists (duplicate)"
-                })
+                results.append(
+                    {
+                        "filename": file.filename,
+                        "status": "skipped",
+                        "message": "Document already exists (duplicate)",
+                    }
+                )
                 os.remove(temp_filepath)
                 continue
-            
+
             # Process the document
             process_result = process_client_document(
-                client_id=client.id, 
-                filepath=temp_filepath, 
-                filename=file.filename
+                client_id=client.id, filepath=temp_filepath, filename=file.filename
             )
-            
+
             # Add document metadata to database
             doc_metadata = db.add_document_metadata(
                 database,
@@ -479,46 +480,46 @@ async def upload_documents(
                 file_hash=process_result["file_hash"],
                 file_size=file_size,
                 chunk_count=process_result["chunk_count"],
-                status=process_result["status"]
+                status=process_result["status"],
             )
-            
-            results.append({
-                "filename": file.filename,
-                "document_id": doc_metadata.id,
-                "status": process_result["status"],
-                "chunk_count": process_result["chunk_count"],
-                "file_size": file_size
-            })
-            
+
+            results.append(
+                {
+                    "filename": file.filename,
+                    "document_id": doc_metadata.id,
+                    "status": process_result["status"],
+                    "chunk_count": process_result["chunk_count"],
+                    "file_size": file_size,
+                }
+            )
+
         except Exception as e:
-            results.append({
-                "filename": file.filename,
-                "status": "failed",
-                "error": str(e)
-            })
-        
+            results.append(
+                {"filename": file.filename, "status": "failed", "error": str(e)}
+            )
+
         finally:
             # Clean up the temporary file
             if os.path.exists(temp_filepath):
                 os.remove(temp_filepath)
-    
+
     return {
         "client_name": client.client_name,
         "total_files": len(files),
-        "results": results
+        "results": results,
     }
+
 
 # --- NEW: Document Management Endpoints ---
 @app.get("/documents/", tags=["Document Management"])
 async def list_documents(
-    client = Depends(get_api_client),
-    database: Session = Depends(get_db)
+    client=Depends(get_api_client), database: Session = Depends(get_db)
 ):
     """
     List all uploaded documents for the authenticated client.
     """
     documents = db.get_client_documents(database, client.id)
-    
+
     return {
         "client_name": client.client_name,
         "total_documents": len(documents),
@@ -529,26 +530,27 @@ async def list_documents(
                 "upload_date": doc.upload_date.isoformat(),
                 "file_size": doc.file_size,
                 "chunk_count": doc.chunk_count,
-                "status": doc.status
+                "status": doc.status,
             }
             for doc in documents
-        ]
+        ],
     }
+
 
 @app.get("/documents/{document_id}", tags=["Document Management"])
 async def get_document_details(
     document_id: int,
-    client = Depends(get_api_client),
-    database: Session = Depends(get_db)
+    client=Depends(get_api_client),
+    database: Session = Depends(get_db),
 ):
     """
     Get details for a specific document.
     """
     doc = db.get_document_by_id(database, document_id, client.id)
-    
+
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     return {
         "id": doc.id,
         "filename": doc.filename,
@@ -556,53 +558,59 @@ async def get_document_details(
         "file_size": doc.file_size,
         "chunk_count": doc.chunk_count,
         "status": doc.status,
-        "file_hash": doc.file_hash
+        "file_hash": doc.file_hash,
     }
+
 
 @app.delete("/documents/{document_id}", tags=["Document Management"])
 async def delete_document(
     document_id: int,
-    client = Depends(get_api_client),
-    database: Session = Depends(get_db)
+    client=Depends(get_api_client),
+    database: Session = Depends(get_db),
 ):
     """
     Delete a document from both the database and vector store.
     """
     from document_manager import delete_document_from_vectorstore
-    
+
     # Get document to retrieve file_hash
     doc = db.get_document_by_id(database, document_id, client.id)
-    
+
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     # Delete from vector store first
     vector_deleted = delete_document_from_vectorstore(client.id, doc.file_hash)
-    
+
     # Delete metadata from database
     db_deleted = db.delete_document_metadata(database, document_id, client.id)
-    
+
     if not db_deleted:
-        raise HTTPException(status_code=500, detail="Failed to delete document metadata")
-    
+        raise HTTPException(
+            status_code=500, detail="Failed to delete document metadata"
+        )
+
     return {
         "status": "success",
         "message": f"Document '{doc.filename}' deleted successfully",
         "vector_store_deleted": vector_deleted,
-        "chunks_removed": doc.chunk_count
+        "chunks_removed": doc.chunk_count,
     }
+
 
 # --- Patient Login ---
 from pydantic import BaseModel as _BaseModel
 
+
 class PatientLoginRequest(_BaseModel):
     name: str
-    ic_number: str | None = None   # For disambiguation when multiple name matches exist
+    ic_number: str | None = None  # For disambiguation when multiple name matches exist
+
 
 @app.post("/patient/login", tags=["Patients"])
 async def patient_login(
     request: PatientLoginRequest,
-    client = Depends(get_api_client),
+    client=Depends(get_api_client),
     database: Session = Depends(get_db),
 ):
     """
@@ -663,13 +671,16 @@ async def patient_login(
         }
 
     # Not found — return clear error, do NOT auto-create records
-    return {"found": False, "message": "No patient record found with that name. Please check your spelling or contact your clinic."}
+    return {
+        "found": False,
+        "message": "No patient record found with that name. Please check your spelling or contact your clinic.",
+    }
 
 
 # --- Patient Endpoints ---
 @app.get("/patients/", tags=["Patients"])
 async def list_patients(
-    client = Depends(get_api_client),
+    client=Depends(get_api_client),
     database: Session = Depends(get_db),
 ):
     """List all patients registered under the authenticated B2B client."""
@@ -698,7 +709,7 @@ async def list_patients(
 @app.get("/patients/{patient_id}", tags=["Patients"])
 async def get_patient_detail(
     patient_id: int,
-    client = Depends(get_api_client),
+    client=Depends(get_api_client),
     database: Session = Depends(get_db),
 ):
     """Get the full medical profile for a specific patient."""
