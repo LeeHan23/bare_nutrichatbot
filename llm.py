@@ -16,10 +16,30 @@ CLARA_BASE_URL = os.getenv("CLARA_BASE_URL", "http://localhost:8001")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
+# --- Eval judge config (kept separate from the generation model above so the
+# eval harness isn't grading a model's answers with that same model) ---
+JUDGE_OLLAMA_MODEL = os.getenv("JUDGE_OLLAMA_MODEL", OLLAMA_MODEL)
+JUDGE_OLLAMA_BASE_URL = os.getenv("JUDGE_OLLAMA_BASE_URL", OLLAMA_BASE_URL)
+
 # --- OpenAI config (kept as optional emergency fallback only) ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4-turbo")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+
+# --- Timeouts ---
+# The public Cloudflare path is already observed to time out client-side at
+# ~100s (see CLAUDE.md's WhatsApp/keep-alive notes). Option B stacks two
+# sequential calls (compress -> generate) to the same Mac Studio tunnel, so
+# their combined budget is kept comfortably under that ceiling: if the
+# backend is going to fail, it fails fast enough that the response still
+# lands before the client would have already given up, instead of the
+# server silently grinding for minutes on a request nobody is waiting for
+# anymore.
+CLARA_COMPRESS_TIMEOUT_S = int(os.getenv("CLARA_COMPRESS_TIMEOUT_S", "40"))
+OLLAMA_GENERATE_TIMEOUT_S = int(os.getenv("OLLAMA_GENERATE_TIMEOUT_S", "50"))
+# Single-call path (CLaRa-primary, USE_CLARA=true) — nothing stacks after it,
+# so it gets a bit more headroom, but still well under the old 120s.
+CLARA_GENERATE_TIMEOUT_S = int(os.getenv("CLARA_GENERATE_TIMEOUT_S", "90"))
 
 if not USE_OLLAMA and not OPENAI_API_KEY:
     raise EnvironmentError(
@@ -79,7 +99,7 @@ def call_clara_api(prompt: str, documents: list = None) -> str:
         "documents": documents or []
     }
     try:
-        resp = requests.post(f"{CLARA_BASE_URL}/generate", json=payload, timeout=120)
+        resp = requests.post(f"{CLARA_BASE_URL}/generate", json=payload, timeout=CLARA_GENERATE_TIMEOUT_S)
         resp.raise_for_status()
         return resp.json().get("answer", "")
     except Exception as e:
@@ -102,7 +122,7 @@ def call_clara_compress(documents: list, question: str = "", patient_context: st
         "temperature": 0.1,
     }
     try:
-        resp = requests.post(f"{CLARA_BASE_URL}/compress", json=payload, timeout=120)
+        resp = requests.post(f"{CLARA_BASE_URL}/compress", json=payload, timeout=CLARA_COMPRESS_TIMEOUT_S)
         resp.raise_for_status()
         digest = resp.json().get("digest", "")
         if digest:
@@ -131,9 +151,32 @@ def call_ollama_generate(prompt: str, max_tokens: int = 800) -> str:
         },
     }
     try:
-        resp = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=180)
+        resp = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=OLLAMA_GENERATE_TIMEOUT_S)
         resp.raise_for_status()
         return resp.json().get("response", "")
     except Exception as e:
         print(f"[Ollama generate error] {e}")
+        return ""
+
+
+def call_judge_llm(prompt: str, max_tokens: int = 10) -> str:
+    """Calls the eval judge model (JUDGE_OLLAMA_MODEL/JUDGE_OLLAMA_BASE_URL),
+    kept independent from the generation model so eval isn't self-graded."""
+    import requests
+    payload = {
+        "model": JUDGE_OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.0,
+            "num_predict": max_tokens,
+            "keep_alive": -1,
+        },
+    }
+    try:
+        resp = requests.post(f"{JUDGE_OLLAMA_BASE_URL}/api/generate", json=payload, timeout=OLLAMA_GENERATE_TIMEOUT_S)
+        resp.raise_for_status()
+        return resp.json().get("response", "")
+    except Exception as e:
+        print(f"[Judge LLM error] {e}")
         return ""

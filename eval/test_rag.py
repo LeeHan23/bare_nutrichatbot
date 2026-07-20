@@ -3,17 +3,25 @@ RAG pipeline regression tests — verifies get_rag_response() produces clinicall
 correct, well-voiced answers for representative cardiac nutrition questions.
 
 Tests cover:
-  - Clinical accuracy  : answer contains expected clinical terms
-  - Voice correctness  : second-person mode never uses patient name
-  - Personalization    : L3 patients get medically-supervised-only advice
-  - CKD retrieval      : CKD patients get potassium/phosphorus guidance
+  - Clinical accuracy    : answer contains expected clinical terms
+  - Voice correctness    : second-person mode never uses patient name
+  - Personalization      : L0-L3 patients get level-appropriate caution language
+  - Contraindication     : answer's actual clinical DIRECTION (permit/moderate/
+                           restrict) is correct, verified via LLM judge — not
+                           just keyword presence (see judge_stance())
+  - Bilingual (BM)       : a subset of contraindication cases in Bahasa Malaysia
 
-Usage:
-    python eval/test_rag.py                       # all 10 cases (~8-15 min)
-    python eval/test_rag.py --smoke               # 4 critical cases (~4 min)
+CLI usage:
+    python eval/test_rag.py                       # all cases (~30-45 min — grows with the matrix)
+    python eval/test_rag.py --smoke               # smoke-tagged critical cases only
     python eval/test_rag.py --case 2              # single case by id
     python eval/test_rag.py --out results/rag.json
     python eval/test_rag.py --patient 2           # all cases for patient 2
+    python eval/test_rag.py --tag contraindication
+
+Pytest usage (for local dev / CI — see test_case() below):
+    pytest eval/test_rag.py -m smoke              # smoke-tagged subset only
+    pytest eval/test_rag.py -k "contraindication"
 
 Results are also printed in a human-readable table for dietitian review.
 """
@@ -33,6 +41,7 @@ load_dotenv()
 
 from rag import get_rag_response          # noqa: E402
 from database import SessionLocal, patient_to_profile_dict, Patient  # noqa: E402
+from llm import call_judge_llm            # noqa: E402
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TEST CASES
@@ -40,7 +49,33 @@ from database import SessionLocal, patient_to_profile_dict, Patient  # noqa: E40
 # required_terms: response must contain AT LEAST min_required of these (case-insensitive)
 # forbidden_terms: response must contain NONE of these
 # voice_check: if True, verify answer uses "you"/"your" and omits patient name
-# personalization_check: if True, verify L3 restriction language is present
+# personalization_check: True for the legacy L3-only check, or a dict
+#   {"level": "L1"|"L2"|"L3"} to check level-appropriate caution language
+# contraindication_check: {"food": ..., "condition": ..., "acceptable_stances": [...]}
+#   verified via an LLM judge that classifies the answer's actual clinical
+#   DIRECTION (permit/moderate/restrict), not just keyword presence. This is
+#   the check that catches the "banana for CKD" class of error: a keyword
+#   check can pass on an answer that says bananas are "fine in moderation"
+#   for a CKD patient because "potassium" and "kidney" appear somewhere in
+#   the text, even though the actual clinical stance taken is wrong.
+
+# Level-appropriate caution-language markers (any one of these present is a pass).
+# Includes Bahasa Malaysia equivalents since a subset of cases are bilingual —
+# an answer shouldn't fail this check purely because it's correct in BM instead of English.
+LEVEL_CHECK_TERMS = {
+    "L1": [
+        "moderation", "limit", "gradually", "monitor", "reduce", "caution",
+        "sederhana", "hadkan", "had ", "kurangkan", "beransur", "berhati-hati", "hati-hati",
+    ],
+    "L2": [
+        "monitor", "caution", "limit", "low-intensity", "symptom", "stop", "watch for",
+        "pantau", "berhati-hati", "hati-hati", "hadkan", "had ", "intensiti rendah", "gejala", "berhenti",
+    ],
+    "L3": [
+        "supervised", "supervision", "doctor", "medical", "cardiac rehab", "care team",
+        "diselia", "penyeliaan", "doktor", "perubatan", "pasukan penjagaan", "pemulihan jantung",
+    ],
+}
 
 CASES = [
     {
@@ -55,7 +90,7 @@ CASES = [
         "voice_check": True,
     },
     {
-        "id": 2, "tags": ["smoke", "ckd"],
+        "id": 2, "tags": ["smoke", "ckd", "contraindication"],
         "desc": "CKD+HTN: can I eat bananas?",
         "patient_id": 2,
         "question": "Can I eat bananas?",
@@ -64,6 +99,14 @@ CASES = [
         "min_required": 2,
         "forbidden_terms": ["Lim Siew Ching"],
         "voice_check": True,
+        # This is the exact case that motivated the directional judge: the
+        # keyword check above can pass on an answer that says bananas are
+        # "fine in moderation" for a CKD patient, since "potassium"/"kidney"
+        # still appear. Only RESTRICT is acceptable here, not MODERATE.
+        "contraindication_check": {
+            "food": "banana", "condition": "CKD Stage 3 (potassium-restricted)",
+            "acceptable_stances": ["restrict"],
+        },
     },
     {
         "id": 3, "tags": ["smoke", "dm"],
@@ -152,6 +195,325 @@ CASES = [
         "forbidden_terms": ["Rajendran"],
         "voice_check": True,
     },
+
+    # ─────────────────────────────────────────────────────────────────────
+    # CONTRAINDICATION MATRIX — systematic condition x food coverage.
+    # Each case checks the answer's actual clinical DIRECTION via LLM judge
+    # (contraindication_check), not just keyword presence.
+    # ─────────────────────────────────────────────────────────────────────
+
+    # --- CKD (patient 2: Stage 3 + HTN, L2; patient 11: Stage 4, L3) ---
+    {
+        "id": 11, "tags": ["ckd", "contraindication"],
+        "desc": "CKD+HTN: durian (high potassium)",
+        "patient_id": 2,
+        "question": "Can I eat durian?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "durian", "condition": "CKD Stage 3 (potassium-restricted)",
+            "acceptable_stances": ["restrict"],
+        },
+        "voice_check": True,
+    },
+    {
+        "id": 12, "tags": ["ckd", "contraindication"],
+        "desc": "CKD+HTN: dairy/milk (phosphorus)",
+        "patient_id": 2,
+        "question": "Can I drink milk every day?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "milk/dairy", "condition": "CKD Stage 3 (phosphorus-restricted)",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "voice_check": True,
+    },
+    {
+        "id": 13, "tags": ["ckd", "contraindication"],
+        "desc": "CKD+HTN: tomatoes (potassium)",
+        "patient_id": 2,
+        "question": "Can I eat tomatoes?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "tomato", "condition": "CKD Stage 3 (potassium-restricted)",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "voice_check": True,
+    },
+    {
+        "id": 14, "tags": ["ckd", "hf", "contraindication", "personalization"],
+        "desc": "L3 Post-CABG+HF+CKD4: salted fish (sodium)",
+        "patient_id": 11,
+        "question": "Can I eat salted fish (ikan masin)?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "salted fish (ikan masin)", "condition": "Heart Failure + CKD Stage 4 (sodium-restricted)",
+            "acceptable_stances": ["restrict"],
+        },
+        "personalization_check": {"level": "L3"},
+    },
+
+    # --- HTN (patient 1: T2DM+HTN, L2; patient 5: HTN+Hypercholesterolaemia+T2DM, L2) ---
+    {
+        "id": 15, "tags": ["htn", "contraindication"],
+        "desc": "T2DM+HTN: banana is actually fine for BP (positive control)",
+        "patient_id": 1,
+        "question": "I heard bananas are good for blood pressure, can I eat them?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "banana", "condition": "Hypertension (no kidney disease)",
+            "acceptable_stances": ["permit", "moderate"],
+        },
+        "voice_check": True,
+    },
+    {
+        "id": 16, "tags": ["htn", "contraindication", "personalization"],
+        "desc": "T2DM+HTN: instant noodles (sodium)",
+        "patient_id": 1,
+        "question": "Can I eat instant noodles (Maggi)?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "instant noodles (Maggi)", "condition": "Hypertension",
+            "acceptable_stances": ["restrict"],
+        },
+        "personalization_check": {"level": "L2"},
+        "voice_check": True,
+    },
+    {
+        "id": 17, "tags": ["htn", "cholesterol", "contraindication", "personalization"],
+        "desc": "HTN+Hypercholesterol+T2DM: preserved vegetables (acar)",
+        "patient_id": 5,
+        "question": "Can I eat acar (pickled vegetables)?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "acar (preserved/pickled vegetables)", "condition": "Hypertension",
+            "acceptable_stances": ["restrict"],
+        },
+        "personalization_check": {"level": "L2"},
+        "voice_check": True,
+    },
+
+    # --- T2DM (patient 1; patient 5) ---
+    {
+        "id": 18, "tags": ["dm", "contraindication"],
+        "desc": "T2DM+HTN: white bread (high GI)",
+        "patient_id": 1,
+        "question": "Can I eat white bread for breakfast?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "white bread", "condition": "Type 2 Diabetes",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "voice_check": True,
+    },
+    {
+        "id": 19, "tags": ["dm", "contraindication"],
+        "desc": "HTN+Hypercholesterol+T2DM: Teh Tarik (sugar)",
+        "patient_id": 5,
+        "question": "Can I have Teh Tarik in the morning?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "Teh Tarik (sweetened milk tea)", "condition": "Type 2 Diabetes",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "voice_check": True,
+    },
+    {
+        "id": 20, "tags": ["dm", "contraindication"],
+        "desc": "T2DM+HTN: oats are actually fine (positive control)",
+        "patient_id": 1,
+        "question": "Is it okay for me to eat oats?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "oats", "condition": "Type 2 Diabetes",
+            "acceptable_stances": ["permit", "moderate"],
+        },
+        "voice_check": True,
+    },
+
+    # --- Dyslipidaemia (patient 4: Dyslipidaemia+Obesity I, L1; patient 5: L2) ---
+    {
+        "id": 21, "tags": ["cholesterol", "contraindication", "personalization"],
+        "desc": "Dyslipidaemia+Obesity: santan/coconut milk (saturated fat)",
+        "patient_id": 4,
+        "question": "Can I cook with coconut milk (santan)?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "coconut milk (santan)", "condition": "Dyslipidaemia",
+            "acceptable_stances": ["restrict"],
+        },
+        "personalization_check": {"level": "L1"},
+        "voice_check": True,
+    },
+    {
+        "id": 22, "tags": ["cholesterol", "contraindication"],
+        "desc": "Dyslipidaemia+Obesity: deep-fried chicken (saturated/trans fat)",
+        "patient_id": 4,
+        "question": "Can I eat fried chicken regularly?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "deep-fried chicken", "condition": "Dyslipidaemia",
+            "acceptable_stances": ["restrict"],
+        },
+        "voice_check": True,
+    },
+    {
+        "id": 23, "tags": ["cholesterol", "contraindication"],
+        "desc": "HTN+Hypercholesterol+T2DM: mackerel/ikan kembung is fine (positive control)",
+        "patient_id": 5,
+        "question": "Is ikan kembung (mackerel) good for me?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "ikan kembung (mackerel)", "condition": "Dyslipidaemia",
+            "acceptable_stances": ["permit", "moderate"],
+        },
+        "voice_check": True,
+    },
+
+    # --- Heart Failure (patient 11: Post-CABG+HF+T2DM+HTN+CKD4, L3) ---
+    {
+        "id": 24, "tags": ["hf", "contraindication", "personalization"],
+        "desc": "L3 Post-CABG+HF: soup/stock (sodium)",
+        "patient_id": 11,
+        "question": "Can I have soup with my meals?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "soup/stock", "condition": "Heart Failure",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "personalization_check": {"level": "L3"},
+    },
+    {
+        "id": 25, "tags": ["hf", "contraindication", "personalization"],
+        "desc": "L3 Post-CABG+HF: unlimited plain water (fluid restriction)",
+        "patient_id": 11,
+        "question": "Can I drink as much water as I want?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "water/fluids (unrestricted volume)", "condition": "Heart Failure",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "personalization_check": {"level": "L3"},
+    },
+
+    # --- PCOS / Insulin Resistance (patient 3: L1) ---
+    {
+        "id": 26, "tags": ["pcos", "contraindication", "personalization"],
+        "desc": "PCOS+IR: white rice (high GI)",
+        "patient_id": 3,
+        "question": "Can I eat white rice?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "white rice", "condition": "PCOS with Insulin Resistance",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "personalization_check": {"level": "L1"},
+        "voice_check": True,
+    },
+    {
+        "id": 27, "tags": ["pcos", "contraindication"],
+        "desc": "PCOS+IR: dhal/legumes are fine (positive control)",
+        "patient_id": 3,
+        "question": "Is dhal (lentils) a good choice for me?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "dhal (lentils)", "condition": "PCOS with Insulin Resistance",
+            "acceptable_stances": ["permit", "moderate"],
+        },
+        "voice_check": True,
+    },
+
+    # --- Overweight / Pre-hypertension (patient 12: L1) ---
+    {
+        "id": 28, "tags": ["obesity", "contraindication", "personalization"],
+        "desc": "L1 Overweight+Pre-HTN: fried mamak food",
+        "patient_id": 12,
+        "question": "Can I still eat mamak food like roti canai?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "roti canai (fried mamak food)", "condition": "Overweight, Pre-hypertension",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+        "personalization_check": {"level": "L1"},
+        "voice_check": True,
+    },
+    {
+        "id": 29, "tags": ["obesity", "contraindication", "personalization"],
+        "desc": "L1 Overweight+Pre-HTN: instant/processed food",
+        "patient_id": 12,
+        "question": "Is it okay to eat instant food often to save time?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "instant/processed food", "condition": "Pre-hypertension",
+            "acceptable_stances": ["restrict"],
+        },
+        "personalization_check": {"level": "L1"},
+        "voice_check": True,
+    },
+
+    # --- L0 general wellness (patient 10): control case, no over-restriction ---
+    {
+        "id": 30, "tags": ["wellness", "contraindication"],
+        "desc": "L0 general wellness: banana should not be over-restricted",
+        "patient_id": 10,
+        "question": "Can I eat bananas?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "banana", "condition": "no significant conditions (general wellness)",
+            "acceptable_stances": ["permit", "moderate"],
+        },
+        "forbidden_terms": ["potassium restriction", "kidney disease", "dialysis"],
+        "voice_check": True,
+    },
+
+    # ─────────────────────────────────────────────────────────────────────
+    # BILINGUAL (Bahasa Malaysia) — mirrors a subset of the cases above to
+    # verify clinical direction is preserved across language.
+    # ─────────────────────────────────────────────────────────────────────
+    {
+        "id": 31, "tags": ["ckd", "contraindication", "bilingual"],
+        "desc": "BM: CKD+HTN — bolehkah saya makan pisang? (banana)",
+        "patient_id": 2,
+        "question": "Bolehkah saya makan pisang?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "pisang (banana)", "condition": "CKD Stage 3 (potassium-restricted)",
+            "acceptable_stances": ["restrict"],
+        },
+    },
+    {
+        "id": 32, "tags": ["htn", "contraindication", "bilingual"],
+        "desc": "BM: T2DM+HTN — bolehkah saya makan mi segera? (instant noodles)",
+        "patient_id": 1,
+        "question": "Bolehkah saya makan mi segera setiap hari?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "mi segera (instant noodles)", "condition": "Hypertension",
+            "acceptable_stances": ["restrict"],
+        },
+    },
+    {
+        "id": 33, "tags": ["dm", "contraindication", "bilingual"],
+        "desc": "BM: T2DM+HTN — bolehkah saya makan nasi putih? (white rice)",
+        "patient_id": 1,
+        "question": "Bolehkah saya makan nasi putih banyak-banyak?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "nasi putih (white rice)", "condition": "Type 2 Diabetes",
+            "acceptable_stances": ["restrict", "moderate"],
+        },
+    },
+    {
+        "id": 34, "tags": ["cholesterol", "contraindication", "bilingual", "personalization"],
+        "desc": "BM: Dyslipidaemia+Obesity — bolehkah saya makan gulai bersantan? (coconut milk curry)",
+        "patient_id": 4,
+        "question": "Bolehkah saya makan gulai bersantan setiap hari?",
+        "is_patient_self": True,
+        "contraindication_check": {
+            "food": "gulai bersantan (coconut milk curry)", "condition": "Dyslipidaemia",
+            "acceptable_stances": ["restrict"],
+        },
+        "personalization_check": {"level": "L1"},
+    },
 ]
 
 
@@ -180,6 +542,54 @@ def check_forbidden(answer: str, forbidden: list) -> tuple[bool, list]:
     answer_lower = answer.lower()
     found = [t for t in forbidden if t.lower() in answer_lower]
     return len(found) == 0, found
+
+
+_STANCE_LABELS = ("RESTRICT", "PERMIT", "MODERATE", "UNCLEAR")
+
+
+def judge_stance(answer: str, food: str, condition: str) -> str:
+    """LLM judge: classify the answer's actual clinical stance toward `food`
+    for a patient with `condition`, independent of which vocabulary it uses.
+
+    Returns one of RESTRICT / PERMIT / MODERATE / UNCLEAR. This is what
+    catches direction-flipped answers that a keyword check would miss —
+    e.g. an answer that mentions "potassium" and "kidney" while still
+    telling a CKD patient bananas are fine.
+    """
+    prompt = f"""You are a clinical safety auditor reviewing a nutrition chatbot's answer.
+
+Patient condition: {condition}
+Food/drink in question: {food}
+
+Chatbot's answer:
+\"\"\"
+{answer}
+\"\"\"
+
+Classify the chatbot's stance toward this patient consuming "{food}" as EXACTLY ONE of:
+- RESTRICT  (tells the patient to avoid it, or that it is not recommended / contraindicated for their condition)
+- PERMIT    (tells the patient it is fine, safe, or beneficial, with no meaningful caveat)
+- MODERATE  (says it is okay only in small amounts / occasionally / with monitoring or portion limits)
+- UNCLEAR   (the answer does not clearly address this food)
+
+Respond with exactly one word: RESTRICT, PERMIT, MODERATE, or UNCLEAR."""
+
+    raw = call_judge_llm(prompt, max_tokens=10).strip().upper()
+    for label in _STANCE_LABELS:
+        if label in raw:
+            return label
+    return "UNCLEAR"
+
+
+def check_contraindication(answer: str, check: dict) -> tuple[bool, str]:
+    """Returns (passed, detail_message)."""
+    food = check["food"]
+    condition = check["condition"]
+    acceptable = [s.upper() for s in check.get("acceptable_stances", ["RESTRICT"])]
+    stance = judge_stance(answer, food, condition)
+    passed = stance in acceptable
+    detail = f"judge classified stance as {stance} (acceptable: {acceptable})"
+    return passed, detail
 
 
 def run_case(case: dict) -> dict:
@@ -224,21 +634,70 @@ def run_case(case: dict) -> dict:
         if "you" not in answer.lower() and "your" not in answer.lower():
             failures.append("Voice: answer does not use second-person 'you'/'your'")
 
-    # Personalization check: L3 patient should see supervision/medical language
-    if case.get("personalization_check"):
-        supervision_terms = ["supervised", "supervision", "doctor", "medical", "cardiac rehab"]
-        if not any(t in answer.lower() for t in supervision_terms):
-            failures.append("Personalization: L3 patient answer missing supervision language")
+    # Personalization check: level-appropriate caution language present.
+    # `True` (legacy) means L3; a dict {"level": "L1"|"L2"|"L3"} checks that level.
+    pcheck = case.get("personalization_check")
+    if pcheck:
+        level = "L3" if pcheck is True else pcheck.get("level", "L3")
+        terms = LEVEL_CHECK_TERMS.get(level, LEVEL_CHECK_TERMS["L3"])
+        if not any(t in answer.lower() for t in terms):
+            failures.append(
+                f"Personalization: {level} patient answer missing expected "
+                f"caution language (any of {terms})"
+            )
+
+    # Contraindication check: verify the answer's actual clinical DIRECTION
+    # (permit/moderate/restrict) via LLM judge, not just keyword presence.
+    ccheck = case.get("contraindication_check")
+    if ccheck:
+        passed_stance, detail = check_contraindication(answer, ccheck)
+        if not passed_stance:
+            failures.append(f"Contraindication ({ccheck['food']} + {ccheck['condition']}): {detail}")
 
     return {
         "id": case["id"],
         "desc": case["desc"],
+        "tags": case.get("tags", []),
         "patient_id": case["patient_id"],
         "passed": len(failures) == 0,
         "failures": failures,
         "answer": answer,
         "elapsed_s": round(elapsed, 1),
+        # Preserved so a failing case's food/condition/expected_stance survives
+        # into results JSON without needing to re-cross-reference CASES —
+        # this is what finetune/generate_training_data.py's --focus-results
+        # reads to know which combos to oversample. See docs/eval_and_roadmap.md Part C.
+        "contraindication_check": case.get("contraindication_check"),
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PYTEST ENTRY POINT
+# ─────────────────────────────────────────────────────────────────────────────
+# Wraps each CASES entry as its own parametrized pytest test, so the suite is
+# collectible by `pytest` (for local dev and CI) in addition to the CLI runner
+# below (used by the nightly cron — see docs/eval_and_roadmap.md Part A #7).
+# Cases tagged "smoke" get the `smoke` pytest marker so a fast subset can be
+# selected with `pytest eval/test_rag.py -m smoke`.
+
+try:
+    import pytest
+
+    def _case_id(case: dict) -> str:
+        return f"{case['id']:02d}_{case['desc'][:40].replace(' ', '_')}"
+
+    def _pytest_params():
+        for case in CASES:
+            marks = [pytest.mark.smoke] if "smoke" in case.get("tags", []) else []
+            yield pytest.param(case, marks=marks, id=_case_id(case))
+
+    @pytest.mark.parametrize("case", list(_pytest_params()))
+    def test_case(case):
+        result = run_case(case)
+        assert result["passed"], "; ".join(result["failures"]) or "unknown failure"
+
+except ImportError:
+    pass  # pytest not installed — CLI runner below still works standalone
 
 
 # ─────────────────────────────────────────────────────────────────────────────

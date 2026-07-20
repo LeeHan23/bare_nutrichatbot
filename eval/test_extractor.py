@@ -2,11 +2,14 @@
 Extractor regression tests — verifies extract_from_message() picks up the right
 fields from patient messages in English, Bahasa Malaysia, and mixed input.
 
-Usage:
+CLI usage:
     python eval/test_extractor.py                 # all 20 cases
     python eval/test_extractor.py --smoke         # 5 critical cases only (~2 min)
     python eval/test_extractor.py --out results/extractor.json
     python eval/test_extractor.py --case 3        # single case by index
+
+Pytest usage (for local dev / CI):
+    pytest eval/test_extractor.py -m smoke
 
 Each test case specifies:
   message     : patient utterance
@@ -266,11 +269,39 @@ def run_case(case: dict) -> dict:
     return {
         "id": case["id"],
         "desc": case["desc"],
+        "tags": case.get("tags", []),
         "passed": len(failures) == 0,
         "failures": failures,
         "result": result,
         "elapsed_s": round(elapsed, 1),
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PYTEST ENTRY POINT
+# ─────────────────────────────────────────────────────────────────────────────
+# Wraps each CASES entry as its own parametrized pytest test (see
+# eval/test_rag.py for the same pattern). Cases tagged "smoke" get the
+# `smoke` marker for `pytest eval/test_extractor.py -m smoke`.
+
+try:
+    import pytest
+
+    def _case_id(case: dict) -> str:
+        return f"{case['id']:02d}_{case['desc'][:40].replace(' ', '_')}"
+
+    def _pytest_params():
+        for case in CASES:
+            marks = [pytest.mark.smoke] if "smoke" in case.get("tags", []) else []
+            yield pytest.param(case, marks=marks, id=_case_id(case))
+
+    @pytest.mark.parametrize("case", list(_pytest_params()))
+    def test_case(case):
+        result = run_case(case)
+        assert result["passed"], "; ".join(result["failures"]) or "unknown failure"
+
+except ImportError:
+    pass  # pytest not installed — CLI runner below still works standalone
 
 
 # ─────────────────────────────────────────────────────────────────────────────

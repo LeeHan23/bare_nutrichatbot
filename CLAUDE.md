@@ -38,6 +38,8 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
     - Conda env: clara (Python 3.10)
 ```
 
+**Note on the `-internal-` tunnel hostnames:** `clara-internal-x9k2.computationalrd.com` and `ollama-internal-x9k2.computationalrd.com` are served by the Mac Studio's *own* `cloudflared` LaunchDaemon, not proxied through the RTX 3050. The RTX 3050 in the diagram above is just a *client* calling those URLs like any other caller would. Because Cloudflare's edge routes to the Mac Studio directly, these two hostnames are reachable from anywhere on the internet — including when the RTX 3050 (and therefore the public `nutribot.computationalrd.com` URL) is down. See "Testing CLaRa/Ollama directly" under Service Management.
+
 ### Drive Layout (RTX 3050)
 
 | Device | Mount | Label | FS | Size | Notes |
@@ -385,6 +387,35 @@ real spec arrives:
 - LE8 BP
 Run `build_base_db.py` after adding to `/home/han/documents_clean/`
 
+### 10. Evaluation methodology + architecture + fine-tuning roadmap
+See `docs/eval_and_roadmap.md` (written 2026-07-16). Covers: fixing `eval_ragas.py`'s dead-code eval target, replacing keyword-match checks with a directional/clinical-correctness judge (the "banana for CKD" test case currently passes on keyword match despite the stored answer being clinically wrong), a systematic per-condition contraindication test matrix, architecture resilience fixes (no LLM-generation fallback, untracked MPS patch, dead `chain_factory.py` path), and a plan to LoRA/QLoRA fine-tune `qwen2.5:32b` directly, targeted at whatever the expanded eval shows as the most common failure categories.
+
+**Part A implemented 2026-07-16** (evaluation methodology — code changes live in `eval/eval_ragas.py`, `eval/test_rag.py`, `eval/test_extractor.py`, `scripts/eval_history.py`, `pytest.ini`):
+- `eval_ragas.py` now calls `rag.get_rag_response()` (the real Option B pipeline) instead of the dead `chain_factory` legacy chain.
+- `eval/test_rag.py` grew from 10 to 34 cases: a systematic per-condition contraindication matrix (25 cases use the new `judge_stance()` LLM-judge check — classifies the answer's actual RESTRICT/PERMIT/MODERATE stance instead of trusting keyword presence), 4 bilingual (BM) cases, and L1/L2 personalization coverage (previously only L3 was checked).
+- `scripts/eval_history.py` appends `{date, git_commit, passed/failed, category_breakdown}` to a JSONL log per run — `python scripts/eval_history.py --results eval/results/rag.json --suite rag` — instead of the old overwrite-only `results/*.json` snapshots.
+- Both suites are now pytest-collectible (`pytest eval/test_rag.py -m smoke`) in addition to their existing CLI runners.
+- **Still pending**: add this cron entry on the RTX 3050 once it's back up (couldn't be installed remotely — the box was down during this session, see Known Issues):
+  ```
+  0 3 * * * cd /mnt/ext/bare_NutriChatbot && /home/han/miniconda3/bin/python eval/test_rag.py --smoke --out eval/results/rag_smoke.json >> logs/eval_nightly.log 2>&1 && /home/han/miniconda3/bin/python scripts/eval_history.py --results eval/results/rag_smoke.json --suite rag_smoke >> logs/eval_nightly.log 2>&1
+  ```
+  (Uses the CLI runner, not `pytest` — the repo's root `conftest.py` forces `DATABASE_URL` to a sqlite in-memory DB for other test suites, which would break this suite's real Postgres/pgvector dependency if run via `pytest` in cron; the CLI runner calls its own `load_dotenv()` directly and isn't affected.)
+- The error-leakage bug is also fixed: `stream_rag_response()` in `website_chat_router.py` no longer yields raw exception text to the patient-facing chat — it logs the real exception server-side and yields a generic apology instead.
+
+**Part B implemented 2026-07-16** (architecture resilience — code changes live in `llm.py`, `rag.py`; scope trimmed per explicit decision not to add an OpenAI generation fallback):
+- Timeout budget cut from a ~300s worst-case stack to ~90s: `CLARA_COMPRESS_TIMEOUT_S=40` + `OLLAMA_GENERATE_TIMEOUT_S=50` (both env-overridable in `llm.py`), comfortably under the ~100s client-observed Cloudflare timeout (item 6 above) — a dead backend now fails fast instead of the server grinding for minutes on a request the client already gave up on. `CLARA_GENERATE_TIMEOUT_S=90` for the single-call CLaRa-primary path.
+- Removed the dead legacy LangChain path from `rag.py` (confirmed `create_conversational_chain` had exactly one remaining caller — that branch — after Part A repointed `eval_ragas.py`). `get_rag_response()` now raises a clear `EnvironmentError` if none of `USE_AGENT_TOOLS`/`USE_CLARA`/`USE_CLARA_COMPRESS` are set, instead of silently falling through to dead code. Also removed `identify_target_disease()`, which became dead code itself once its only call site (inside the removed branch's profile-less path) was gone — it was a wasted extra LLM round-trip on every profile-less request that fed a value nothing downstream used.
+- `chain_factory.py` itself is untouched — `get_system_template()` is still used by `finetune/generate_training_data.py`.
+- **Explicitly not done, per user decision**: no OpenAI fallback was wired into `call_ollama_generate`'s call site — a full Mac Studio/tunnel outage still means 100% generation failure. This was Part B item 1 in the roadmap doc; deliberately skipped, not forgotten.
+- The MPS patch is now tracked: `patches/mps_cuda_patch.py` + `patches/README.md`. Since the real `modeling_clara.py` lives only on the Mac Studio's HuggingFace cache (never accessible from this session), this is a verified apply/revert script (mechanical text substitutions matching the exact changes documented above) rather than a literal `.patch` diff against content nobody here has read — a hand-authored diff against unseen content would have been worse than nothing. Verified via `--demo` mode against a built-in sample snippet (no real file needed to prove the substitution logic is correct). Still manual: bfloat16 dtype choice (optional) and removing `PYTORCH_ENABLE_MPS_FALLBACK=1` from the Mac Studio's LaunchDaemon (an env var, not a source-file line) — both documented in `patches/README.md`. The IP ownership flag remains documentation-only (no action needed from Claude).
+
+**Part C implemented 2026-07-16** (fine-tuning scaffolding — code changes live in `eval/test_rag.py`, `finetune/generate_training_data.py`, `scripts/compare_eval_runs.py`, `finetune/QWEN_FINETUNE.md`):
+- `eval/test_rag.py`'s `run_case()` now also returns the `contraindication_check` dict for each case (food/condition/acceptable_stances), so a failing case's targeting metadata survives into results JSON without needing to re-cross-reference `CASES`.
+- `finetune/generate_training_data.py` gained `--focus-results <path>` + `--focus-weight <n>`: reads a `test_rag.py --out` results JSON, extracts every distinct FAILING contraindication combo, and generates `--focus-weight` extra synthetic ADIME conversations per combo that explicitly demonstrate the correct RESTRICT/MODERATE/PERMIT stance (via a new `FOCUS_ADDENDUM` prompt block) — oversampling the model's known weak spots instead of pure uniform random sampling. The stance-picking logic (`_target_stance`) and combo extraction (`load_focus_combos`) were verified against a synthetic results JSON matching the real output shape (correctly excludes passing cases and no-check cases, dedupes, and picks the clinically conservative stance when multiple are acceptable) — this Mac Mini has no `openai`/`dotenv` packages installed, so the full module couldn't be executed end-to-end here, only its pure logic.
+- `scripts/compare_eval_runs.py` (new): compares a baseline vs. candidate `test_rag.py --out` results JSON, reports per-case regressions/improvements and per-tag pass rates, and prints a PROMOTE / DO NOT PROMOTE verdict (exit code 0/1) — a candidate is only promotion-worthy with zero regressions and at least one fix. Verified against synthetic baseline/candidate pairs covering both a clean-improvement case (correctly PROMOTEs) and a mixed-improvement-with-regression case (correctly blocks promotion).
+- `finetune/QWEN_FINETUNE.md` (new): documents the recommended QLoRA config for fine-tuning `qwen2.5:32b` directly (not the existing Gemma-3 `Modelfile` track) — base model, Unsloth framework, starting hyperparameters, the merge/quantize/deploy pipeline, and how the pieces above wire together end-to-end. Documentation only — actually running a 32B training job needs real GPU time this session didn't have.
+- **Not built**: the actual LoRA/QLoRA training run itself (needs the Mac Studio or a cloud GPU); the embeddings closed-loop (Part C item 4) is noted as blocked on Part A's retrieval-quality visibility gap, which was never closed (`vector_store.py`'s `[TopicBoost]` scores are still print-only, no persisted signal).
+
 ---
 
 ## Service Management
@@ -446,6 +477,49 @@ curl -X POST https://nutribot.computationalrd.com/chat/get_response_sync \
 
 Healthy response: clinical answer mentioning CKD + hypertension restrictions (low K, low P, fluid limit, low Na). Takes 30–60s first call, 10–30s warm.
 
+### Testing CLaRa/Ollama directly (RTX 3050 down)
+
+If the RTX 3050 is down, the public bot URL and the smoke test above will fail — but CLaRa and Ollama on the Mac Studio can still be checked directly from **any machine with internet access** (no LAN/Tailscale/SSH to the Mac Studio needed), since their tunnel hostnames are served by the Mac Studio's own `cloudflared`, independent of the RTX 3050:
+
+```bash
+# CLaRa (Mac Studio :8001, via its own tunnel)
+curl -s -o /dev/null -w "CLaRa: %{http_code}\n" https://clara-internal-x9k2.computationalrd.com/docs
+
+# Ollama (Mac Studio :11434, via its own tunnel) — lists loaded models
+curl -s https://ollama-internal-x9k2.computationalrd.com/api/tags
+
+# Public bot URL, for contrast — will show the RTX 3050 outage
+curl -s -o /dev/null -w "Public bot: %{http_code}\n" https://nutribot.computationalrd.com/docs
+```
+
+Last verified **2026-07-16**: CLaRa → `200`, Ollama → `200` (models loaded: `qwen2.5:32b`, `llama3.1:8b`), public bot → `530` (Cloudflare origin/DNS error — confirms the outage is isolated to the RTX 3050's tunnel, Mac Studio unaffected).
+
+**Real inference test (proves the models actually generate, not just that the HTTP server is up)** — payload shapes match `llm.py`'s `call_ollama_generate` / `call_clara_api` / `call_clara_compress`:
+
+```bash
+# Ollama — real generation via qwen2.5:32b
+curl -s -X POST https://ollama-internal-x9k2.computationalrd.com/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"model":"qwen2.5:32b","prompt":"Reply with exactly one short sentence confirming you are online.","stream":false,"options":{"temperature":0.3,"num_predict":50}}'
+
+# CLaRa — /generate
+curl -s -X POST https://clara-internal-x9k2.computationalrd.com/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Reply with exactly one short sentence confirming you are online.","max_tokens":50,"temperature":0.3,"documents":[]}'
+
+# CLaRa — /compress (the actual Option B pipeline call)
+curl -s -X POST https://clara-internal-x9k2.computationalrd.com/compress \
+  -H "Content-Type: application/json" \
+  -d '{"documents":["Patients with chronic kidney disease should limit potassium intake to 2000-3000mg per day and avoid high-potassium foods such as bananas, oranges, and potatoes."],"question":"What should I eat for breakfast?","patient_context":"CKD Stage 3, Hypertension","max_tokens":300,"temperature":0.1}'
+```
+
+Results, verified **2026-07-16** from a Mac Mini (not RTX 3050, not the Mac Studio itself — i.e. from any machine on the internet):
+- Ollama → `"I am online and ready to assist."` (~16s, mostly cold model-load time)
+- CLaRa `/generate` → `"I'm online and ready to help."` (~16s)
+- CLaRa `/compress` → full structured digest (RECOMMENDATIONS / CAUTIONS / KEY NUMBERS) correctly reflecting the CKD + hypertension test input — confirms the compression step of the active RAG pipeline is working, not just reachable.
+
+Note: this only exercises CLaRa/Ollama in isolation. The full `rag.py` retrieval pipeline additionally needs PGVector/Postgres, which lives on the RTX 3050 — so this local test proves the *models* are healthy but doesn't stand in for a full end-to-end RAG smoke test while the RTX 3050 is down.
+
 ---
 
 ## Content Pipeline Quick Reference
@@ -486,6 +560,7 @@ NUTRIBOT_TEST_LIVE=1 python scripts/test_content_pipeline.py --test generation  
 | exFAT on /mnt/ext breaks Python venvs | Must use miniconda, not .venv | Use /home/han/miniconda3/bin/python |
 | UiTM network blocks Tailscale | Can't use Tailscale on Mac Studio | Replaced with Cloudflare tunnels |
 | T7 Shield (/mnt/ssd) 100% full | Cannot write new files there | Project moved to MEEEE (/mnt/ext) |
+| RTX 3050 down as of 2026-07-16 (public `nutribot.computationalrd.com` → Cloudflare 530) | Full bot pipeline untestable via public URL | Mac Studio's CLaRa/Ollama confirmed independently reachable via their own tunnel — see "Testing CLaRa/Ollama directly" under Service Management |
 
 ---
 

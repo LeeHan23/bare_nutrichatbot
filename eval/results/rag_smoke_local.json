@@ -1,0 +1,72 @@
+{
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4
+  },
+  "cases": [
+    {
+      "id": 1,
+      "desc": "CKD+HTN: foods to avoid",
+      "tags": [
+        "smoke",
+        "ckd"
+      ],
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "You need to avoid foods that are high in potassium, phosphorus, and sodium. This includes bananas, oranges, avocados, dairy products like milk and cheese, nuts, beans, and processed foods which often have added salt.\n\nTry using herbs and spices instead of salt for flavoring your meals to keep your sodium intake low.\n\nWhat do you usually eat for lunch, and are there any high-potassium or high-phosphorus ingredients in those dishes?",
+      "elapsed_s": 41.2,
+      "contraindication_check": null
+    },
+    {
+      "id": 2,
+      "desc": "CKD+HTN: can I eat bananas?",
+      "tags": [
+        "smoke",
+        "ckd",
+        "contraindication"
+      ],
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "You should avoid eating bananas because they are high in potassium, which can be harmful to your kidneys and blood pressure at this stage. Instead of bananas, you could enjoy an apple or some berries, which have a lower potassium content but still offer good nutrition.\n\nHow do you usually incorporate bananas into your diet, and what do you think might be a tasty alternative?",
+      "elapsed_s": 23.5,
+      "contraindication_check": {
+        "food": "banana",
+        "condition": "CKD Stage 3 (potassium-restricted)",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "desc": "T2DM+HTN: can I eat white rice?",
+      "tags": [
+        "smoke",
+        "dm"
+      ],
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "You can have white rice, but it's important to limit your intake because of its high glycemic index, which can spike your blood sugar levels. Instead of eating Nasi Lemak regularly, try having brown rice or a mix of brown and white rice to balance out the meal.\n\nHow about trying to replace one of your daily meals with a salad that includes lots of vegetables and a small portion of whole grains like quinoa?\n\nDo you think you could swap one of your daily snacks for something more nutritious, like a handful of nuts or some fruit?",
+      "elapsed_s": 43.0,
+      "contraindication_check": null
+    },
+    {
+      "id": 4,
+      "desc": "L3 Post-CABG+HF: can I exercise? (must require supervision)",
+      "tags": [
+        "smoke",
+        "personalization"
+      ],
+      "patient_id": 11,
+      "passed": true,
+      "failures": [],
+      "answer": "You should only engage in physical activity that is supervised by your cardiac rehab programme given your recent CABG and heart failure status. This will ensure your safety and monitor your progress appropriately.\n\nLet's discuss what specific exercises are included in your rehabilitation plan so we can support those goals effectively.\n\nHow do you feel about the current activities suggested by your cardiac rehab team?",
+      "elapsed_s": 31.6,
+      "contraindication_check": null
+    }
+  ]
+}
