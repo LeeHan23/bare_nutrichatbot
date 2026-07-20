@@ -96,6 +96,12 @@ clean_annotations.py
 cloudflared
 .mcp.json
 
+# Claude Code (AI coding assistant) local settings - machine-specific
+# (paths, permissions), never meant to be shared across machines/contributors
+.claude/
+.claude.json
+CLAUDE.local.md
+
 # Ignore large PDFs in the root
 Food Group .pdf
 Malaysian food portion size photo album copy.pdf
