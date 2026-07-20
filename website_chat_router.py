@@ -13,10 +13,17 @@ from dependencies import get_api_client, get_db
 from extractor import extract_from_message
 from patient_store import get_patient_store
 
+logger = logging.getLogger(__name__)
+
+# --- Router Initialization ---
+chat_router = APIRouter()
+
+# --- Single PatientStore instance — RemotePatientStore if HOSPITAL_API_URL is set, else LocalPatientStore ---
+patient_store = get_patient_store()
+
 # --- PROTOCOL SEC 13.4: RED-FLAG ESCALATION (BILINGUAL) ---
 RED_FLAG_PATTERN = re.compile(
-    r"\b(chest\s*pain|sakit\s*dada|breathlessness|sesak\s*nafas|fainted|pengsan|"
-    r"sweating\s*with\s*discomfort|berpeluh\s*sejuk|slurred\s*speech|pelesat\s*cakap|"
+    r"\b(chest\s*pain|sakit\s*dada|breathlessness|sesak\s*nafas|fainted|pengsan|sweating\s*with\s*discomfort|berpeluh\s*sejuk|slurred\s*speech|pelesat\s*cakap|weakness\s*one\s*side|lemah\s*sebelah\s*badan|palpitations|jantung\s*laju|collapse)\b",
     re.IGNORECASE,
 )
 
@@ -26,14 +33,6 @@ EMERGENCY_DETERMINISTIC_RESPONSE = (
     "🚨 **Amaran Keselamatan**\n"
     "Gejala anda mungkin serius. Sila dapatkan rawatan kecemasan dengan segera di Jabatan Kecemasan hospital berdekatan atau hubungi 999. Jangan tunggu maklum balas dalam talian."
 )
-
-logger = logging.getLogger(__name__)
-
-# --- Router Initialization ---
-chat_router = APIRouter()
-
-# --- Single PatientStore instance — RemotePatientStore if HOSPITAL_API_URL is set, else LocalPatientStore ---
-patient_store = get_patient_store()
 
 
 # --- Pydantic Model ---
@@ -70,7 +69,7 @@ async def stream_rag_response(
             await asyncio.sleep(0.01)
     except Exception as e:
         logger.error(f"RAG Error: {e}")
-        yield f"I encountered an error processing your request: {str(e)}"
+        yield "I'm sorry, I encountered an error processing your request. Please try again shortly."
 
 
 def _resolve_patient_profile(
@@ -128,8 +127,6 @@ async def _run_extractor_background(
     so it adds zero user-facing latency.
     """
     try:
-        # Extractor is sync (blocking HTTP to Ollama), run it in a thread
-        # so we don't block the asyncio event loop.
         loop = asyncio.get_event_loop()
         new_fields = await loop.run_in_executor(
             None,
@@ -152,7 +149,6 @@ async def _run_extractor_background(
                 f"[Extractor] Patient {patient_id} updated: {list(applied.keys())}"
             )
     except Exception as e:
-        # Never let extractor failures affect the user. Log and move on.
         logger.error(f"[Extractor] Background task failed: {e}")
 
 
@@ -171,14 +167,23 @@ async def get_chat_response(
     """
     resolved_profile = _resolve_patient_profile(request, client, database)
 
-    # Infer is_patient_self: default True when a patient_id is provided and the
-    # caller did not explicitly set the flag. Clinician tools should pass False.
+    # Infer is_patient_self
     is_patient_self = request.is_patient_self
     if is_patient_self is None:
         is_patient_self = request.patient_id is not None
 
+    # --- PHASE 5: SYNCHRONOUS SAFETY CATCH ---
     if RED_FLAG_PATTERN.search(request.question):
-        logger.warning(f"[RED FLAG] Patient {request.patient_id or 'Unknown'} reported: {request.question}")
+        logger.warning(
+            f"[RED FLAG] Patient {request.patient_id or 'Unknown'} reported: {request.question}"
+        )
+
+        async def emergency_stream():
+            yield EMERGENCY_DETERMINISTIC_RESPONSE
+
+        return StreamingResponse(emergency_stream(), media_type="text/event-stream")
+    # -----------------------------------------
+
     if request.patient_id is not None and resolved_profile is not None:
         asyncio.create_task(_record_first_chat(request.patient_id))
         asyncio.create_task(
@@ -207,7 +212,6 @@ async def get_chat_response(
 async def get_chat_response_sync(
     request: ChatRequest,
     client=Depends(get_api_client),
-    client = Depends(get_api_client),
     database: Session = Depends(get_db),
 ):
     """
@@ -219,6 +223,17 @@ async def get_chat_response_sync(
     is_patient_self = request.is_patient_self
     if is_patient_self is None:
         is_patient_self = request.patient_id is not None
+
+    # --- PHASE 5: SYNCHRONOUS SAFETY CATCH ---
+    if RED_FLAG_PATTERN.search(request.question):
+        logger.warning(
+            f"[RED FLAG] Patient {request.patient_id or 'Unknown'} reported: {request.question}"
+        )
+        return {
+            "answer": EMERGENCY_DETERMINISTIC_RESPONSE,
+            "session_id": request.session_id,
+        }
+    # -----------------------------------------
 
     if request.patient_id is not None and resolved_profile is not None:
         asyncio.create_task(_record_first_chat(request.patient_id))

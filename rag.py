@@ -1,5 +1,4 @@
 import database as db
-from chain_factory import create_conversational_chain
 from image_handler import parse_response_for_image
 from llm import (
     USE_AGENT_TOOLS,
@@ -21,17 +20,27 @@ _LEVEL_INSTRUCTIONS = {
     "L1": (
         "This patient has emerging or moderate cardiovascular risk (e.g. early hypertension, elevated BMI) "
         "with no functional limitations. Provide structured, safety-aware guidance with clear "
-        "do/don't boundaries. Emphasise moderation and preventing escalation of risk."
+        "do/don't boundaries. Emphasise moderation and preventing escalation of risk. "
+        "For food and drink questions specifically: never give a plain yes/no on a higher-risk item — "
+        "always frame it as a moderation boundary (a concrete portion size or frequency limit) so "
+        "the patient has a clear, actionable caution rather than an open-ended allowance."
     ),
     "L2": (
         "This patient has established conditions with physical limitations and higher cardiovascular risk. "
         "Recommend low-intensity activities only. Always include symptom monitoring cues "
-        "(e.g. chest pain, breathlessness) and strict stop conditions for any activity."
+        "(e.g. chest pain, breathlessness) and strict stop conditions for any activity. "
+        "For food and drink questions specifically: name the exact risk the item poses (sodium, potassium, "
+        "sugar, saturated fat) and pair it with a concrete limit or monitoring action — a portion cap, a "
+        "frequency cap, or a value to watch (e.g. blood pressure, blood glucose) — rather than general reassurance."
     ),
     "L3": (
         "This patient is at high clinical risk or has had a recent cardiac event or disability. "
         "Restrict all recommendations to medically supervised options only. "
-        "Include emergency education where relevant. Do not suggest unsupervised physical activity."
+        "Include emergency education where relevant. Do not suggest unsupervised physical activity. "
+        "For food, drink, and fluid questions specifically: treat every restriction (sodium, potassium, "
+        "phosphorus, fluid volume) as a firm medical limit set by their care team — state the limit "
+        "plainly, and in every such answer briefly note that it comes from their doctor/care team's "
+        "monitoring, not general lifestyle advice (e.g. 'your care team has set this limit')."
     ),
 }
 
@@ -45,33 +54,30 @@ _LEVEL_INSTRUCTIONS_SELF = {
     "L1": (
         "You have emerging or moderate cardiovascular risk (e.g. early hypertension, elevated BMI) "
         "with no functional limitations. I will provide structured, safety-aware guidance with clear "
-        "do/don't boundaries, emphasising moderation and preventing escalation of risk."
+        "do/don't boundaries, emphasising moderation and preventing escalation of risk. "
+        "When you ask about a food or drink: I won't just say yes or no on anything higher-risk — "
+        "I'll give you a clear moderation boundary, like a portion size or how often, so you know exactly "
+        "where the limit is."
     ),
     "L2": (
         "You have established conditions with physical limitations and higher cardiovascular risk. "
         "Only low-intensity activities are appropriate for you. Always watch for warning signs "
-        "(e.g. chest pain, breathlessness) and stop any activity immediately if they occur."
+        "(e.g. chest pain, breathlessness) and stop any activity immediately if they occur. "
+        "When you ask about a food or drink: I'll name the specific risk it carries for you (sodium, "
+        "potassium, sugar, saturated fat) and give you a concrete limit or something to monitor — a "
+        "portion cap, how often, or a number to watch (like blood pressure or blood glucose) — rather "
+        "than just reassurance."
     ),
     "L3": (
         "You are at high clinical risk or have had a recent cardiac event. "
         "All recommendations will be restricted to medically supervised options only. "
-        "Do not attempt unsupervised physical activity."
+        "Do not attempt unsupervised physical activity. "
+        "When you ask about food, drink, or fluids: I'll treat your restrictions (sodium, potassium, "
+        "phosphorus, fluid volume) as firm medical limits set by your care team — I'll state the limit "
+        "plainly, and briefly remind you in every such answer that it's your doctor/care team's limit "
+        "to monitor and adjust, not something to change on your own."
     ),
 }
-
-
-def identify_target_disease(question: str) -> str:
-    """Uses the orchestration LLM (Ollama) to identify the primary health condition."""
-    prompt = f"""
-Analyze the following user question and identify the primary health condition or disease mentioned.
-If a specific condition like 'Type 2 Diabetes', 'hypertension', 'CKD', or 'high cholesterol' is mentioned, return that name.
-If no specific disease is mentioned, return the phrase 'general health and wellness'.
-Respond with only the name of the condition and nothing else.
-User Question: "{question}"
-"""
-    disease = get_direct_llm_response(prompt)
-    print(f"[DEBUG] Identified target condition: {disease}")
-    return disease.strip()
 
 
 def get_food_context(question: str) -> str:
@@ -320,8 +326,6 @@ def get_rag_response(
 
         patient_context = "\n".join(parts)
         print(f"[DEBUG] Using patient profile: {target_disease}")
-    else:
-        target_disease = identify_target_disease(question)
 
     # Load persisted conversation history (survives bot restarts).
     history_text = _load_history_text(chat_session_id)
@@ -498,35 +502,14 @@ def get_rag_response(
         return parse_response_for_image(answer)
 
     # ============================================================
-    # Legacy LangChain path (only used if USE_CLARA=false and USE_CLARA_COMPRESS=false)
+    # No generation path enabled — misconfiguration guard.
     # ============================================================
-    # Append personalization level to patient_context so the chain system
-    # prompt receives it — same level injection as Option B and CLaRa paths.
-    lc_patient_context = patient_context
-    if profile:
-        level = profile.get("personalization_level")
-        level_map = _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
-        level_instruction = level_map.get(level, "") if level else ""
-        if level_instruction:
-            lc_patient_context += (
-                f"\n\nPersonalization Level {level}: {level_instruction}"
-            )
-
-    qa_chain = create_conversational_chain(
-        client_id,
-        target_disease,
-        lc_patient_context,
-        is_patient_self=is_patient_self,
-        patient_conditions=profile.get("condition", []) if profile else [],
+    # USE_AGENT_TOOLS / USE_CLARA / USE_CLARA_COMPRESS are all false. There is
+    # no legacy fallthrough anymore (the old LangChain chain_factory path was
+    # removed — it was unreachable in production and had drifted into its own
+    # divergent system prompt; see docs/eval_and_roadmap.md Part B). Fail loudly
+    # instead of silently returning None.
+    raise EnvironmentError(
+        "No RAG generation path enabled. Set USE_CLARA_COMPRESS=true (recommended, "
+        "Option B) or USE_CLARA=true or USE_AGENT_TOOLS=true in .env."
     )
-    answer = qa_chain.invoke(
-        {"question": question},
-        config={"configurable": {"session_id": chat_session_id}},
-    )
-
-    if not answer:
-        answer = (
-            "I'm sorry, I couldn't generate a response right now. Please try again."
-        )
-
-    return parse_response_for_image(answer)

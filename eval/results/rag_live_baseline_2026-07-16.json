@@ -1,0 +1,573 @@
+{
+  "summary": {
+    "passed": 21,
+    "failed": 4,
+    "total": 25
+  },
+  "cases": [
+    {
+      "id": 2,
+      "desc": "CKD+HTN: can I eat bananas?",
+      "tags": [
+        "smoke",
+        "ckd",
+        "contraindication"
+      ],
+      "patient_id": 2,
+      "passed": false,
+      "failures": [
+        "Contraindication (banana + CKD Stage 3 (potassium-restricted)): judge classified stance as MODERATE (acceptable: ['RESTRICT'])"
+      ],
+      "answer": "Yes, you can enjoy bananas in moderation\u2014aim for 1-2 bananas per day. Bananas are good for you as they help manage blood pressure with their potassium content, but remember to keep them within this limit due to your CKD Stage 3 and hypertension.",
+      "elapsed_s": 26.2,
+      "contraindication_check": {
+        "food": "banana",
+        "condition": "CKD Stage 3 (potassium-restricted)",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 11,
+      "desc": "CKD+HTN: durian (high potassium)",
+      "tags": [
+        "ckd",
+        "contraindication"
+      ],
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "You should limit your intake of durian as it's high in potassium. With CKD Stage 3 and hypertension, you need to keep your daily potassium intake between 3500-4000 mg, and a serving of durian can contain around 500 mg of potassium. It\u2019s best to avoid or strictly limit durian to manage your potassium levels safely.",
+      "elapsed_s": 19.7,
+      "contraindication_check": {
+        "food": "durian",
+        "condition": "CKD Stage 3 (potassium-restricted)",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    },
+    {
+      "id": 12,
+      "desc": "CKD+HTN: dairy/milk (phosphorus)",
+      "tags": [
+        "ckd",
+        "contraindication"
+      ],
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, you can drink low-fat milk daily, but keep an eye on your portions since milk contains potassium and phosphorus. Stick to about one cup a day to help meet calcium needs without exceeding your daily limits for potassium and phosphorus. Always monitor how you feel after consuming it.",
+      "elapsed_s": 32.8,
+      "contraindication_check": {
+        "food": "milk/dairy",
+        "condition": "CKD Stage 3 (phosphorus-restricted)",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 13,
+      "desc": "CKD+HTN: tomatoes (potassium)",
+      "tags": [
+        "ckd",
+        "contraindication"
+      ],
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, you can eat tomatoes. They are low in sodium and phosphorus, which is good for managing hypertension and CKD Stage 3. However, eat them in moderation as part of a balanced DASH diet. Always watch your overall intake to stay within your daily limits for sodium, protein, and phosphorus.",
+      "elapsed_s": 22.7,
+      "contraindication_check": {
+        "food": "tomato",
+        "condition": "CKD Stage 3 (potassium-restricted)",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 14,
+      "desc": "L3 Post-CABG+HF+CKD4: salted fish (sodium)",
+      "tags": [
+        "ckd",
+        "hf",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 11,
+      "passed": true,
+      "failures": [],
+      "answer": "No, you should avoid salted fish like ikan masin because it's very high in sodium, which isn't good for your heart failure and hypertension. Stick to low-sodium protein sources such as egg whites, lean meats, and fish instead.",
+      "elapsed_s": 31.6,
+      "contraindication_check": {
+        "food": "salted fish (ikan masin)",
+        "condition": "Heart Failure + CKD Stage 4 (sodium-restricted)",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    },
+    {
+      "id": 15,
+      "desc": "T2DM+HTN: banana is actually fine for BP (positive control)",
+      "tags": [
+        "htn",
+        "contraindication"
+      ],
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, you can eat bananas. They're great for managing blood pressure due to their potassium content and fit well into your DASH diet plan. Just remember to keep an eye on the total carbohydrates \u2014 a medium banana has about 27g of carbs, so factor this into your meal planning.",
+      "elapsed_s": 22.6,
+      "contraindication_check": {
+        "food": "banana",
+        "condition": "Hypertension (no kidney disease)",
+        "acceptable_stances": [
+          "permit",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 16,
+      "desc": "T2DM+HTN: instant noodles (sodium)",
+      "tags": [
+        "htn",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "It's best to avoid instant noodles like Maggi because they are high in sodium and may contain added sugars, which isn't good for managing your diabetes and hypertension. Instead, focus on whole foods that are low in sodium and beneficial for both conditions, such as fruits, vegetables, lean proteins, and whole grains.",
+      "elapsed_s": 32.0,
+      "contraindication_check": {
+        "food": "instant noodles (Maggi)",
+        "condition": "Hypertension",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    },
+    {
+      "id": 17,
+      "desc": "HTN+Hypercholesterol+T2DM: preserved vegetables (acar)",
+      "tags": [
+        "htn",
+        "cholesterol",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 5,
+      "passed": false,
+      "failures": [
+        "Contraindication (acar (preserved/pickled vegetables) + Hypertension): judge classified stance as MODERATE (acceptable: ['RESTRICT'])"
+      ],
+      "answer": "You can enjoy acar, but choose varieties that are low in sodium and added sugars. Opt for pickled vegetables made with vinegar instead of soy sauce to keep your sodium intake down. Eat them in moderation as part of a balanced diet.",
+      "elapsed_s": 35.0,
+      "contraindication_check": {
+        "food": "acar (preserved/pickled vegetables)",
+        "condition": "Hypertension",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 18,
+      "desc": "T2DM+HTN: white bread (high GI)",
+      "tags": [
+        "dm",
+        "contraindication"
+      ],
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "White bread is high in simple carbohydrates and can cause a quick spike in blood sugar levels, which isn't ideal for managing Type 2 Diabetes. It's better to choose whole grain or multigrain bread that provides more fiber and helps keep your blood sugar stable. This choice also aligns well with the DASH diet recommendations.",
+      "elapsed_s": 24.1,
+      "contraindication_check": {
+        "food": "white bread",
+        "condition": "Type 2 Diabetes",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    },
+    {
+      "id": 19,
+      "desc": "HTN+Hypercholesterol+T2DM: Teh Tarik (sugar)",
+      "tags": [
+        "dm",
+        "contraindication"
+      ],
+      "patient_id": 5,
+      "passed": true,
+      "failures": [],
+      "answer": "You can enjoy Teh Tarik in the morning, but keep it a once-a-day treat due to its sugar content. Opt for less sugar when you order and aim to drink mostly water or unsweetened beverages throughout the day to stay hydrated and manage your blood sugar levels effectively.",
+      "elapsed_s": 32.9,
+      "contraindication_check": {
+        "food": "Teh Tarik (sweetened milk tea)",
+        "condition": "Type 2 Diabetes",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 20,
+      "desc": "T2DM+HTN: oats are actually fine (positive control)",
+      "tags": [
+        "dm",
+        "contraindication"
+      ],
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, it's okay for you to eat oats. Oats are a great choice as they're high in fiber and have a low glycemic index, which is beneficial for managing both your diabetes and hypertension. Aim for about 45g of oats daily to help control blood sugar levels and support heart health. Just ensure the oats aren't mixed with added sugars or served with high-sodium toppings.",
+      "elapsed_s": 23.4,
+      "contraindication_check": {
+        "food": "oats",
+        "condition": "Type 2 Diabetes",
+        "acceptable_stances": [
+          "permit",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 21,
+      "desc": "Dyslipidaemia+Obesity: santan/coconut milk (saturated fat)",
+      "tags": [
+        "cholesterol",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 4,
+      "passed": true,
+      "failures": [],
+      "answer": "No, it's best to avoid cooking with coconut milk as it is high in saturated fats. Instead, try using olive oil or canola oil for cooking to help manage your dyslipidaemia and obesity. These oils are better for your heart health.",
+      "elapsed_s": 41.6,
+      "contraindication_check": {
+        "food": "coconut milk (santan)",
+        "condition": "Dyslipidaemia",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    },
+    {
+      "id": 22,
+      "desc": "Dyslipidaemia+Obesity: deep-fried chicken (saturated/trans fat)",
+      "tags": [
+        "cholesterol",
+        "contraindication"
+      ],
+      "patient_id": 4,
+      "passed": false,
+      "failures": [
+        "Contraindication (deep-fried chicken + Dyslipidaemia): judge classified stance as MODERATE (acceptable: ['RESTRICT'])"
+      ],
+      "answer": "Fried chicken is high in saturated fats and calories, which isn't ideal for managing your dyslipidaemia and obesity. It's best to limit how often you eat it. Try grilling or baking chicken instead; these methods are much better for your heart health.",
+      "elapsed_s": 38.8,
+      "contraindication_check": {
+        "food": "deep-fried chicken",
+        "condition": "Dyslipidaemia",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 23,
+      "desc": "HTN+Hypercholesterol+T2DM: mackerel/ikan kembung is fine (positive control)",
+      "tags": [
+        "cholesterol",
+        "contraindication"
+      ],
+      "patient_id": 5,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, ikan kembung is good for you. It's a great source of omega-3 fatty acids which can help manage your cholesterol levels and support heart health. Just make sure to prepare it without added salt or deep frying to keep it healthy.",
+      "elapsed_s": 29.6,
+      "contraindication_check": {
+        "food": "ikan kembung (mackerel)",
+        "condition": "Dyslipidaemia",
+        "acceptable_stances": [
+          "permit",
+          "moderate"
+        ]
+      },
+      "judged_stance": "PERMIT"
+    },
+    {
+      "id": 24,
+      "desc": "L3 Post-CABG+HF: soup/stock (sodium)",
+      "tags": [
+        "hf",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 11,
+      "passed": true,
+      "failures": [],
+      "answer": "You can have soup, but make sure it\u2019s low in sodium and avoid soups that are creamy or made with high-phosphorus ingredients like beans or meat broths. Opt for clear broths made from vegetables and lean meats, and always check the label or ask about the ingredients to ensure they\u2019re suitable for your diet.",
+      "elapsed_s": 40.7,
+      "contraindication_check": {
+        "food": "soup/stock",
+        "condition": "Heart Failure",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 25,
+      "desc": "L3 Post-CABG+HF: unlimited plain water (fluid restriction)",
+      "tags": [
+        "hf",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 11,
+      "passed": true,
+      "failures": [],
+      "answer": "No, you need to monitor your fluid intake closely because of your heart failure and kidney condition. Drinking too much can strain your heart and kidneys. Stick to the amount recommended by your healthcare provider to maintain a good fluid balance.",
+      "elapsed_s": 27.8,
+      "contraindication_check": {
+        "food": "water/fluids (unrestricted volume)",
+        "condition": "Heart Failure",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 26,
+      "desc": "PCOS+IR: white rice (high GI)",
+      "tags": [
+        "pcos",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 3,
+      "passed": true,
+      "failures": [],
+      "answer": "You can have white rice, but it's better to choose basmati rice or other lower glycemic index options more often to help manage your blood sugar and insulin resistance. If you do opt for white rice, keep an eye on your portion size and pair it with plenty of vegetables and a good source of protein.",
+      "elapsed_s": 18.6,
+      "contraindication_check": {
+        "food": "white rice",
+        "condition": "PCOS with Insulin Resistance",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 27,
+      "desc": "PCOS+IR: dhal/legumes are fine (positive control)",
+      "tags": [
+        "pcos",
+        "contraindication"
+      ],
+      "patient_id": 3,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, dhal is a great choice for you. It's high in protein and fiber, which can help manage insulin resistance and support heart health. Choose varieties like red, black, or green lentils to add balanced nutrition to your meals. Enjoy it in moderation as part of a varied diet.",
+      "elapsed_s": 21.7,
+      "contraindication_check": {
+        "food": "dhal (lentils)",
+        "condition": "PCOS with Insulin Resistance",
+        "acceptable_stances": [
+          "permit",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 28,
+      "desc": "L1 Overweight+Pre-HTN: fried mamak food",
+      "tags": [
+        "obesity",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 12,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, you can still enjoy roti canai as part of a balanced diet, but keep an eye on portion sizes and choose healthier sides like dhal or vegetable curries instead of more fatty options. Avoid adding extra butter and skip the sugary drinks. Opt for water or unsweetened tea to drink with your meal.",
+      "elapsed_s": 28.0,
+      "contraindication_check": {
+        "food": "roti canai (fried mamak food)",
+        "condition": "Overweight, Pre-hypertension",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 29,
+      "desc": "L1 Overweight+Pre-HTN: instant/processed food",
+      "tags": [
+        "obesity",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 12,
+      "passed": false,
+      "failures": [
+        "Contraindication (instant/processed food + Pre-hypertension): judge classified stance as MODERATE (acceptable: ['RESTRICT'])"
+      ],
+      "answer": "It's best to limit how often you eat instant foods, as they can be high in sodium and saturated fats, which isn't great for managing your pre-hypertension and weight. Try to prepare meals with fresh ingredients more often, focusing on fruits, vegetables, whole grains, and lean proteins. This will help you maintain a healthier diet.",
+      "elapsed_s": 40.4,
+      "contraindication_check": {
+        "food": "instant/processed food",
+        "condition": "Pre-hypertension",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 30,
+      "desc": "L0 general wellness: banana should not be over-restricted",
+      "tags": [
+        "wellness",
+        "contraindication"
+      ],
+      "patient_id": 10,
+      "passed": true,
+      "failures": [],
+      "answer": "Yes, you can eat bananas. They are a good source of potassium and fiber and count as one serving towards your daily fruit intake. Aim for about 4-6 servings of fruits each day according to the Malaysian Dietary Guidelines. Enjoy them as part of a balanced diet.",
+      "elapsed_s": 17.4,
+      "contraindication_check": {
+        "food": "banana",
+        "condition": "no significant conditions (general wellness)",
+        "acceptable_stances": [
+          "permit",
+          "moderate"
+        ]
+      },
+      "judged_stance": "PERMIT"
+    },
+    {
+      "id": 31,
+      "desc": "BM: CKD+HTN \u2014 bolehkah saya makan pisang? (banana)",
+      "tags": [
+        "ckd",
+        "contraindication",
+        "bilingual"
+      ],
+      "patient_id": 2,
+      "passed": true,
+      "failures": [],
+      "answer": "Tidak boleh, kerana pisang mempunyai kandungan potasium yang tinggi dan ini boleh meningkatkan risiko kesihatan anda. Lebih baik pilih buah-buahan lain yang rendah potasium seperti buah berry atau apel.",
+      "elapsed_s": 36.2,
+      "contraindication_check": {
+        "food": "pisang (banana)",
+        "condition": "CKD Stage 3 (potassium-restricted)",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    },
+    {
+      "id": 32,
+      "desc": "BM: T2DM+HTN \u2014 bolehkah saya makan mi segera? (instant noodles)",
+      "tags": [
+        "htn",
+        "contraindication",
+        "bilingual"
+      ],
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "Tidak boleh, kerana mi segera tinggi sodium dan seringkali mengandungi perisa tambahan yang tidak sesuai untuk pengurangan tekanan darah dan pengurusan diabetes. Lebih baik pilih nasi basmati atau quinoa sebagai sumber karbohidrat anda.",
+      "elapsed_s": 29.2,
+      "contraindication_check": {
+        "food": "mi segera (instant noodles)",
+        "condition": "Hypertension",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    },
+    {
+      "id": 33,
+      "desc": "BM: T2DM+HTN \u2014 bolehkah saya makan nasi putih? (white rice)",
+      "tags": [
+        "dm",
+        "contraindication",
+        "bilingual"
+      ],
+      "patient_id": 1,
+      "passed": true,
+      "failures": [],
+      "answer": "Tidak disarankan untuk memakan banyak nasi putih kerana ia boleh menyebabkan kenaikan gula darah yang cepat. Sebaiknya anda ambil 45-60g karbohidrat per makanan dan pilih nasi basmati atau beras coklat yang indeks glycemic rendah. Ingat, kawal porsi dan fokus pada makanan yang lebih seimbang untuk kesejahteraan jantung anda.",
+      "elapsed_s": 29.4,
+      "contraindication_check": {
+        "food": "nasi putih (white rice)",
+        "condition": "Type 2 Diabetes",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "judged_stance": "MODERATE"
+    },
+    {
+      "id": 34,
+      "desc": "BM: Dyslipidaemia+Obesity \u2014 bolehkah saya makan gulai bersantan? (coconut milk curry)",
+      "tags": [
+        "cholesterol",
+        "contraindication",
+        "bilingual",
+        "personalization"
+      ],
+      "patient_id": 4,
+      "passed": true,
+      "failures": [],
+      "answer": "Tidak boleh, kerana gulai bersantan mengandungi minyak kelapa yang tinggi dalam lemak jenuh. Ini tidak sesuai untuk anda dengan dyslipidaemia dan obesiti kelas I. Cadangan saya ialah menggantinya dengan hidangan yang menggunakan minyak zaitun atau canola oil, serta menambah lebih banyak sayur-sayuran ke dalam hidangan.",
+      "elapsed_s": 40.6,
+      "contraindication_check": {
+        "food": "gulai bersantan (coconut milk curry)",
+        "condition": "Dyslipidaemia",
+        "acceptable_stances": [
+          "restrict"
+        ]
+      },
+      "judged_stance": "RESTRICT"
+    }
+  ]
+}
