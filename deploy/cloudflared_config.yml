@@ -1,0 +1,14 @@
+tunnel: ead75dae-7d79-415f-887f-2dbd398570f5
+credentials-file: /etc/cloudflared/ead75dae-7d79-415f-887f-2dbd398570f5.json
+protocol: http2
+
+ingress:
+  - hostname: computationalrd.com
+    service: http://localhost:8501
+  - hostname: www.computationalrd.com
+    service: http://localhost:8501
+  - hostname: nutribot.computationalrd.com
+    service: http://localhost:8000
+  - hostname: docs-api.computationalrd.com
+    service: http://localhost:8100
+  - service: http_status:404
