@@ -204,6 +204,11 @@ def _build_qwen_prompt(
         parts.append(f"\n## Conversation So Far\n{history_text}")
 
     if is_patient_self:
+        # L3 patients get a slightly larger word budget: the Personalization
+        # Level L3 instruction above requires a brief care-team reference on
+        # every food/fluid answer, which was consistently losing out against
+        # a flat 100-word cap (confirmed across 3 eval runs, REPORT.md Part 5/7).
+        word_limit = 130 if level == "L3" else 100
         parts.append(
             "\n## Voice Rules — apply to every word of your reply\n"
             "- Speak DIRECTLY to the person: use 'you', 'your', 'yours'\n"
@@ -211,6 +216,9 @@ def _build_qwen_prompt(
             "- NEVER use generic framings like 'an adult with BMI X should...'\n"
             "- Be warm, conversational, and practical — skip definitions and preamble\n"
             "- Verify every food recommendation against their conditions; flag anything contraindicated\n"
+            "- If the Personalization Level section above requires a specific phrase (e.g. a care-team "
+            "reference), always include it — that requirement takes priority over the structure and "
+            "word-count rules below.\n"
             "\n## Conversation Style — strictly follow this structure\n"
             "You are having a back-and-forth conversation, NOT writing a health article.\n"
             "ALWAYS follow this 3-part structure:\n"
@@ -218,7 +226,7 @@ def _build_qwen_prompt(
             "  2. ONE practical tip or example the person can act on immediately.\n"
             "  3. ONE follow-up question to learn more about their specific situation before giving further advice.\n"
             "Do NOT list multiple tips in a single reply. Do NOT use bullet points or numbered lists. "
-            "Keep the entire reply under 100 words. Save the rest for after you hear their answer."
+            f"Keep the entire reply under {word_limit} words. Save the rest for after you hear their answer."
         )
     else:
         parts.append(

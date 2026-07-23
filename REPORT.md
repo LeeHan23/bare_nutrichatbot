@@ -1,8 +1,8 @@
-# Session Report — 2026-07-20
+# Session Report — 2026-07-20 to 2026-07-21
 
 Machine: `han233` (local dev box, RTX 5060 Ti, not the RTX 3050 production server referenced in `CLAUDE.md`)
 
-This report covers two pieces of work done in one continuous session: (1) standing up a full working deployment of the bot on this machine and cutting the public domain over to it, and (2) setting up and running the clinical evaluation suite, investigating its failures, and applying fixes. It's meant to be readable on its own — where something is still open or needs a decision, that's called out explicitly rather than implied.
+This report covers work done across two sessions: (1) standing up a full working deployment of the bot on this machine and cutting the public domain over to it, (2) setting up and running the clinical evaluation suite, investigating its failures, and applying fixes, and (3) a second full eval run after those fixes were committed and deployed (Part 6). It's meant to be readable on its own — where something is still open or needs a decision, that's called out explicitly rather than implied.
 
 ---
 
@@ -171,6 +171,122 @@ Both `rag.py` and `eval/test_rag.py` changes are live. The running `uvicorn` app
 
 ---
 
+## Part 6 — Full evaluation run #2 (2026-07-21, after committing/deploying the Part 5 fixes)
+
+Command: `PYTHONPATH=. .venv/bin/python eval/test_rag.py --out eval/results/rag_full_2.json`, run after `rag.py`/`eval/test_rag.py` changes were committed (`25cdb6e`) and the live app restarted to serve them.
+
+**Result: 25/34 passed (74%)**, 9 failed — for comparison, run #1 (Part 3, before the Part 5 fixes): 26/34 (76%), 8 failed. Full raw output: `eval/results/rag_full_2.json`, `logs/eval_full_run_2.log`.
+
+The headline number went down by one case. Given the confirmed `temperature=0.5` sampling noise (Part 5), a 1-case swing between runs is within noise and is **not treated as a regression** — it's two different single-sample draws from a non-deterministic generator, not two measurements of a fixed quantity.
+
+### What changed vs. run #1
+
+| Case | Run #1 | Run #2 | Interpretation |
+|---|---|---|---|
+| 34 (BM gulai bersantan) | FAIL | **PASS** | Durable — the bilingual keyword fix is a real, deterministic win |
+| 29 (instant food) | FAIL | **PASS** | Consistent with Part 5's "passes more often now" — still probabilistic, not guaranteed |
+| 24 (L3 soup/stock) | FAIL | PASS | One more data point that L3 personalization is a coin-flip, not fixed |
+| 14, 25 (L3 salted fish, fluid) | FAIL | FAIL | Same tension flagged in Part 5 — the "care team" framing still loses out against the prompt's tight word budget |
+| 17 (L2 acar) | FAIL | FAIL (personalization + contraindication) | Both failure modes stack here; contraindication disagreement unresolved |
+| 21 (L1 coconut milk) | FAIL | FAIL (contraindication only — personalization passed this run) | Same MODERATE-vs-RESTRICT pattern as case 17 |
+| 8 (L0 breakfast, required-terms) | PASS | **FAIL (new)** | Answer omitted "protein/fibre/fruit/vegetable," said "whole grain oats, bananas, flax seeds, soy milk" instead. L0 instructions weren't touched this session — ordinary content variance under `temperature=0.5` |
+| 22 (deep-fried chicken, Dyslipidaemia) | PASS | **FAIL (new)** | Judge: MODERATE ("limit to a rare treat"), test wants RESTRICT — third distinct food showing this pattern |
+| 26 (PCOS+IR white rice) | PASS | **FAIL (new)** | L1 personalization keyword miss — "keep portions small and occasional" conveys moderation without a tracked word |
+| 28 (L1 roti canai) | FAIL | FAIL | Same keyword-miss class as 26; fluctuated pass/fail across Part 5's repeated re-runs too |
+
+### Interpretation
+
+1. **The BM fix is confirmed durable** — case 34 passed both times it was tested standalone in Part 5 and now again in a full run. This is the one clean, unambiguous win from this session's changes.
+2. **Everything else attributable to the diet-instruction wording change is still probabilistic**, exactly as flagged in Part 5 — cases flip between runs regardless of the fix, because `temperature=0.5` generation doesn't reliably reproduce the same phrasing twice.
+3. **The MODERATE-vs-RESTRICT stance pattern is now stronger evidence, not weaker.** Across the two full runs it has now shown up on **four distinct foods**: acar, coconut milk, instant/processed food, and deep-fried chicken — spanning three different conditions (HTN, Dyslipidaemia+Obesity, Pre-HTN). This stopped looking like an isolated test-case quirk after the second occurrence; it reads as the model consistently applying a moderation-based dietetic philosophy to fried/processed/high-fat foods rather than a blanket restriction, which may or may not be the clinically correct stance.
+4. **The new L0 failure (case 8)** is a reminder that re-running the same suite twice, with zero changes to the L0 path, still produces different individual results — a single eval run number (76% or 74%) shouldn't be read as a precise score. Comparisons should be made at the pattern level (does a *class* of failure recur across runs?), not the individual-case level.
+
+### Revised recommendation
+
+Given four foods now show the same pattern, **the dietitian-judgment call on moderation-vs-restriction should be treated as the single highest-priority open item from this whole session** — more so than before Part 6. Everything else (L3 word budget, keyword-vs-judge design) is eval/prompt-engineering plumbing; this one is about what the bot actually tells patients is safe to eat.
+
+---
+
+## Part 7 — Update (2026-07-23): docs_api, containerization, and a third eval run
+
+### Infra shipped since Part 6
+
+Separate session, same machine. Full detail lives in `CLAUDE.md` (kept as the
+single source of truth for architecture); summarized here only for "what's
+changed since this report was written":
+
+- New `docs_api.py` — a standalone, patient-free document Q&A service reusing
+  the existing PGVector `base_knowledge` collection and CLaRa/Ollama pipeline.
+  Shipped with its own systemd unit (`docs_api.service`), a Cloudflare tunnel
+  ingress rule + public DNS (`docs-api.computationalrd.com`), and
+  `DOCS_API_KEY` auth (it's public, so it needed its own key).
+- `nutribot` itself — which Part 1 of this report describes running as "a
+  bare `uvicorn` process" — now also has a systemd unit (`nutribot.service`).
+  Unit files for both are tracked at `deploy/nutribot.service` /
+  `deploy/docs_api.service`.
+- `docs/api_usage.md` — copy-paste curl + Python integration examples for
+  both APIs.
+
+### Docker containerization
+
+`Dockerfile` and `docker-compose.yml` (previously stale/unused) were rewritten
+to match current architecture: dropped the dead `agentgateway`/OpenAI-proxy
+service (confirmed dead — `USE_AGENT_TOOLS=false`, `llm.py` only treats
+OpenAI as an optional emergency fallback), added a `docs_api` service sharing
+one built image with `nutribot`, fixed a Python 3.11→3.13 base-image mismatch
+against the host `.venv` (this had been silently causing a pip dependency
+resolver failure — 200k+ backtracking rounds, `ResolutionTooDeep`), and added
+`deploy/requirements.lock.txt` (a flat `pip freeze` of the proven-working host
+`.venv`, installed with `--no-deps` to skip re-litigating already-working
+version pins).
+
+Verified end-to-end: a real containerized request against `/ask` returned a
+correct, document-grounded answer. **Not yet the live deployment** —
+production still runs the bare-`.venv` + systemd setup above; the Docker
+Compose stack is proven-working but unused so far.
+
+### Third eval run (today, 2026-07-23)
+
+`eval/results/rag.json`: **25/34 passed, 9 failed.** `eval/results/extractor.json`:
+**17/20 passed, 3 failed.** Same two RAG failure classes as Part 6, still
+present:
+
+| # | Case | Failure type |
+|---|---|---|
+| 2 | CKD+HTN: bananas | Contraindication — judge: MODERATE, test wants RESTRICT |
+| 16 | T2DM+HTN: instant noodles | Personalization — L2 caution keyword miss |
+| 17 | HTN+Hypercholesterol+T2DM: acar | Contraindication — judge: MODERATE |
+| 21 | Dyslipidaemia+Obesity: coconut milk | Contraindication — judge: MODERATE |
+| 24 | L3 Post-CABG+HF: soup/stock | Personalization — L3 caution keyword miss |
+| 25 | L3 Post-CABG+HF: fluid restriction | Personalization — L3 caution keyword miss |
+| 26 | PCOS+IR: white rice | Personalization — L1 caution keyword miss |
+| 28 | L1 Overweight+Pre-HTN: fried mamak food | Personalization — L1 caution keyword miss |
+| 34 | BM: gulai bersantan | Both — keyword miss + judge: MODERATE |
+
+**Case 2 matters more than the others: it's the exact "banana for CKD" example
+CLAUDE.md's own pending-work item 10 names** as the motivating case for
+building the LLM judge in the first place ("passes on keyword match despite
+the stored answer being clinically wrong"). Today, with the judge in place,
+that same case fails — the judge classifies the model's answer as MODERATE
+where the test only accepts RESTRICT. This is the **third** full run (after
+Parts 3 and 6) to reproduce the MODERATE-vs-RESTRICT pattern, now landing on
+the headline case itself.
+
+New extractor gap, not previously reported: cases 9 and 15 (EN + BM shellfish
+allergy) both fail on `extractor_food_allergies` missing from the result;
+case 3 fails on `fat_intake_level` missing. Not investigated further this
+session — root cause (prompt vs. schema) unknown.
+
+### Resolved from Part 1's open items
+
+Item 1 ("if the RTX 3050 ever comes back online, it will NOT automatically
+reclaim the domain") is now moot: per `CLAUDE.md`, that box has been
+reimaged/replaced outright (new IP `100.100.203.34`, hostname `han233`,
+single ext4 drive) — it can't "come back online" in the form this warning
+was written about.
+
+---
+
 ## Summary of all file changes this session
 
 | File | Change |
@@ -188,10 +304,14 @@ Both `rag.py` and `eval/test_rag.py` changes are live. The running `uvicorn` app
 
 ## Recommended next steps
 
-1. **Decide on cases 17/21/29/34's contraindication stance disagreements** (acar, coconut milk, instant food) — needs the supervising dietitian's judgment on whether MODERATE is acceptable for these specific condition/food pairs, or whether the test's RESTRICT-only bar is correct and the model is being too lenient. This is the highest-value open question, since it's about real clinical safety, not test plumbing.
-2. **Decide the L3 word-budget tension** (cases 14/25): either loosen the "under 100 words" constraint specifically for L3 patients so the care-team reference has room, restructure the prompt so it doesn't compete with the voice-rules section, or accept that this framing will only appear probabilistically and adjust the eval's expectation accordingly.
-3. **Resolve the Siti Hajar (patient 12) content mismatch** between `seed_patients.py`'s current profile (IHD/HTN/Hypercholesterolaemia) and `eval/test_rag.py` cases 28/29's assumed profile (Overweight/Pre-hypertension).
-4. **Re-run the full 34-case suite** (not just the 8 that failed) now that both `rag.py` and `eval/test_rag.py` have changed, to get a clean updated baseline — ideally 2-3x given the confirmed `temperature=0.5` sampling noise, rather than trusting a single run.
-5. **Consider whether `personalization_check`'s literal-keyword approach is the right long-term design**, given how much of this session's investigation was about the model saying the right *thing* in different *words*. `judge_stance()` already moved from keyword-matching to an LLM judge for exactly this reason (documented in `CLAUDE.md`'s pending-work item 10, the "banana for CKD" example) — the same argument applies to `personalization_check`. Not done this session; flagged as a design decision for whoever owns eval methodology next.
-6. **Decide whether to copy the LoRA embedding adapter to this machine** for retrieval-quality parity with the RTX 3050 (currently running on base `BAAI/bge-m3`).
-7. **If the RTX 3050 comes back online**, remember DNS won't auto-revert — that's a manual `cloudflared tunnel route dns --overwrite-dns` back to its tunnel ID.
+1. **Decide on the MODERATE-vs-RESTRICT contraindication disagreement — now confirmed across three full runs, on five distinct foods, and as of Part 7 on CLAUDE.md's own flagship "banana for CKD" case.** Needs the supervising dietitian's judgment on whether MODERATE is acceptable for these specific condition/food pairs, or whether the test's RESTRICT-only bar is correct and the model is being too lenient. This is the top-priority open question — it's about real clinical safety, not test plumbing, and it's no longer plausible to read it as a one-off or a single-case quirk.
+2. **Decide the L3 word-budget tension** (cases 14/24/25, still reproducing as of Part 7's run): either loosen the "under 100 words" constraint specifically for L3 patients so the care-team reference has room, restructure the prompt so it doesn't compete with the voice-rules section, or accept that this framing will only appear probabilistically and adjust the eval's expectation accordingly.
+3. **Resolve the Siti Hajar (patient 12) content mismatch** between `seed_patients.py`'s current profile (IHD/HTN/Hypercholesterolaemia) and `eval/test_rag.py` cases 28/29's assumed profile (Overweight/Pre-hypertension). Confirmed still unresolved as of Part 7.
+4. **Three full runs are now done** (Part 3: 26/34, Part 6: 25/34, Part 7: 25/34). Individual case pass/fail keeps flipping (expected — `temperature=0.5`), but the two failure *classes* (personalization keyword misses, MODERATE-vs-RESTRICT disagreement) have now shown up identically in all three runs — that's a pattern, not noise, and is stable enough to act on for items 1-2 without a 4th run.
+5. **New: root-cause the extractor gap found in Part 7** — `extractor_food_allergies` came back missing in 2 of 3 extractor failures (cases 9, 15 — EN and BM shellfish allergy), plus `fat_intake_level` in case 3. Not yet investigated; unclear if it's a prompt issue or a schema/parsing issue in `extractor.py`.
+6. **Consider whether `personalization_check`'s literal-keyword approach is the right long-term design**, given how much of this session's investigation was about the model saying the right *thing* in different *words*. `judge_stance()` already moved from keyword-matching to an LLM judge for exactly this reason — the same argument applies to `personalization_check`. Flagged as a design decision for whoever owns eval methodology next.
+7. **Decide whether to copy the LoRA embedding adapter to this machine** for retrieval-quality parity with the RTX 3050 (currently running on base `BAAI/bge-m3`).
+8. **New: decide whether to cut production over to `docker compose up`** (per Part 7, the Docker Compose stack is built and verified working) or keep it as a proven-but-unused deployment option alongside the current bare-`.venv` + systemd setup.
+9. **Still open from `CLAUDE.md`, not touched by any session so far**: install the nightly eval cron (`CLAUDE.md` pending item 10 — confirmed still absent from `crontab -l` as of Part 7), and set real WhatsApp provider credentials (`CLAUDE.md` pending item 5 — `TWILIO_*` or `META_*` env vars still unset).
+
+~~If the RTX 3050 comes back online, remember DNS won't auto-revert~~ — **resolved as of Part 7**: that machine has been reimaged/replaced outright, so this scenario no longer applies in its original form.

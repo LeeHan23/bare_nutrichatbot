@@ -55,7 +55,7 @@ EXTRACTOR_FIELDS = [
         "field": "fat_intake_level",
         "encpt": "FH-1.5.1.1",
         "type": "string (one of: 'low', 'moderate', 'high')",
-        "guidance": "Estimate qualitative level from food sources mentioned. Daily fried/fatty foods → 'high'. Few times/week fried foods → 'moderate'. Rarely fried, mostly steamed/grilled → 'low'. Don't extract if patient hasn't described their fat-related eating.",
+        "guidance": "Estimate qualitative level from food sources mentioned. Daily fried/fatty foods, OR daily use of a fat/oil/butter/ghee/lard as a cooking medium → 'high'. Few times/week fried foods or fatty cooking fats → 'moderate'. Rarely fried, mostly steamed/grilled, or uses oil sparingly → 'low'. Don't extract if patient hasn't described their fat-related eating.",
     },
     {
         "field": "sodium_awareness",
@@ -113,6 +113,12 @@ EXTRACTOR_FIELDS = [
         "type": "string (one of: 'light', 'moderate', 'vigorous')",
         "guidance": "Patient's described exertion. 'Easy'/'leisurely' → 'light'. 'Bit out of breath'/'sweat a bit' → 'moderate'. 'Very intense'/'cardio' → 'vigorous'.",
     },
+    {
+        "field": "extractor_food_allergies",
+        "encpt": "PD-1.1.9",
+        "type": "list of strings",
+        "guidance": "Food allergies the patient self-reports in conversation (distinct from the hospital-supplied 'allergies' clinical field). Examples: ['shellfish', 'peanuts', 'shrimp']. Empty list if none mentioned.",
+    },
 ]
 
 
@@ -147,6 +153,7 @@ Example valid responses:
   {{"fluid_intake_ml": 1500}}
   {{"fat_intake_level": "high", "fat_sources": ["palm oil", "butter"]}}
   {{"medication_compliance": "variable", "activity_types": ["walking"]}}
+  {{"extractor_food_allergies": ["shellfish", "peanuts"]}}
 """
 
 
@@ -245,6 +252,11 @@ def _validate_field(key: str, value: Any) -> tuple[bool, Any]:
         allowed = {"light", "moderate", "vigorous"}
         if isinstance(value, str) and value.strip().lower() in allowed:
             return True, value.strip().lower()
+
+    elif key == "extractor_food_allergies":
+        if isinstance(value, list) and all(isinstance(s, str) for s in value):
+            cleaned = [s.strip().lower() for s in value if s.strip()]
+            return True, cleaned
 
     return False, None
 
