@@ -16,15 +16,16 @@ A distributed AI-powered nutrition chatbot for cardiac patients, built for a Mal
 Public Internet
     │
     ▼
-nutribot.computationalrd.com (Cloudflare Tunnel)
+nutribot.computationalrd.com, docs-api.computationalrd.com (Cloudflare Tunnel)
     │
     ▼
-RTX 3050 Server — Linux, user: han, IP: 100.101.247.5
-/mnt/ext/bare_NutriChatbot/          ← main codebase (exFAT drive MEEEE, /dev/sdb1)
-    - FastAPI bot (systemd: nutribot.service)
+RTX 3050 Server — Linux, user: han, hostname: han233, IP: 100.100.203.34
+/home/han/Desktop/projects/bare_NutriChatbot/  ← main codebase (single NVMe drive, ext4)
+    - Patient chat API (systemd: nutribot.service, port 8000) — reinstalled 2026-07-23, was a bare manual process before
+    - Docs API (systemd: docs_api.service, port 8100) — patient-free document Q&A, added 2026-07-23, see docs_api.py
     - PGVector / Postgres (Docker: pgvector-nutribot)
-    - Cloudflare tunnel (systemd: cloudflared.service)
-    - Python: /home/han/miniconda3/bin/python (NOT .venv — exFAT breaks symlinks)
+    - Cloudflare tunnel (systemd: cloudflared.service) — ingress rules for all of the above in /etc/cloudflared/config.yml
+    - Python: /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python (project venv)
     │
     │ HTTPS via Cloudflare Tunnel
     ├─→ clara-internal-x9k2.computationalrd.com → Mac Studio :8001
@@ -40,25 +41,25 @@ Mac Studio — macOS, user: bing, M3 Ultra 96GB
 
 **Note on the `-internal-` tunnel hostnames:** `clara-internal-x9k2.computationalrd.com` and `ollama-internal-x9k2.computationalrd.com` are served by the Mac Studio's *own* `cloudflared` LaunchDaemon, not proxied through the RTX 3050. The RTX 3050 in the diagram above is just a *client* calling those URLs like any other caller would. Because Cloudflare's edge routes to the Mac Studio directly, these two hostnames are reachable from anywhere on the internet — including when the RTX 3050 (and therefore the public `nutribot.computationalrd.com` URL) is down. See "Testing CLaRa/Ollama directly" under Service Management.
 
-### Drive Layout (RTX 3050)
+### Drive Layout (RTX 3050 — replaced 2026-07-23)
 
-| Device | Mount | Label | FS | Size | Notes |
-|--------|-------|-------|----|------|-------|
-| /dev/sda1 | /mnt/ssd | T7 Shield | exFAT | 932GB | **100% FULL** — do not use for project files |
-| /dev/sdb1 | /mnt/ext | MEEEE | exFAT | 932GB | **Active project drive** (~910GB free) |
-| /dev/nvme0n1p3 | / | — | ext4 | 465GB | OS drive |
+The old dual exFAT-drive setup (`/mnt/ssd` T7 Shield + `/mnt/ext` MEEEE) is **gone** — this is a different physical machine (hostname `han233`, IP `100.100.203.34`, vs. the old box's `100.101.247.5`). Single NVMe drive, ext4 throughout:
 
-**IMPORTANT:** `/mnt/ssd` is full. The project codebase lives on `/mnt/ext`. `/dev/sdb1` is mounted on boot via `/etc/fstab` (added 12 June 2026, by UUID with `nofail`):
-```
-UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro,nofail 0 0
-```
+| Device | Mount | FS | Size | Notes |
+|--------|-------|----|------|-------|
+| /dev/nvme0n1p1 | /boot/efi | vfat | 1GB | EFI boot partition |
+| /dev/nvme0n1p2 | / | ext4 | 1.8TB | OS + project codebase, ~1.4TB free |
+
+The project lives directly at `/home/han/Desktop/projects/bare_NutriChatbot/` on this ext4 drive — no exFAT symlink issues, so the project's `.venv` works fine (see Python path above). The `/etc/fstab` exFAT entry (`UUID=67B2-12E3 /mnt/ext ...`) and the manual `mount -t exfat ...` instructions elsewhere in this doc are **obsolete**, left only as history until confirmed fully removable.
+
+**2026-07-23 re-install:** the content-scheduler, weekly-EKA, and Cloudflare keep-alive cron jobs were found missing from `crontab -l` on this machine (empty crontab) and have been re-installed with paths updated for this box — see items 2 and 7 under "Pending Work" below.
 
 ---
 
 ## Repository Structure
 
 ```
-/mnt/ext/bare_NutriChatbot/
+/home/han/Desktop/projects/bare_NutriChatbot/
 ├── app.py                    # FastAPI app entry point, demo UI
 ├── rag.py                    # RAG pipeline (Option B: CLaRa compress → Qwen generate)
 ├── llm.py                    # LLM abstraction (CLARA_BASE_URL, OLLAMA_BASE_URL from .env)
@@ -290,19 +291,19 @@ Table: `chat_messages` (session_id, patient_id, role, content, created_at) — a
 ### 1. ✅ DONE — Run content generation live test
 Superseded by the weekly EKA pipeline (§25 of ARCHITECTURE.md). Weeks 22-24 EKA materials generated and approved (63 items, 11 June 2026); one item (id=68) flagged for dietitian review — see `materials/eka_dietitian_review_flags.md`.
 
-### 2. ✅ DONE — Content scheduler cron
+### 2. ✅ DONE (re-installed 2026-07-23 on new hardware) — Content scheduler cron
 Both schedulers are in crontab:
 ```
-0 8 * * * /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/content_scheduler.py >> /mnt/ext/bare_NutriChatbot/logs/content_scheduler.log 2>&1
-0 6 * * 1 /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/weekly_eka_scheduler.py >> /mnt/ext/bare_NutriChatbot/logs/weekly_eka.log 2>&1
+0 8 * * * /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python /home/han/Desktop/projects/bare_NutriChatbot/scripts/content_scheduler.py >> /home/han/Desktop/projects/bare_NutriChatbot/logs/content_scheduler.log 2>&1
+0 6 * * 1 /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python /home/han/Desktop/projects/bare_NutriChatbot/scripts/weekly_eka_scheduler.py >> /home/han/Desktop/projects/bare_NutriChatbot/logs/weekly_eka.log 2>&1
 ```
 
-### 3. ✅ DONE — Add /mnt/ext to /etc/fstab for auto-mount on boot
-Added 12 June 2026:
+### 3. ✅ DONE (obsolete since 2026-07-23 hardware change) — Add /mnt/ext to /etc/fstab for auto-mount on boot
+Added 12 June 2026, on the old RTX 3050 box:
 ```
 UUID=67B2-12E3 /mnt/ext exfat rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro,nofail 0 0
 ```
-Verified with `sudo mount -fav` → `/mnt/ext : already mounted`.
+Verified with `sudo mount -fav` → `/mnt/ext : already mounted`. **This entry and drive no longer exist** — see "Drive Layout" above.
 
 ### 4. ✅ DONE — Persist conversation history to DB
 Added 12 June 2026. New `chat_messages` table (`id, session_id, patient_id, role, content, created_at`), created via `scripts/migrate_chat_history.py` (auto-creates the table — no ALTER needed).
@@ -340,8 +341,8 @@ RAG replied in English referencing "6 glasses of water" and "walking" — correc
 
 **Note**: request was sent to `localhost:8000` directly — the public Cloudflare URL timed out client-side (>100s) on the same request, consistent with the existing cold-start/long-request behaviour noted elsewhere. The `[Extractor] Ollama call failed: Connection aborted/Read timed out` errors seen frequently in `/var/log/nutribot.log` (from the 4-minute keepalive cron's background extractor calls contending with Ollama) are a pre-existing issue, unrelated to this fix — extractor failures there are silently swallowed (`return {}`) and don't affect the user-facing reply.
 
-### 7. ✅ DONE — Cloudflare keep-alive cron
-Already in crontab, runs every 4 minutes:
+### 7. ✅ DONE (re-installed 2026-07-23 on new hardware) — Cloudflare keep-alive cron
+In crontab, runs every 4 minutes:
 ```
 */4 * * * * curl -s -X POST -H "Content-Type: application/json" \
   -H "X-API-Key: nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3" \
@@ -397,7 +398,7 @@ See `docs/eval_and_roadmap.md` (written 2026-07-16). Covers: fixing `eval_ragas.
 - Both suites are now pytest-collectible (`pytest eval/test_rag.py -m smoke`) in addition to their existing CLI runners.
 - **Still pending**: add this cron entry on the RTX 3050 once it's back up (couldn't be installed remotely — the box was down during this session, see Known Issues):
   ```
-  0 3 * * * cd /mnt/ext/bare_NutriChatbot && /home/han/miniconda3/bin/python eval/test_rag.py --smoke --out eval/results/rag_smoke.json >> logs/eval_nightly.log 2>&1 && /home/han/miniconda3/bin/python scripts/eval_history.py --results eval/results/rag_smoke.json --suite rag_smoke >> logs/eval_nightly.log 2>&1
+  0 3 * * * cd /home/han/Desktop/projects/bare_NutriChatbot && /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python eval/test_rag.py --smoke --out eval/results/rag_smoke.json >> logs/eval_nightly.log 2>&1 && /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python scripts/eval_history.py --results eval/results/rag_smoke.json --suite rag_smoke >> logs/eval_nightly.log 2>&1
   ```
   (Uses the CLI runner, not `pytest` — the repo's root `conftest.py` forces `DATABASE_URL` to a sqlite in-memory DB for other test suites, which would break this suite's real Postgres/pgvector dependency if run via `pytest` in cron; the CLI runner calls its own `load_dotenv()` directly and isn't affected.)
 - The error-leakage bug is also fixed: `stream_rag_response()` in `website_chat_router.py` no longer yields raw exception text to the patient-facing chat — it logs the real exception server-side and yields a generic apology instead.
@@ -423,12 +424,17 @@ See `docs/eval_and_roadmap.md` (written 2026-07-16). Covers: fixing `eval_ragas.
 ### RTX 3050 Server
 
 ```bash
-# Bot
+# Patient chat bot
 sudo systemctl status nutribot
 sudo systemctl restart nutribot
-tail -f /var/log/nutribot.log
+journalctl -u nutribot -f              # logs go to journald now, not /var/log/nutribot.log
 
-# Cloudflare tunnel (public URL + portfolio)
+# Docs API (patient-free document Q&A, docs_api.py)
+sudo systemctl status docs_api
+sudo systemctl restart docs_api
+journalctl -u docs_api -f
+
+# Cloudflare tunnel (public URLs: nutribot.computationalrd.com, docs-api.computationalrd.com, portfolio)
 sudo systemctl status cloudflared
 sudo cat /etc/cloudflared/config.yml
 
@@ -437,11 +443,9 @@ sudo docker ps | grep pgvector
 sudo docker inspect pgvector-nutribot --format='{{.HostConfig.RestartPolicy.Name}}'
 
 # Check all services
-sudo systemctl status nutribot cloudflared docker
-
-# Mount MEEEE drive if not auto-mounted
-sudo mount -t exfat -o rw,uid=1000,gid=1000,fmask=0000,dmask=0000,allow_utime=0022,iocharset=utf8,errors=remount-ro /dev/sdb1 /mnt/ext
+sudo systemctl status nutribot docs_api cloudflared docker
 ```
+(No exFAT drive to mount anymore — single ext4 NVMe drive, see Drive Layout above. Unit files for `nutribot` and `docs_api` are tracked in the repo at `deploy/nutribot.service` and `deploy/docs_api.service` — copy to `/etc/systemd/system/` if ever reinstalling.)
 
 ### Mac Studio (SSH as bing, or AnyDesk as care-uitm)
 
@@ -525,7 +529,7 @@ Note: this only exercises CLaRa/Ollama in isolation. The full `rag.py` retrieval
 ## Content Pipeline Quick Reference
 
 ```bash
-cd /mnt/ext/bare_NutriChatbot
+cd /home/han/Desktop/projects/bare_NutriChatbot
 
 # Generate all content for client 4 (calls Ollama, takes ~20 min)
 python scripts/generate_content.py --client-id 4
@@ -557,10 +561,8 @@ NUTRIBOT_TEST_LIVE=1 python scripts/test_content_pipeline.py --test generation  
 |-------|--------|------------|
 | CLaRa sometimes recommends bananas to CKD patients | Clinical risk | Prompt engineering, more training data |
 | Mac Studio SSH via `studio-ssh.mrbing.dev` broken | Can't SSH as bing directly | Use AnyDesk as care-uitm, or local LAN |
-| exFAT on /mnt/ext breaks Python venvs | Must use miniconda, not .venv | Use /home/han/miniconda3/bin/python |
 | UiTM network blocks Tailscale | Can't use Tailscale on Mac Studio | Replaced with Cloudflare tunnels |
-| T7 Shield (/mnt/ssd) 100% full | Cannot write new files there | Project moved to MEEEE (/mnt/ext) |
-| RTX 3050 down as of 2026-07-16 (public `nutribot.computationalrd.com` → Cloudflare 530) | Full bot pipeline untestable via public URL | Mac Studio's CLaRa/Ollama confirmed independently reachable via their own tunnel — see "Testing CLaRa/Ollama directly" under Service Management |
+| RTX 3050 was down 2026-07-16 (Cloudflare 530) — box has since been replaced/reimaged (new IP `100.100.203.34`, hostname `han233`, single ext4 drive) | Resolved — public bot confirmed `200` and generating real answers as of 2026-07-23 | None needed; historical entry kept for context |
 
 ---
 
@@ -601,16 +603,16 @@ Pending dietitian review: `data/encpt/encpt_curated.md` (send to supervising die
 
 | Use case | Command |
 |----------|---------|
-| Run the bot locally | `/home/han/miniconda3/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000` |
-| Run extractor test | `/home/han/miniconda3/bin/python -c "from extractor import extract_from_message; ..."` |
-| Run v2 migration | `/home/han/miniconda3/bin/python scripts/migrate_v2.py` |
-| Run content pipeline migration | `/home/han/miniconda3/bin/python scripts/migrate_content_pipeline.py` |
-| Run chat history migration | `/home/han/miniconda3/bin/python scripts/migrate_chat_history.py` |
-| Run WhatsApp columns migration | `/home/han/miniconda3/bin/python scripts/migrate_whatsapp_columns.py` |
-| Run build schema | `/home/han/miniconda3/bin/python data/encpt/build_curated_schema.py` |
-| Check DB | `/home/han/miniconda3/bin/python -c "import database as db; ..."` |
-| Generate content | `/home/han/miniconda3/bin/python scripts/generate_content.py --client-id 4` |
-| Test RemotePatientStore (mock hospital API) | `/home/han/miniconda3/bin/python scripts/test_remote_patient_store.py` |
+| Run the bot locally | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000` |
+| Run extractor test | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python -c "from extractor import extract_from_message; ..."` |
+| Run v2 migration | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python scripts/migrate_v2.py` |
+| Run content pipeline migration | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python scripts/migrate_content_pipeline.py` |
+| Run chat history migration | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python scripts/migrate_chat_history.py` |
+| Run WhatsApp columns migration | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python scripts/migrate_whatsapp_columns.py` |
+| Run build schema | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python data/encpt/build_curated_schema.py` |
+| Check DB | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python -c "import database as db; ..."` |
+| Generate content | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python scripts/generate_content.py --client-id 4` |
+| Test RemotePatientStore (mock hospital API) | `/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python scripts/test_remote_patient_store.py` |
 
 ---
 
@@ -618,4 +620,4 @@ Pending dietitian review: `data/encpt/encpt_curated.md` (send to supervising die
 
 Repo: on GitHub (main branch).
 The Mac Studio has a clone at `/Users/bing/Desktop/clara_lyh/clara-nutri/` (CLaRa inference only — not the bot codebase).
-**The bot codebase at `/mnt/ext/bare_NutriChatbot/` is the source of truth** (moved from `/mnt/ssd` on 29 May 2026).
+**The bot codebase at `/home/han/Desktop/projects/bare_NutriChatbot/` is the source of truth** (moved from `/mnt/ssd` on 29 May 2026).

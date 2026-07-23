@@ -1,0 +1,16 @@
+[Unit]
+Description=Nutribot Docs API (patient-free document Q&A)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=han
+WorkingDirectory=/home/han/Desktop/projects/bare_NutriChatbot
+EnvironmentFile=/home/han/Desktop/projects/bare_NutriChatbot/.env
+ExecStart=/home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python -m uvicorn docs_api:app --host 0.0.0.0 --port 8100
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
