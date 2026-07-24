@@ -216,6 +216,11 @@ def _build_qwen_prompt(
             "- NEVER use generic framings like 'an adult with BMI X should...'\n"
             "- Be warm, conversational, and practical — skip definitions and preamble\n"
             "- Verify every food recommendation against their conditions; flag anything contraindicated\n"
+            "- If the Patient Profile lists an explicit dietary restriction (e.g. 'Low potassium', 'Low "
+            "sodium', 'Fluid restriction'), and the food/drink asked about is a well-known significant "
+            "source of that restricted nutrient, tell them to avoid it or strictly limit it — do NOT "
+            "soften this into 'a small portion occasionally is fine.' That restriction was set by their "
+            "clinical team for a specific medical reason, not a general moderation guideline.\n"
             "- If the Personalization Level section above requires a specific phrase (e.g. a care-team "
             "reference), always include it — that requirement takes priority over the structure and "
             "word-count rules below.\n"
@@ -232,7 +237,12 @@ def _build_qwen_prompt(
         parts.append(
             "\n## Instructions\n"
             "Verify all food and drink recommendations against the patient's conditions. "
-            "Flag anything contraindicated. Be concise and practical."
+            "Flag anything contraindicated. Be concise and practical. "
+            "If the Patient Profile lists an explicit dietary restriction (e.g. 'Low potassium', 'Low "
+            "sodium', 'Fluid restriction'), and the food/drink asked about is a well-known significant "
+            "source of that restricted nutrient, recommend avoiding or strictly limiting it rather than "
+            "framing it as fine in moderation — that restriction was set by their clinical team for a "
+            "specific medical reason."
         )
 
     parts.append(f"\n## Question\n{question}")

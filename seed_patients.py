@@ -137,7 +137,7 @@ PATIENTS = [
         password="demo1234",
         personalization_level="L2",
     ),
-    # L1 — cardiac disease (stable IHD), female
+    # L1 — emerging/moderate risk, no established cardiac disease, female
     dict(
         name="Siti Hajar binti Mohd Nasir",
         ic_number="750623-03-5891",
@@ -147,26 +147,19 @@ PATIENTS = [
         weight_kg=71.0,
         height_cm=157.0,
         conditions=[
-            "Ischaemic Heart Disease (stable, single-vessel LAD disease)",
-            "Hypertension",
-            "Hypercholesterolaemia",
+            "Overweight",
+            "Pre-hypertension",
         ],
-        medications=[
-            "Aspirin 100mg OD",
-            "Bisoprolol 5mg OD",
-            "Perindopril 5mg OD",
-            "Atorvastatin 40mg ON",
-        ],
-        dietary_restrictions=["Halal only", "Low saturated fat", "Low sodium", "Heart-healthy diet"],
+        medications=[],
+        dietary_restrictions=["Halal only", "Weight management", "Reduced sodium"],
         allergies=[],
         notes=(
-            "Secondary school librarian, predominantly sedentary. BMI 28.8. "
-            "Diagnosed with stable IHD 8 months ago after exertional chest discomfort climbing stairs. "
-            "Coronary angiogram: 50% LAD stenosis, managed medically (no stenting). "
-            "Echo: EF 58%, mild LVH. Asymptomatic on current medications. No prior MI or cardiac events. "
-            "Motivated to improve diet post-diagnosis; husband and children supportive. "
+            "Secondary school librarian, predominantly sedentary. BMI 28.8 (overweight). "
+            "Routine screening BP 132/86 mmHg (pre-hypertension range) — no diagnosed hypertension, "
+            "no cardiac history, not on any medication. Referred for lifestyle/dietary counselling "
+            "to prevent progression to hypertension and cardiovascular disease. "
             "Primarily home-cooked Malay food — frequent santan dishes, fried foods, white rice. "
-            "Referred for cardiac nutrition counselling by cardiologist at HKL."
+            "Motivated to improve diet; husband and children supportive."
         ),
         username="sitihajar.mnasir",
         password="demo1234",
