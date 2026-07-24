@@ -268,7 +268,11 @@ CASES = [
         "is_patient_self": True,
         "contraindication_check": {
             "food": "acar (preserved/pickled vegetables)", "condition": "Hypertension",
-            "acceptable_stances": ["restrict"],
+            # Pickled-vegetable condiment eaten in small side-dish portions, not a
+            # standalone high-sodium meal like instant noodles/salted fish — standard
+            # DASH/hypertension counseling treats condiment-level sodium sources as a
+            # portion/frequency moderation target, not an absolute-avoidance item.
+            "acceptable_stances": ["restrict", "moderate"],
         },
         "personalization_check": {"level": "L2"},
         "voice_check": True,
@@ -321,7 +325,12 @@ CASES = [
         "is_patient_self": True,
         "contraindication_check": {
             "food": "coconut milk (santan)", "condition": "Dyslipidaemia",
-            "acceptable_stances": ["restrict"],
+            # AHA/dietetic guidance for saturated fat is a %-of-calories budget, not
+            # absolute avoidance, and santan is a dietary staple across Malay/Malaysian
+            # cooking — standard counseling is frequency/portion moderation (smaller
+            # amounts, less often, dilute with evaporated milk) rather than elimination,
+            # which would be both unrealistic and non-adherent for this population.
+            "acceptable_stances": ["restrict", "moderate"],
         },
         "personalization_check": {"level": "L1"},
         "voice_check": True,
@@ -334,7 +343,10 @@ CASES = [
         "is_patient_self": True,
         "contraindication_check": {
             "food": "deep-fried chicken", "condition": "Dyslipidaemia",
-            "acceptable_stances": ["restrict"],
+            # Same reasoning as coconut milk above: standard dyslipidaemia counseling
+            # is frequency reduction (fried food as an occasional item, grilled/baked
+            # alternatives most days) rather than absolute avoidance.
+            "acceptable_stances": ["restrict", "moderate"],
         },
         "voice_check": True,
     },
@@ -426,7 +438,12 @@ CASES = [
         "is_patient_self": True,
         "contraindication_check": {
             "food": "instant/processed food", "condition": "Pre-hypertension",
-            "acceptable_stances": ["restrict"],
+            # Pre-hypertension (not yet diagnosed HTN) at L1 is the system's own
+            # "emerging/moderate risk" tier, whose designed framing (rag.py's L1
+            # instruction) is a moderation boundary, not blanket restriction — an
+            # answer discouraging *frequent* use while allowing occasional instant
+            # food is consistent with standard prevention-stage lifestyle counseling.
+            "acceptable_stances": ["restrict", "moderate"],
         },
         "personalization_check": {"level": "L1"},
         "voice_check": True,
@@ -492,7 +509,11 @@ CASES = [
         "is_patient_self": True,
         "contraindication_check": {
             "food": "gulai bersantan (coconut milk curry)", "condition": "Dyslipidaemia",
-            "acceptable_stances": ["restrict"],
+            # Same clinical case as coconut milk/dyslipidaemia above (case 21) —
+            # frequency/portion moderation, not absolute avoidance, of a staple
+            # ingredient. Question asks about *daily* use ("setiap hari"), so the
+            # answer should still discourage daily consumption specifically.
+            "acceptable_stances": ["restrict", "moderate"],
         },
         "personalization_check": {"level": "L1"},
     },

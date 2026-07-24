@@ -1,13 +1,17 @@
 {
   "summary": {
-    "passed": 17,
-    "failed": 3,
+    "passed": 20,
+    "failed": 0,
     "total": 20
   },
   "cases": [
     {
       "id": 1,
       "desc": "High fat intake from palm oil and coconut milk",
+      "tags": [
+        "smoke",
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -16,11 +20,14 @@
           "palm oil"
         ]
       },
-      "elapsed_s": 1.6
+      "elapsed_s": 4.3
     },
     {
       "id": 2,
       "desc": "Low fat intake with olive oil",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -29,56 +36,72 @@
           "olive oil"
         ]
       },
-      "elapsed_s": 1.5
+      "elapsed_s": 1.4
     },
     {
       "id": 3,
       "desc": "High fat from butter and ghee",
-      "passed": false,
-      "failures": [
-        "fat_intake_level: missing from result"
+      "tags": [
+        "en"
       ],
+      "passed": true,
+      "failures": [],
       "result": {
+        "fat_intake_level": "high",
         "fat_sources": [
           "butter",
           "ghee"
         ]
       },
-      "elapsed_s": 1.3
+      "elapsed_s": 1.6
     },
     {
       "id": 4,
       "desc": "Variable medication compliance",
+      "tags": [
+        "smoke",
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
         "medication_compliance": "variable"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.1
     },
     {
       "id": 5,
       "desc": "Poor medication compliance",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
         "medication_compliance": "poor"
       },
-      "elapsed_s": 1.3
+      "elapsed_s": 1.2
     },
     {
       "id": 6,
       "desc": "Good medication compliance",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
         "medication_compliance": "good"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.1
     },
     {
       "id": 7,
       "desc": "Walking 30 min daily",
+      "tags": [
+        "smoke",
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -89,11 +112,14 @@
         ],
         "activity_intensity": "moderate"
       },
-      "elapsed_s": 1.8
+      "elapsed_s": 1.9
     },
     {
       "id": 8,
       "desc": "Multiple activity types",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -108,26 +134,38 @@
     {
       "id": 9,
       "desc": "Shellfish and nut allergy",
-      "passed": false,
-      "failures": [
-        "extractor_food_allergies: missing from result"
+      "tags": [
+        "en"
       ],
-      "result": {},
-      "elapsed_s": 0.9
+      "passed": true,
+      "failures": [],
+      "result": {
+        "extractor_food_allergies": [
+          "shellfish",
+          "tree nuts"
+        ]
+      },
+      "elapsed_s": 1.4
     },
     {
       "id": 10,
       "desc": "Current smoker",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
         "tobacco_status": "Current smoker"
       },
-      "elapsed_s": 1.3
+      "elapsed_s": 1.2
     },
     {
       "id": 11,
       "desc": "Former smoker",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -138,6 +176,9 @@
     {
       "id": 12,
       "desc": "Fish oil and vitamin D",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -151,6 +192,10 @@
     {
       "id": 13,
       "desc": "BM: high fat from nasi lemak and santan",
+      "tags": [
+        "smoke",
+        "bm"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -164,36 +209,51 @@
     {
       "id": 14,
       "desc": "BM: variable compliance \u2014 forget sometimes",
+      "tags": [
+        "bm"
+      ],
       "passed": true,
       "failures": [],
       "result": {
         "medication_compliance": "variable"
       },
-      "elapsed_s": 1.4
+      "elapsed_s": 1.1
     },
     {
       "id": 15,
       "desc": "BM: shellfish allergy",
-      "passed": false,
-      "failures": [
-        "extractor_food_allergies: missing from result"
+      "tags": [
+        "bm"
       ],
-      "result": {},
-      "elapsed_s": 1.0
+      "passed": true,
+      "failures": [],
+      "result": {
+        "extractor_food_allergies": [
+          "udang",
+          "ketam"
+        ]
+      },
+      "elapsed_s": 1.4
     },
     {
       "id": 16,
       "desc": "BM: never smoked",
+      "tags": [
+        "bm"
+      ],
       "passed": true,
       "failures": [],
       "result": {
         "tobacco_status": "Never smoked"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.1
     },
     {
       "id": 17,
       "desc": "BM: badminton twice a week",
+      "tags": [
+        "bm"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -203,11 +263,14 @@
           "badminton"
         ]
       },
-      "elapsed_s": 1.9
+      "elapsed_s": 1.8
     },
     {
       "id": 18,
       "desc": "Manglish: sometimes miss meds + coconut oil",
+      "tags": [
+        "en"
+      ],
       "passed": true,
       "failures": [],
       "result": {
@@ -216,23 +279,30 @@
           "coconut oil"
         ]
       },
-      "elapsed_s": 1.7
+      "elapsed_s": 1.5
     },
     {
       "id": 19,
       "desc": "Generic question \u2014 nothing to extract",
+      "tags": [
+        "smoke",
+        "negative"
+      ],
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 0.9
+      "elapsed_s": 0.8
     },
     {
       "id": 20,
       "desc": "Greeting \u2014 nothing to extract",
+      "tags": [
+        "negative"
+      ],
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 0.9
+      "elapsed_s": 0.8
     }
   ]
 }
