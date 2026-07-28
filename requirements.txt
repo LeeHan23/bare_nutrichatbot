@@ -50,3 +50,9 @@ redis
 
 #--- Evaluation ---
 ragas
+deepeval
+ollama
+# NOTE: deepeval pulls in packaging>=24, which conflicts with langchain-core
+# 0.1.52's packaging<24 pin above (pip resolver warning, not a runtime break —
+# verified 2026-07-29 that langchain-core/langchain-community still import
+# and rag.py's full pipeline still runs correctly with packaging 26.2).
