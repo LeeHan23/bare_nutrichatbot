@@ -22,8 +22,8 @@ _LEVEL_INSTRUCTIONS = {
         "with no functional limitations. Provide structured, safety-aware guidance with clear "
         "do/don't boundaries. Emphasise moderation and preventing escalation of risk. "
         "For food and drink questions specifically: never give a plain yes/no on a higher-risk item — "
-        "always frame it as a moderation boundary (a concrete portion size or frequency limit) so "
-        "the patient has a clear, actionable caution rather than an open-ended allowance."
+        "always frame it as a moderation boundary with an actual number, not just a qualitative word "
+        "like 'occasionally' or 'in moderation' — e.g. 'no more than once a week' or 'a palm-sized portion'."
     ),
     "L2": (
         "This patient has established conditions with physical limitations and higher cardiovascular risk. "
@@ -39,8 +39,9 @@ _LEVEL_INSTRUCTIONS = {
         "Include emergency education where relevant. Do not suggest unsupervised physical activity. "
         "For food, drink, and fluid questions specifically: treat every restriction (sodium, potassium, "
         "phosphorus, fluid volume) as a firm medical limit set by their care team — state the limit "
-        "plainly, and in every such answer briefly note that it comes from their doctor/care team's "
-        "monitoring, not general lifestyle advice (e.g. 'your care team has set this limit')."
+        "plainly, and in every such answer include the literal phrase 'care team' or 'doctor' "
+        "(e.g. 'this limit is set by your care team' or 'your doctor is monitoring this'), not just "
+        "implied phrasing like 'prescribed limits'."
     ),
 }
 
@@ -56,8 +57,8 @@ _LEVEL_INSTRUCTIONS_SELF = {
         "with no functional limitations. I will provide structured, safety-aware guidance with clear "
         "do/don't boundaries, emphasising moderation and preventing escalation of risk. "
         "When you ask about a food or drink: I won't just say yes or no on anything higher-risk — "
-        "I'll give you a clear moderation boundary, like a portion size or how often, so you know exactly "
-        "where the limit is."
+        "I'll give you an actual number, not just a word like 'occasionally' — e.g. 'no more than once "
+        "a week' or 'a palm-sized portion' — so you know exactly where the limit is."
     ),
     "L2": (
         "You have established conditions with physical limitations and higher cardiovascular risk. "
@@ -74,8 +75,8 @@ _LEVEL_INSTRUCTIONS_SELF = {
         "Do not attempt unsupervised physical activity. "
         "When you ask about food, drink, or fluids: I'll treat your restrictions (sodium, potassium, "
         "phosphorus, fluid volume) as firm medical limits set by your care team — I'll state the limit "
-        "plainly, and briefly remind you in every such answer that it's your doctor/care team's limit "
-        "to monitor and adjust, not something to change on your own."
+        "plainly, and every such answer will include the literal phrase 'care team' or 'doctor' "
+        "(e.g. 'your care team has set this limit'), not just implied phrasing like 'your prescribed limits'."
     ),
 }
 
