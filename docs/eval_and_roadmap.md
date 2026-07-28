@@ -157,14 +157,12 @@ full breakdown. Remaining 3 failures, all `personalization_check`:
    further — an open-ended category doesn't always have one natural number,
    and over-fitting the prompt to these two specific eval questions risks
    making real answers worse to make two test cases pass.
-2. **Case 34 (BM gulai bersantan) looks like a judge misclassification**: the
-   answer literally contains "batasi kepada sekali seminggu" ("limit to once
-   a week") — a concrete frequency — but `judge_personalization` still
-   marked it failing. Worth 2-3 more standalone re-runs of this one case
-   specifically (not the whole suite) to check whether this is ordinary
-   run-to-run judge noise or a systematic blind spot in how
-   `judge_personalization`'s prompt handles BM-language answers — that would
-   matter for every bilingual personalization case, not just this one.
+2. ~~Case 34 (BM gulai bersantan) looks like a judge misclassification~~ —
+   **confirmed 2026-07-29**: 3 standalone re-runs all passed, each answer
+   containing a clear weekly frequency limit ("sekali seminggu" / "1-2 kali
+   seminggu") and correctly recognized by the judge each time. This was
+   ordinary run-to-run judge noise on a single draw, not a systematic BM-
+   language blind spot — no `judge_personalization` prompt change needed.
 
 ### Full-suite staleness — a real gap, not just today's oversight
 
@@ -210,8 +208,10 @@ before it's found by accident.
 
 ### Priority order for picking this up
 
-1. Confirm/refute the case-34 judge misclassification (small, fast, informs
-   whether other BM personalization cases need attention).
+1. ~~Confirm/refute the case-34 judge misclassification~~ — **done
+   2026-07-29**, see above. RAG suite is effectively 32/34-clean once this
+   noise draw is excluded (only the 2 category-level food gaps remain as a
+   genuine, documented limitation).
 2. Add the weekly full-suite cron (small, mechanical, closes a gap that's
    already bitten this session twice).
 3. Everything else (DeepEval migration, retrieval-visibility logging, actual
