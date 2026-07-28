@@ -166,15 +166,14 @@ full breakdown. Remaining 3 failures, all `personalization_check`:
 
 ### Full-suite staleness — a real gap, not just today's oversight
 
-The nightly cron (`crontab -l`) only runs `eval/test_rag.py --smoke` (4
-cases). The full 34+20 case suites have no cron at all — they only run when
-someone remembers to trigger them by hand. This session found the full
-snapshot 4-5 days stale more than once, purely by luck of checking. Recommend
-adding a **weekly** (not nightly — a full run takes 20-30+ min against live
-Mac Studio models) cron entry for both full suites, logged via the existing
-`scripts/eval_history.py`, mirroring the cadence of `weekly_eka_scheduler.py`
-already in crontab. Nightly stays smoke-only; weekly catches full-suite drift
-before it's found by accident.
+~~The nightly cron only runs `eval/test_rag.py --smoke`~~ — **fixed
+2026-07-29**: added `0 4 * * 0` (Sunday 4am, after the 3am nightly smoke has
+cleared) running the full 34-case RAG suite + 20-case extractor suite, both
+logged via `scripts/eval_history.py` into `rag_history.jsonl` /
+`extractor_history.jsonl`, output to `logs/eval_weekly.log`. Uses `;` (not
+`&&`) between the two suite runs so a test-runner's exit-1-on-failures
+doesn't skip the extractor run — see `crontab -l`. Nightly stays smoke-only;
+weekly now catches full-suite drift automatically instead of by accident.
 
 ### Still open from the original framework survey
 
@@ -212,8 +211,7 @@ before it's found by accident.
    2026-07-29**, see above. RAG suite is effectively 32/34-clean once this
    noise draw is excluded (only the 2 category-level food gaps remain as a
    genuine, documented limitation).
-2. Add the weekly full-suite cron (small, mechanical, closes a gap that's
-   already bitten this session twice).
+2. ~~Add the weekly full-suite cron~~ — **done 2026-07-29**, see above.
 3. Everything else (DeepEval migration, retrieval-visibility logging, actual
    fine-tune run) — larger, each deserves its own session rather than being
    squeezed in alongside routine eval maintenance.
