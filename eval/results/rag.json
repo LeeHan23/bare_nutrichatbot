@@ -15,8 +15,8 @@
       "patient_id": 2,
       "passed": true,
       "failures": [],
-      "answer": "You need to avoid foods high in potassium, phosphorus, and sodium, as well as any shellfish due to your allergy. This means steering clear of bananas, oranges, avocados, dairy products, nuts, beans, and processed foods.\n\nTry incorporating more low-potassium fruits like apples or pears into your diet instead of higher-risk options.\n\nHow are you managing your fluid intake with your love for dim sum and herbal soups?",
-      "elapsed_s": 43.0,
+      "answer": "You need to avoid foods high in potassium, phosphorus, and sodium. This includes bananas, oranges, avocados, dairy products, nuts, beans, and processed foods. Stick to your low-potassium, low-phosphorus, and low-sodium diet to manage your conditions better.\n\nTry using herbs like oregano or thyme instead of salt for flavoring your meals. How do you usually season your food now?",
+      "elapsed_s": 40.3,
       "contraindication_check": null
     },
     {
@@ -30,8 +30,8 @@
       "patient_id": 2,
       "passed": true,
       "failures": [],
-      "answer": "You should avoid eating bananas because they are high in potassium, which can be harmful to your kidneys and blood pressure. Instead of bananas, you might enjoy an apple or pear as a snack; these fruits have less potassium and still provide fiber and vitamins.\n\nHow do you usually incorporate bananas into your diet, and what other snacks do you like?",
-      "elapsed_s": 32.4,
+      "answer": "You should avoid eating bananas as they are high in potassium, which can be harmful to your kidneys and blood pressure. Instead of bananas, try fruits like apples or pears that have lower potassium levels.\n\nHow do you usually incorporate bananas into your diet, and would you like some suggestions for similar sweet snacks?",
+      "elapsed_s": 25.8,
       "contraindication_check": {
         "food": "banana",
         "condition": "CKD Stage 3 (potassium-restricted)",
@@ -50,8 +50,8 @@
       "patient_id": 1,
       "passed": true,
       "failures": [],
-      "answer": "White rice is high in carbohydrates and has a high glycemic index, which can cause your blood sugar levels to rise quickly. Given your conditions of Type 2 Diabetes and hypertension, it's best to limit or avoid white rice as much as possible.\n\nTry substituting white rice with whole grains like brown rice or quinoa for a meal; these options are higher in fiber and have a lower glycemic index.\n\nHow often do you currently eat white rice, and what meals does it typically feature in?",
-      "elapsed_s": 43.9,
+      "answer": "You can have white rice, but it's important to limit your intake because of its high glycemic index, which can spike blood sugar levels. Aim for a small portion\u2014about half a cup cooked\u2014and pair it with plenty of vegetables and lean protein to help manage your glucose response.\n\nTry swapping one meal\u2019s worth of white rice with brown rice or another whole grain once a week to see how your body feels.\n\nHow do you typically incorporate white rice into your meals, and are there specific times when you find it hard to avoid?",
+      "elapsed_s": 46.8,
       "contraindication_check": null
     },
     {
@@ -64,8 +64,8 @@
       "patient_id": 11,
       "passed": true,
       "failures": [],
-      "answer": "You should only engage in physical activity that is supervised by your cardiac rehab programme. This ensures it\u2019s safe and appropriate for your condition post-CABG, heart failure, and other health issues.\n\nA good first step could be attending a supervised session to understand what types of exercises are best suited for you.\n\nHow do you feel about starting with light activities like walking under supervision?",
-      "elapsed_s": 32.7,
+      "answer": "You should not start any exercise routine without supervision from your cardiac rehab program. Your physical activity must be carefully monitored to ensure safety, especially given your recent CABG and heart failure status.\n\nA practical first step would be to schedule an appointment with your cardiac rehab team to discuss a safe exercise plan tailored for you.\n\nHow do you feel about starting a supervised exercise program?",
+      "elapsed_s": 29.4,
       "contraindication_check": null
     },
     {
@@ -77,8 +77,8 @@
       "patient_id": 5,
       "passed": true,
       "failures": [],
-      "answer": "You should use oils that are rich in unsaturated fats, like olive oil, corn oil, sunflower oil, or canola oil. These oils help manage your cholesterol and support blood sugar control. Aim for 2-3 servings a day, where one serving is about a tablespoon.\n\nTry switching to olive oil for stir-frying instead of using palm oil or coconut oil, which are high in saturated fats.\n\nHow do you usually cook at home, and does your wife have any preferences when it comes to cooking oils?",
-      "elapsed_s": 30.1,
+      "answer": "You should use oils that are rich in unsaturated fats, like olive oil, corn oil, sunflower oil, or canola oil. These oils help improve your lipid profile and support blood sugar control. Aim for 2-3 servings a day, with one tablespoon being equal to one serving.\n\nDo you currently have any of these oils at home, or do you need tips on where to find them?",
+      "elapsed_s": 27.6,
       "contraindication_check": null
     },
     {
@@ -90,8 +90,8 @@
       "patient_id": 3,
       "passed": true,
       "failures": [],
-      "answer": "Foods that are high in fiber and have a low glycemic index can help manage insulin resistance, such as whole grains, legumes, nuts (excluding peanuts), seeds, and non-starchy vegetables like leafy greens. \n\nTry incorporating a serving of lentils or chickpeas into your meals each day to help stabilize blood sugar levels.\n\nDo you currently include these types of foods in your diet regularly?",
-      "elapsed_s": 23.7,
+      "answer": "Foods that are high in fiber and have a low glycemic index can help manage insulin resistance, such as whole grains, legumes, nuts (except peanuts), seeds, and non-starchy vegetables. For example, you could include lentils or chickpeas in your vegetable curries.\n\nTry to start your day with breakfast, even if it\u2019s something simple like a bowl of oatmeal topped with flaxseeds and berries.\n\nHow do your current meals look throughout the day? Do you find it challenging to maintain regular meal times given your work schedule?",
+      "elapsed_s": 24.6,
       "contraindication_check": null
     },
     {
@@ -103,8 +103,8 @@
       "patient_id": 4,
       "passed": true,
       "failures": [],
-      "answer": "You should aim for a daily caloric intake of about 1200-1500 kcal to help manage your weight and cholesterol levels effectively.\n\nTry keeping track of your meals with a simple food diary or app, so you can see where you might be going over your calorie limit.\n\nHow do you usually plan your meals when eating out at roadside stalls?",
-      "elapsed_s": 44.2,
+      "answer": "You should aim for a daily caloric intake of about 1200-1500 kcal to help manage your weight and cholesterol levels effectively.\n\nTry keeping track of what you eat using an app or a simple notebook to ensure you're staying within this range. This can also help you see where you might be able to make healthier choices.\n\nCan you share some typical meals from roadside stalls that you enjoy so we can look at ways to adjust them to fit your dietary needs?",
+      "elapsed_s": 40.1,
       "contraindication_check": null
     },
     {
@@ -116,8 +116,8 @@
       "patient_id": 10,
       "passed": true,
       "failures": [],
-      "answer": "A healthy breakfast for you could include a serving of whole grain oats with sliced bananas and a sprinkle of flax seeds, paired with a cup of soy milk. This will provide you with the energy needed to start your day and support your running.\n\nTry adding some cinnamon or ginger to your oats for extra flavor without extra sugar.\n\nHow do you usually prepare your breakfasts, and are there any specific flavors or ingredients you enjoy?",
-      "elapsed_s": 48.3,
+      "answer": "A healthy breakfast could include brown rice porridge made with water and a little bit of canola oil, topped with sliced banana and a sprinkle of ground flax seeds. This will give you the energy and nutrients to start your day and support your running.\n\nTry adding a side of steamed spinach for extra vitamins and minerals.\n\nHow do you feel about incorporating more plant-based proteins into your breakfast?",
+      "elapsed_s": 44.0,
       "contraindication_check": null
     },
     {
@@ -129,8 +129,8 @@
       "patient_id": 1,
       "passed": true,
       "failures": [],
-      "answer": "For breakfast, it\u2019s best to choose foods that are low in simple carbohydrates and sodium. You could have whole wheat bread with a small amount of jelly or some shredded wheat cereal with 1% milk and a bit of orange juice. This will help keep your blood sugar stable and support your heart health.\n\nTry adding some raw vegetables like cucumber slices or celery sticks to your breakfast for extra nutrients without adding much sodium.\n\nHow do you feel about these options, and is there anything specific you\u2019d like to add or avoid in your breakfast?",
-      "elapsed_s": 53.6,
+      "answer": "For breakfast, focus on having a mix of vegetables, fruits, whole grains, lean proteins, and healthy fats. For example, you could have a bowl of oatmeal with a handful of berries, a sprinkle of nuts, and a side of steamed broccoli. This will help keep your blood sugar stable and provide the nutrients you need.\n\nHave you tried incorporating oats into your meals before? How do you feel about trying this breakfast option?",
+      "elapsed_s": 47.1,
       "contraindication_check": null
     },
     {
@@ -142,8 +142,8 @@
       "patient_id": 11,
       "passed": true,
       "failures": [],
-      "answer": "Your care team has set your protein intake at 0.6-0.8 grams per kilogram of body weight daily, which means about 40-50 grams of protein a day is suitable for you.\n\nTo help meet this requirement, consider including lean proteins like skinless chicken or fish in your meals, while keeping portion sizes moderate to avoid exceeding the limit set by your doctor.\n\nHow do you currently plan your meals to ensure you stay within these guidelines?",
-      "elapsed_s": 24.6,
+      "answer": "You need to keep your protein intake between 0.6-0.8 grams per kilogram of body weight each day, which translates to about 40-50 grams daily based on your weight. This is important for managing your heart failure and kidney disease.\n\nTry to spread your protein intake evenly throughout the meals you eat today. Good sources that are also low in potassium include egg whites or a small portion of chicken breast without skin.\n\nHow do you usually plan your meals, and do you find it challenging to stick to this protein range?",
+      "elapsed_s": 32.1,
       "contraindication_check": null
     },
     {
@@ -156,8 +156,8 @@
       "patient_id": 2,
       "passed": true,
       "failures": [],
-      "answer": "You should avoid eating durian as it is high in potassium, phosphorus, and sodium, which can be harmful given your dietary restrictions and conditions.\n\nInstead of durian, consider having a serving of papaya or pineapple, which are lower in potassium and safer for you.\n\nHow do you usually incorporate fruits into your diet?",
-      "elapsed_s": 42.0,
+      "answer": "You should avoid eating durian as it is high in potassium and can be harmful to your kidney function. Additionally, it has a lot of natural sugars which could affect your blood pressure management.\n\nTry having a small serving of watermelon or pineapple instead; they are lower in potassium and still provide some sweetness.\n\nHow do you feel about trying these alternatives?",
+      "elapsed_s": 41.4,
       "contraindication_check": {
         "food": "durian",
         "condition": "CKD Stage 3 (potassium-restricted)",
@@ -176,8 +176,8 @@
       "patient_id": 2,
       "passed": true,
       "failures": [],
-      "answer": "You can include milk in your diet, but be mindful of its phosphorus and potassium content since you need to keep these low due to your chronic kidney disease. Choose lower-fat options like skimmed or low-fat milk to help manage your cardiovascular risk as well. How much milk are you planning to have daily?",
-      "elapsed_s": 19.3,
+      "answer": "You can include milk in your diet, but it's important to monitor your intake because milk contains potassium and phosphorus. Given your restrictions, a small portion once or twice a week would be more suitable than daily consumption. \n\nCheck the labels for low-potassium options if you choose to have milk.\n\nHow do you feel about trying plant-based milks that might be lower in potassium and phosphorus?",
+      "elapsed_s": 19.6,
       "contraindication_check": {
         "food": "milk/dairy",
         "condition": "CKD Stage 3 (phosphorus-restricted)",
@@ -197,8 +197,8 @@
       "patient_id": 2,
       "passed": true,
       "failures": [],
-      "answer": "You can have tomatoes, but you need to limit your intake due to their potassium content. Stick to no more than 2-3 servings per week, where one serving is either a medium tomato or one cup of chopped tomatoes.\n\nTry using canned tomatoes with lower sodium content in small amounts for flavoring soups or stews that are otherwise low in potassium and phosphorus.\n\nHow do you usually include tomatoes in your meals?",
-      "elapsed_s": 38.1,
+      "answer": "You can have tomatoes, but you need to limit your intake to no more than 2-3 servings per week due to their potassium content. One serving is either one medium tomato or a cup of chopped tomatoes. This helps manage your potassium levels.\n\nTry using canned tomatoes instead of fresh ones for cooking; they often have less potassium and can be a good alternative in recipes like soups or stews.\n\nHow do you usually incorporate tomatoes into your meals, and are there any specific dishes you enjoy that include them?",
+      "elapsed_s": 37.2,
       "contraindication_check": {
         "food": "tomato",
         "condition": "CKD Stage 3 (potassium-restricted)",
@@ -220,8 +220,8 @@
       "patient_id": 11,
       "passed": true,
       "failures": [],
-      "answer": "You should avoid eating salted fish, as it is very high in sodium, and your care team has set this limit to manage your heart failure and hypertension.\n\nInstead of salted fish, consider fresh or frozen fish that you can cook with low-sodium methods. For example, try baking a white fish like cod with lemon and herbs for flavor without extra salt.\n\nHow do you usually incorporate fish into your meals, and are there specific types you enjoy?",
-      "elapsed_s": 32.1,
+      "answer": "You should avoid eating salted fish as it is very high in sodium, which goes against your care team's guidelines for a low-sodium diet to manage your heart failure and hypertension. Stick with fresh, unsalted fish options that are lower in sodium.\n\nFor example, you could try grilled or steamed white fish like cod or tilapia instead.\n\nHow do you usually incorporate fish into your meals, and would you need help finding low-sodium alternatives?",
+      "elapsed_s": 30.5,
       "contraindication_check": {
         "food": "salted fish (ikan masin)",
         "condition": "Heart Failure + CKD Stage 4 (sodium-restricted)",
@@ -240,8 +240,8 @@
       "patient_id": 1,
       "passed": true,
       "failures": [],
-      "answer": "Bananas are indeed beneficial due to their potassium content, which helps regulate blood pressure. However, since you need to monitor your potassium intake and focus on a low sodium diet, it's best to limit banana consumption to one medium-sized banana per day.\n\nTry incorporating bananas into your breakfast or as a mid-morning snack to help manage your carbohydrate intake throughout the day.\n\nHow do you usually incorporate fruits into your daily meals?",
-      "elapsed_s": 55.6,
+      "answer": "Yes, bananas are beneficial for managing blood pressure due to their potassium content. However, given your diabetes, limit your intake to one to two servings per day because of the natural sugars they contain.\n\nTry having a banana as a mid-morning snack instead of something with added sugars or simple carbohydrates.\n\nHow do you usually incorporate fruits into your daily meals?",
+      "elapsed_s": 49.6,
       "contraindication_check": {
         "food": "banana",
         "condition": "Hypertension (no kidney disease)",
@@ -260,10 +260,12 @@
         "personalization"
       ],
       "patient_id": 1,
-      "passed": true,
-      "failures": [],
-      "answer": "You should limit or avoid instant noodles like Maggi because they are high in sodium and simple carbohydrates, which can affect your blood pressure and blood sugar levels. A single serving of 100g contains around 1600 mg of sodium, which is almost the entire day's recommended intake for someone with hypertension.\n\nTry making a quick soup at home using low-sodium broth and adding plenty of vegetables to keep it healthy and satisfying.\n\nHow often do you find yourself reaching for instant noodles when you need a quick meal?",
-      "elapsed_s": 41.8,
+      "passed": false,
+      "failures": [
+        "Personalization: L2 patient answer doesn't demonstrate expected caution framing (the specific risk named (e.g. sodium, potassium, sugar) paired with a concrete limit or monitoring cue \u2014 a portion cap, frequency cap, or a value to watch (blood pressure, blood glucose, symptoms)) per LLM judge"
+      ],
+      "answer": "You should limit or avoid eating instant noodles like Maggi because they are high in sodium and simple carbohydrates, which can affect your blood pressure and blood sugar levels. If you're craving something quick, consider making a homemade soup with low-sodium broth and plenty of vegetables.\n\nHave you tried any other quick meal options that fit within your dietary restrictions?",
+      "elapsed_s": 44.8,
       "contraindication_check": {
         "food": "instant noodles (Maggi)",
         "condition": "Hypertension",
@@ -282,10 +284,13 @@
         "personalization"
       ],
       "patient_id": 5,
-      "passed": true,
-      "failures": [],
-      "answer": "Yes, you can eat acar as part of your daily intake of fruits and vegetables. However, be mindful of its sodium content; a typical serving may contain around 200-400 mg of sodium. Given your low sodium dietary restrictions, it's best to limit your portion size or check the label for lower-sodium options.\n\nTry having acar as a side dish once a day with a meal that is otherwise low in sodium.\n\nHow does your wife feel about incorporating more vegetables into her cooking? Might be worth discussing how we can adjust recipes together.",
-      "elapsed_s": 30.5,
+      "passed": false,
+      "failures": [
+        "Personalization: L2 patient answer doesn't demonstrate expected caution framing (the specific risk named (e.g. sodium, potassium, sugar) paired with a concrete limit or monitoring cue \u2014 a portion cap, frequency cap, or a value to watch (blood pressure, blood glucose, symptoms)) per LLM judge",
+        "Contraindication (acar (preserved/pickled vegetables) + Hypertension): GEval judge: The response permits the consumption of acar without a strong recommendation to restrict it due to high sodium content, which is not aligned with the evaluation steps that require either RESTRICT or MODERATE stances for passing. The advice given does not clearly indicate that acar should be consumed in moderation or with caution."
+      ],
+      "answer": "Yes, you can eat acar as part of your daily intake of fruits and vegetables, which is beneficial for managing hypertension and type 2 diabetes. However, be mindful of the sodium content since it can vary among different recipes.\n\nTry to choose acar with less added salt or make a homemade version to control the sodium level better.\n\nHow often do you include acar in your meals?",
+      "elapsed_s": 24.6,
       "contraindication_check": {
         "food": "acar (preserved/pickled vegetables)",
         "condition": "Hypertension",
@@ -305,8 +310,8 @@
       "patient_id": 1,
       "passed": true,
       "failures": [],
-      "answer": "White bread is high in simple carbohydrates, which can spike your blood sugar levels and isn't ideal given your HbA1c of 8.2%. It's best to avoid it or limit its intake significantly. Instead, consider having a whole grain toast with a bit of avocado for healthy fats.\n\nHow do you usually plan your breakfasts? Do you have easy alternatives that fit your diet in mind?",
-      "elapsed_s": 26.7,
+      "answer": "White bread is high in simple carbohydrates and low in fiber, which isn\u2019t ideal for managing your diabetes and hypertension. It can cause quick spikes in blood glucose levels and doesn't provide much nutritional value.\n\nInstead of white bread, you could try whole grain bread options that are Halal certified to help keep your blood sugar more stable and provide better nutrition.\n\nHow do you usually prepare your breakfast? Are there other foods or drinks you enjoy that we should consider including in a healthier meal plan?",
+      "elapsed_s": 24.8,
       "contraindication_check": {
         "food": "white bread",
         "condition": "Type 2 Diabetes",
@@ -326,8 +331,8 @@
       "patient_id": 5,
       "passed": true,
       "failures": [],
-      "answer": "You can have Teh Tarik in the morning, but it's high in sugar and calories due to the condensed milk, which isn't ideal given your diabetes and weight management goals. Try asking for less condensed milk or a smaller portion.\n\nHave you tried any alternatives like teh o kosong (black tea without milk) with just a splash of low-calorie sweetener?\n\nHow often do you enjoy Teh Tarik, and how does it fit into your daily meal plan?",
-      "elapsed_s": 46.6,
+      "answer": "You can have Teh Tarik in moderation, but be aware of its high sugar content, which is about 25-30g per serving. This can affect your blood glucose levels and should be monitored closely since you're managing type 2 diabetes.\n\nTry asking for it to be made with less condensed milk or opt for a smaller portion size to keep your sugar intake in check.\n\nHow often do you typically enjoy Teh Tarik, and how does it fit into your daily meal plan?",
+      "elapsed_s": 41.4,
       "contraindication_check": {
         "food": "Teh Tarik (sweetened milk tea)",
         "condition": "Type 2 Diabetes",
@@ -347,8 +352,8 @@
       "patient_id": 1,
       "passed": true,
       "failures": [],
-      "answer": "Yes, oats are good for you as they're high in fiber and can help manage your blood sugar levels and keep you feeling full. Just make sure to prepare them without adding extra salt or sugary toppings. Aim for unsweetened varieties and add some fresh fruits if you need a bit of sweetness.\n\nHow do you usually prepare your oats, and what flavors do you like?",
-      "elapsed_s": 34.2,
+      "answer": "Yes, oats are good for you as they're high in fiber and can help manage your blood sugar levels and keep you feeling full. Just make sure to prepare them without adding extra salt or sugary toppings. \n\nTry having a bowl of plain oats with some low-fat milk and a sprinkle of cinnamon for flavor.\n\nHow do you usually prepare your oats, and what do you typically eat with them?",
+      "elapsed_s": 34.1,
       "contraindication_check": {
         "food": "oats",
         "condition": "Type 2 Diabetes",
@@ -367,12 +372,10 @@
         "personalization"
       ],
       "patient_id": 4,
-      "passed": false,
-      "failures": [
-        "Personalization: L1 patient answer doesn't demonstrate expected caution framing (a clear moderation boundary for any higher-risk food or activity \u2014 a concrete portion size or frequency limit, not a plain yes/no) per LLM judge"
-      ],
-      "answer": "No, it's best to limit foods made with coconut milk because it\u2019s high in saturated fat, which can raise your cholesterol levels and isn't good for managing dyslipidaemia. Instead, try using low-fat alternatives like light coconut milk or even cow\u2019s milk diluted with water.\n\nHave you tried any recipes that use these lower-fat options? How do they taste compared to what you're used to?",
-      "elapsed_s": 58.2,
+      "passed": true,
+      "failures": [],
+      "answer": "You can include coconut milk in your diet, but it's important to limit its use due to its high saturated fat content. Try using it sparingly or opt for a lighter version if available. For example, you could add a small amount to soups instead of using it as the base.\n\nHow often do you currently use coconut milk in your cooking?",
+      "elapsed_s": 49.5,
       "contraindication_check": {
         "food": "coconut milk (santan)",
         "condition": "Dyslipidaemia",
@@ -392,8 +395,8 @@
       "patient_id": 4,
       "passed": true,
       "failures": [],
-      "answer": "No, you should not eat fried chicken regularly as it is high in calories and fat, which can worsen your dyslipidemia and obesity. Limit this to no more than once a month and try to have smaller portions when you do indulge.\n\nInstead of fried chicken, consider grilled or baked chicken without skin for a healthier protein option that fits within your dietary restrictions.\n\nHow often are you currently eating out at roadside stalls, and what types of meals do you usually choose?",
-      "elapsed_s": 48.3,
+      "answer": "Fried chicken is high in fat and calories, which isn't ideal given your dyslipidaemia and obesity. It\u2019s best to avoid eating it regularly. If you do have fried chicken, limit it to once a month or less.\n\nTry grilled chicken instead; it's lower in fat and can be seasoned with herbs for flavor without adding much sodium.\n\nHow often are you currently eating out at roadside stalls, and what other protein sources do you usually include in your diet?",
+      "elapsed_s": 56.6,
       "contraindication_check": {
         "food": "deep-fried chicken",
         "condition": "Dyslipidaemia",
@@ -413,8 +416,8 @@
       "patient_id": 5,
       "passed": true,
       "failures": [],
-      "answer": "Ikan kembung is a good choice for you as it\u2019s rich in omega-3 fatty acids, which can help manage your cholesterol levels. However, watch how it's prepared; grilling or baking are better options than frying to keep the saturated fat low.\n\nTry having ikan kembung twice a week as part of your meals to support heart health without increasing your risk factors.\n\nHow does your family feel about adding more fish like ikan kembung into your diet?",
-      "elapsed_s": 25.8,
+      "answer": "Ikan kembung is a great choice as it's high in omega-3 fatty acids, which are beneficial for heart health and can help manage your cholesterol levels. Just be mindful of how it\u2019s prepared; opt for steaming or grilling over frying to keep the fat content low.\n\nTry incorporating ikan kembung into your meals 2-3 times a week as part of a balanced diet that includes plenty of vegetables.\n\nHow does your wife feel about preparing fish like mackerel, and are there any particular ways you enjoy it?",
+      "elapsed_s": 25.9,
       "contraindication_check": {
         "food": "ikan kembung (mackerel)",
         "condition": "Dyslipidaemia",
@@ -435,8 +438,8 @@
       "patient_id": 11,
       "passed": true,
       "failures": [],
-      "answer": "You can include soup in your meals, but it must fit within your care team's set limits for sodium, potassium, phosphorus, and simple carbohydrates. Opt for broths that are low in salt and avoid soups made with beans or excessive vegetables high in potassium like tomatoes or spinach.\n\nHave you checked the nutritional labels of any specific soups you're considering to ensure they meet these criteria?",
-      "elapsed_s": 22.7,
+      "answer": "You can include soup in your meals, but it must fit within the limits set by your care team for sodium, potassium, phosphorus, and simple carbohydrates. Choose soups that are low in these nutrients, such as clear broths without added salt or vegetables high in potassium like tomatoes or peas.\n\nCould you try making a homemade broth with lean meats and low-potassium veggies to ensure it meets your dietary needs?\n\nWhat kind of soups do you usually enjoy, and how often would you like to have them?",
+      "elapsed_s": 23.9,
       "contraindication_check": {
         "food": "soup/stock",
         "condition": "Heart Failure",
@@ -457,8 +460,8 @@
       "patient_id": 11,
       "passed": true,
       "failures": [],
-      "answer": "No, you cannot drink as much water as you want. Your care team has set this limit to 1.0L per day due to your heart failure and chronic kidney disease.\n\nTo help manage your fluid intake, try measuring out your allowed amount in the morning and use that for all drinks throughout the day, including water, tea, and any other fluids.\n\nHow do you currently track your daily fluid intake?",
-      "elapsed_s": 23.7,
+      "answer": "No, you cannot drink as much water as you want. Your care team has set this limit to 1.0L per day due to your heart failure and chronic kidney disease. It's important to measure your fluid intake carefully.\n\nTry using a marked water bottle to keep track of how much you've had throughout the day.\n\nHow do you currently manage your fluid intake?",
+      "elapsed_s": 22.3,
       "contraindication_check": {
         "food": "water/fluids (unrestricted volume)",
         "condition": "Heart Failure",
@@ -479,8 +482,8 @@
       "patient_id": 3,
       "passed": true,
       "failures": [],
-      "answer": "You can have white rice, but it's best to limit it due to its high glycemic index which could affect your blood sugar levels. Stick to a palm-sized portion once or twice a week and pair it with plenty of vegetables and lean protein.\n\nHow do you usually incorporate white rice into your meals?",
-      "elapsed_s": 28.0,
+      "answer": "You can include white rice in your diet, but it's important to keep portions moderate due to its high glycemic index. Aim for no more than half a cup of cooked white rice per meal to help manage blood sugar levels effectively.\n\nTry pairing your white rice with plenty of vegetables and a lean protein source like chicken or fish to balance out the meal.\n\nHow often do you typically include white rice in your meals, and what other grains might you enjoy?",
+      "elapsed_s": 24.5,
       "contraindication_check": {
         "food": "white rice",
         "condition": "PCOS with Insulin Resistance",
@@ -500,8 +503,8 @@
       "patient_id": 3,
       "passed": true,
       "failures": [],
-      "answer": "Yes, dhal is a great choice for you. It's high in fiber and protein while being low on the glycemic index, which aligns well with your dietary needs for managing PCOS and insulin resistance.\n\nTry adding it to your meals more often, like having a small bowl of dhal curry as part of your lunch or dinner to help manage blood sugar levels throughout the day.\n\nHow do you usually incorporate dhal into your diet?",
-      "elapsed_s": 46.7,
+      "answer": "Yes, dhal is a great choice for you as it's rich in fiber and protein while being low on the glycemic index, which can help manage your insulin resistance.\n\nTry incorporating dhal into your daily meals, such as having it with vegetables or as a side dish to balance out your meal nutrients.\n\nHow do you usually include dhal in your diet, and are there any specific recipes you enjoy?",
+      "elapsed_s": 40.4,
       "contraindication_check": {
         "food": "dhal (lentils)",
         "condition": "PCOS with Insulin Resistance",
@@ -522,8 +525,8 @@
       "patient_id": 12,
       "passed": true,
       "failures": [],
-      "answer": "Yes, you can enjoy roti canai occasionally, but keep it to once a week due to its calorie content and carbohydrate load. When you do have it, pair it with healthier sides like vegetable soup or grilled fish instead of fried dishes.\n\nHow often are you currently eating out at mamak restaurants?",
-      "elapsed_s": 58.0,
+      "answer": "You can enjoy roti canai occasionally, but keep it to no more than once a week due to its high carbohydrate content and potential for being served with high-sodium accompaniments. Try having it with a side of vegetables or a yogurt dip instead of dhal curry to balance your meal.\n\nHow do you usually enjoy your roti canai, and what are some of your favorite sides?",
+      "elapsed_s": 52.0,
       "contraindication_check": {
         "food": "roti canai (fried mamak food)",
         "condition": "Overweight, Pre-hypertension",
@@ -546,8 +549,8 @@
       "failures": [
         "Personalization: L1 patient answer doesn't demonstrate expected caution framing (a clear moderation boundary for any higher-risk food or activity \u2014 a concrete portion size or frequency limit, not a plain yes/no) per LLM judge"
       ],
-      "answer": "It's best to limit your intake of instant foods as they are usually high in sodium and unhealthy fats, which can affect your weight management and pre-hypertension. Try preparing meals in advance or finding healthier alternatives that you can quickly prepare at home, like stir-fried vegetables with tofu.\n\nHow often do you currently rely on instant foods, and what types of dishes do you enjoy the most?",
-      "elapsed_s": 36.2,
+      "answer": "It's best to limit your intake of instant foods as they are often high in sodium and unhealthy fats, which can contribute to weight gain and increase blood pressure. Try preparing meals in bulk on days when you have more time, so you always have a healthy option ready.\n\nHow do you usually incorporate meal planning into your weekly routine?",
+      "elapsed_s": 38.0,
       "contraindication_check": {
         "food": "instant/processed food",
         "condition": "Pre-hypertension",
@@ -567,8 +570,8 @@
       "patient_id": 10,
       "passed": true,
       "failures": [],
-      "answer": "Yes, you can eat bananas. They are great for providing energy and supporting your heart health due to their potassium content. Try having a banana about an hour before your jogging sessions to boost your stamina.\n\nDo you usually eat bananas or other fruits around the time of your workouts?",
-      "elapsed_s": 25.4,
+      "answer": "Yes, you can definitely enjoy bananas as they are great for boosting your energy levels and provide essential nutrients like potassium and vitamins. Since you're interested in long-distance running, a banana before or after jogging could help fuel your workouts or aid recovery.\n\nTry having a banana with a handful of almonds for an energizing snack that balances carbs and protein.\n\nHow do you usually incorporate fruits into your diet, and are there specific times when you feel like you need more energy?",
+      "elapsed_s": 22.3,
       "contraindication_check": {
         "food": "banana",
         "condition": "no significant conditions (general wellness)",
@@ -589,8 +592,8 @@
       "patient_id": 2,
       "passed": true,
       "failures": [],
-      "answer": "Tidak boleh, anda perlu mengelakkan pisang kerana ia tinggi kalium. Intake kalium anda harus di bawah 2500 mg sehari dan satu biji pisang boleh menyumbang banyak kepada had tersebut.\n\nCuba cari alternatif buah yang rendah kalium seperti jambu batu atau kiwi dalam jumlah kecil.\n\nAdakah anda sedang merancang makanan untuk hari ini, dan perlu cadangan lebih banyak buah-buahan yang selamat?",
-      "elapsed_s": 43.5,
+      "answer": "Tidak boleh, pisang adalah sumber tinggi kalium dan dapat meningkatkan kadar kalium dalam darah Anda melebihi 2500 mg per hari yang dianjurkan. Pastikan untuk memilih buah-buahan lain seperti apel atau pir yang lebih rendah kalium.\n\nAdakah jenis buah lain yang anda suka atau ingin cuba?",
+      "elapsed_s": 42.2,
       "contraindication_check": {
         "food": "pisang (banana)",
         "condition": "CKD Stage 3 (potassium-restricted)",
@@ -610,8 +613,8 @@
       "patient_id": 1,
       "passed": true,
       "failures": [],
-      "answer": "Mi Segera setiap hari tidak sesuai untukmu karena tinggi natrium dan karbohidrat sederhana, yang dapat meningkatkan tekanan darah dan gula darah. Sebaiknya kau mencoba makanan lain seperti sayur-sayuran atau ikan yang lebih sehat dan sesuai dengan kondisimu.\n\nMungkin bisa coba buat mi sendiri tanpa bumbu instan dan tambahkan banyak sayuran untuk mengurangi natrium dan meningkatkan serat?\n\nBagaimana kalau kebiasaan makan malam di mamak? Ada kemungkinan untuk memilih pilihan yang lebih sehat atau membuat makanan sendiri?",
-      "elapsed_s": 33.9,
+      "answer": "Mi Segera is not suitable for daily consumption due to its high sodium and simple carbohydrate content, which can affect your blood pressure and blood sugar levels. A typical pack contains between 1200-3000 mg of sodium, far exceeding the recommended limit of less than 2,300mg per day.\n\nTry replacing Mi Segera with a healthier meal like grilled chicken with steamed vegetables for dinner, which is lower in sodium and provides more nutrients.\n\nHow do you usually feel after eating Mi Segera? Do you notice any changes in how you feel throughout the day?",
+      "elapsed_s": 29.8,
       "contraindication_check": {
         "food": "mi segera (instant noodles)",
         "condition": "Hypertension",
@@ -631,8 +634,8 @@
       "patient_id": 1,
       "passed": true,
       "failures": [],
-      "answer": "Tidak boleh makan nasi putih terlalu banyak kerana ia tinggi dalam karbohidrat yang sederhana, dan anda perlu membatasi intake karbohidrat kepada 45-60g setiap hidangan. Gantikan sebahagian nasi putih dengan nasi beras atau sayur-sayuran untuk mengekalkan keseimbangan diet.\n\nContohnya, dalam satu hidangan, anda boleh memakan separuh cawan nasi putih dan separuh lagi sayur-sayuran yang direbus tanpa garam.\n\nAdakah anda biasa makan nasi putih dalam kuantiti yang besar pada setiap hidangan?",
-      "elapsed_s": 48.6,
+      "answer": "Tidak boleh terlalu banyak, kerana nasi putih mengandungi banyak karbohidrat yang boleh meningkatkan tahap gula darah. Sebaiknya hadkan porsi nasi putih kepada sekitar separuh cawan (sekitar 75 gram) pada setiap hidangan dan tambah lauk dengan sayur-sayuran untuk membantu kawalan gula darah.\n\nCuba gantikan sebahagian nasi putih anda dengan nasi beras yang lebih rendah indeks glycemic.\n\nAdakah anda mencari alternatif lain kepada nasi putih untuk hidangan harian anda?",
+      "elapsed_s": 44.7,
       "contraindication_check": {
         "food": "nasi putih (white rice)",
         "condition": "Type 2 Diabetes",
@@ -652,12 +655,10 @@
         "personalization"
       ],
       "patient_id": 4,
-      "passed": false,
-      "failures": [
-        "Personalization: L1 patient answer doesn't demonstrate expected caution framing (a clear moderation boundary for any higher-risk food or activity \u2014 a concrete portion size or frequency limit, not a plain yes/no) per LLM judge"
-      ],
-      "answer": "Tidak, anda tidak boleh makan gulai bersantan setiap hari kerana ia tinggi lemak dan kalori, yang boleh meningkatkan kolesterol dan berat badan. Sebaiknya batasi kepada sekali seminggu dan pilih lauk yang kurang minyak seperti ikan daripada ayam.\n\nAdakah anda mempunyai akses mudah kepada makanan yang lebih sehat di tempat kerja atau biasanya makan di kedai runcit?",
-      "elapsed_s": 59.0,
+      "passed": true,
+      "failures": [],
+      "answer": "Tidak, anda tidak boleh makan gulai bersantan setiap hari kerana ia tinggi lemak teruk dan kolesterol yang boleh meningkatkan risiko penyakit jantung. Sebaiknya hadkan pengambilan kepada sekali seminggu sahaja.\n\nCuba cari alternatif seperti menggunakan santan cair rendah lemak atau ganti dengan kuah sayur yang lebih ringan untuk makan harian anda.\n\nBagaimana anda boleh memasukkan lebih banyak serat dalam diet anda, contohnya dengan menambah buah-buahan atau sayuran ke dalam hidangan?",
+      "elapsed_s": 52.8,
       "contraindication_check": {
         "food": "gulai bersantan (coconut milk curry)",
         "condition": "Dyslipidaemia",

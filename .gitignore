@@ -109,3 +109,6 @@ Malaysian food portion size photo album copy.pdf
 
 # Cron job logs (created at runtime, not source)
 logs/
+
+# DeepEval local telemetry cache (created at runtime, not source)
+.deepeval/

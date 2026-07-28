@@ -177,14 +177,28 @@ weekly now catches full-suite drift automatically instead of by accident.
 
 ### Still open from the original framework survey
 
-- **DeepEval `G-Eval` migration was never done.** `judge_stance()` and
-  `judge_personalization()` in `eval/test_rag.py` are still the hand-rolled
-  prototype this doc originally described as a stopgap. Migrating to
-  DeepEval's `G-Eval` is still the right long-term call (a maintained,
-  published judge implementation vs. one this project has to keep correct
-  itself) but adds a new dependency and needs verification that a local
-  Ollama judge model plugs into `DeepEvalBaseLLM` cleanly — scope as its own
-  follow-up session, don't fold it into routine eval maintenance.
+- ~~DeepEval `G-Eval` migration was never done~~ — **done 2026-07-29**:
+  `judge_stance()`/`check_contraindication()` and `judge_personalization()`
+  in `eval/test_rag.py` now run on DeepEval's `GEval` metric via its native
+  `OllamaModel` wrapper (`deepeval.models.llms.ollama_model.OllamaModel`),
+  pointed at the same `JUDGE_OLLAMA_MODEL`/`JUDGE_OLLAMA_BASE_URL`
+  (`qwen2.5:14b` on local Ollama) the bespoke judge already used — no new
+  judge model or infra, just a maintained scoring engine instead of a
+  hand-rolled prompt + string match. `GEval`'s `evaluation_steps` (rather
+  than `criteria`) is passed explicitly to skip its extra step-generation
+  LLM round-trip and keep behavior as deterministic as the old prompt.
+  Verified: the smoke suite (4/4) and a full 34-case run both pass, landing
+  at **31/34 — exactly matching** the last bespoke-judge baseline, with the
+  same known failure categories (personalization sampling noise on 2 cases,
+  one contraindication case where that run's generation was genuinely more
+  permissive than intended). Bonus: `GEval`'s `reason` field gives a full
+  natural-language explanation per judgment, replacing the old terse
+  "judge classified stance as X" detail string — a real debuggability
+  improvement, not just a maintainability one.
+  `deepeval` + `ollama` added to `requirements.txt`, with a noted (and
+  verified-harmless) `packaging` version conflict against the `langchain-core`
+  pin — pip's resolver warns, but `rag.py`'s full pipeline still imports and
+  runs correctly.
 - **Part C #4 (embedding closed-loop) is still blocked.** `vector_store.py`'s
   `[TopicBoost]` scores remain print-only (confirmed again today) — no
   persisted signal exists to tell whether retrieval or generation is the
@@ -212,6 +226,7 @@ weekly now catches full-suite drift automatically instead of by accident.
    noise draw is excluded (only the 2 category-level food gaps remain as a
    genuine, documented limitation).
 2. ~~Add the weekly full-suite cron~~ — **done 2026-07-29**, see above.
-3. Everything else (DeepEval migration, retrieval-visibility logging, actual
-   fine-tune run) — larger, each deserves its own session rather than being
-   squeezed in alongside routine eval maintenance.
+3. ~~DeepEval migration~~ — **done 2026-07-29**, see above.
+4. Remaining: retrieval-visibility logging and the actual fine-tune run —
+   larger, each deserves its own session rather than being squeezed in
+   alongside routine eval maintenance.
