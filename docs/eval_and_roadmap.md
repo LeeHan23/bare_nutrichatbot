@@ -131,3 +131,89 @@ This is a lot of surface area. If picking work up incrementally, the natural dep
 4. Part B #1, #3–#5 (fallback wiring, timeout budget, tracked MPS patch, dead-code removal) — architecture resilience, can happen in parallel with the eval work.
 5. Part C — depends on Part A's history mechanism existing first, since it's driven by "most common failure categories," which requires having run the expanded eval enough times to know what those are.
 6. Part B #6 (production cutover) — depends on Part B #4 (tracked patch) at minimum.
+
+---
+
+## Part D — Status update and next steps (2026-07-29)
+
+Parts A #1–#7 and Part B #2–#5 above are now all done (see `REPORT.md` Parts
+3–7 for the narrative). Status of everything else this doc left open, plus
+what a fifth full eval run today turned up:
+
+### Where the RAG suite stands
+
+The 34-case matrix (Part A #2–#5's contraindication/bilingual/personalization
+coverage) has now been run five times. Today's run went 25/34 → **31/34**
+(the best result yet) after root-causing 3 of the 9 failures as real prompt
+gaps rather than sampling noise — see `eval/results/EVAL_REPORT.md` for the
+full breakdown. Remaining 3 failures, all `personalization_check`:
+
+1. **Coconut milk (santan) in general** and **instant/processed food in
+   general** — both ask about a *food category*, not a single dish, and the
+   model still says "limit your intake" without a concrete number. Every
+   single-dish L1 case (roti canai, gulai bersantan specifically) now gets a
+   number reliably; category-level questions don't yet. Recommend leaving
+   this as a documented known limitation rather than forcing the prompt
+   further — an open-ended category doesn't always have one natural number,
+   and over-fitting the prompt to these two specific eval questions risks
+   making real answers worse to make two test cases pass.
+2. **Case 34 (BM gulai bersantan) looks like a judge misclassification**: the
+   answer literally contains "batasi kepada sekali seminggu" ("limit to once
+   a week") — a concrete frequency — but `judge_personalization` still
+   marked it failing. Worth 2-3 more standalone re-runs of this one case
+   specifically (not the whole suite) to check whether this is ordinary
+   run-to-run judge noise or a systematic blind spot in how
+   `judge_personalization`'s prompt handles BM-language answers — that would
+   matter for every bilingual personalization case, not just this one.
+
+### Full-suite staleness — a real gap, not just today's oversight
+
+The nightly cron (`crontab -l`) only runs `eval/test_rag.py --smoke` (4
+cases). The full 34+20 case suites have no cron at all — they only run when
+someone remembers to trigger them by hand. This session found the full
+snapshot 4-5 days stale more than once, purely by luck of checking. Recommend
+adding a **weekly** (not nightly — a full run takes 20-30+ min against live
+Mac Studio models) cron entry for both full suites, logged via the existing
+`scripts/eval_history.py`, mirroring the cadence of `weekly_eka_scheduler.py`
+already in crontab. Nightly stays smoke-only; weekly catches full-suite drift
+before it's found by accident.
+
+### Still open from the original framework survey
+
+- **DeepEval `G-Eval` migration was never done.** `judge_stance()` and
+  `judge_personalization()` in `eval/test_rag.py` are still the hand-rolled
+  prototype this doc originally described as a stopgap. Migrating to
+  DeepEval's `G-Eval` is still the right long-term call (a maintained,
+  published judge implementation vs. one this project has to keep correct
+  itself) but adds a new dependency and needs verification that a local
+  Ollama judge model plugs into `DeepEvalBaseLLM` cleanly — scope as its own
+  follow-up session, don't fold it into routine eval maintenance.
+- **Part C #4 (embedding closed-loop) is still blocked.** `vector_store.py`'s
+  `[TopicBoost]` scores remain print-only (confirmed again today) — no
+  persisted signal exists to tell whether retrieval or generation is the
+  bottleneck on any given failure. Smallest viable next step: persist
+  boost/rerank scores per query to a log (same JSONL pattern as
+  `eval_history.py`) rather than building a full retrieval-eval harness
+  up front.
+- **Part C #1 (the actual LoRA/QLoRA training run) still hasn't happened** —
+  `finetune/QWEN_FINETUNE.md` documents the plan, but running it needs real
+  Mac Studio GPU time. `finetune/generate_training_data.py --focus-results`
+  is built and ready to consume exactly this kind of eval-failure JSON
+  whenever that GPU time is available — once 2-3 more full runs accumulate
+  in `rag_history.jsonl`, the "category-level food lacks a concrete number"
+  pattern above is a reasonable first target for a focused synthetic batch.
+- **No CI gate exists**, and this is a real constraint rather than an
+  oversight: both suites are pytest-collectible, but they need live network
+  access to the Mac Studio's private Cloudflare tunnels, which a hosted CI
+  runner doesn't have. Not proposing a GitHub Actions workflow until/unless
+  that constraint changes.
+
+### Priority order for picking this up
+
+1. Confirm/refute the case-34 judge misclassification (small, fast, informs
+   whether other BM personalization cases need attention).
+2. Add the weekly full-suite cron (small, mechanical, closes a gap that's
+   already bitten this session twice).
+3. Everything else (DeepEval migration, retrieval-visibility logging, actual
+   fine-tune run) — larger, each deserves its own session rather than being
+   squeezed in alongside routine eval maintenance.
