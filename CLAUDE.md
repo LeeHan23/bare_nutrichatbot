@@ -278,7 +278,7 @@ Table: `chat_messages` (session_id, patient_id, role, content, created_at) — a
 | May 2026 | Cloudflare tunnels, Option B hybrid pipeline, TopicBoostRetriever |
 | May 2026 | v2 cardiac schema (15 extractor fields + 5 DB columns) fully deployed |
 | May 2026 | Personalization levels L0–L3 wired end-to-end in all RAG paths |
-| May 2026 | CKD + KDOQI 2020 docs ingested; 24,268 chunks enriched with topic metadata |
+| May 2026 | CKD + KDOQI 2020 docs ingested; 24,268 chunks enriched with topic metadata — **broken by the 2026-07-23 hardware migration, re-fixed 2026-07-29, see "Document / Knowledge Base" below for current state** |
 | May 2026 | Eval harness written: `eval/eval_ragas.py` + `eval/results/` |
 | 29 May 2026 | Project moved: `/mnt/ssd` → `/mnt/ext` (T7 Shield 100% full → MEEEE 910GB free) |
 | 29 May 2026 | Content drip pipeline: DB migration + `generate_content.py` + `content_scheduler.py` |
@@ -573,7 +573,9 @@ Sources: Malaysian CPGs, NICE guidelines, WHO nutrition guidance, MDGV, KDOQI.
 Location on server: `/home/han/documents_clean/`
 Ingestion script: `build_base_db.py` (run with `BASE_DOCS_DIR=/home/han/documents_clean python build_base_db.py`)
 
-Chunk enrichment: all chunks have `doc_keywords`, `doc_topics`, `doc_topic_summary`, `doc_language` metadata.
+Chunk enrichment: **12,617 of 24,818 chunks** (the 36 documents listed in `data/encpt/doc_keyword_mapping.json`) have `doc_keywords`, `doc_topics`, `doc_topic_summary`, `doc_language` metadata — not "all chunks" as previously stated here. The mapping file doesn't yet cover the full ~58-document corpus, so the remaining ~12,200 chunks (mostly documents added after the mapping was written) have no topic tags and never get boosted by `TopicBoostedRetriever`.
+
+**2026-07-29 finding**: the hardware migration (2026-07-23) broke `enrich_v1_with_keywords.py` — it hardcoded the old machine's path (`/mnt/ext/bare_NutriChatbot`), so `load_dotenv()` silently failed to find `.env`, `PGVECTOR_URL` stayed unset, and the script exited immediately (`PGVECTOR_URL not set`) on this box. That meant the entire `base_knowledge` collection had **zero** enriched chunks since the migration — `TopicBoostedRetriever`'s boost step was a silent no-op the whole time (`[TopicBoost] boosted 0/5` on every query), invisible until `vector_store.py`'s new persisted retrieval-quality logging (`logs/retrieval_quality.jsonl`, see `docs/eval_and_roadmap.md` Part D) surfaced it. Fixed: the script now resolves its own path via `__file__` instead of a hardcoded one, and was re-run against the current DB (restoring the 12,617/24,818 figure above). Still open: expand `doc_keyword_mapping.json` to cover the remaining ~22 documents for full coverage.
 Enrichment script: `scripts/enrich_v1_with_keywords.py --mapping data/encpt/doc_keyword_mapping.json`
 
 ---

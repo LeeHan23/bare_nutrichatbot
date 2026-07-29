@@ -199,13 +199,38 @@ weekly now catches full-suite drift automatically instead of by accident.
   verified-harmless) `packaging` version conflict against the `langchain-core`
   pin — pip's resolver warns, but `rag.py`'s full pipeline still imports and
   runs correctly.
-- **Part C #4 (embedding closed-loop) is still blocked.** `vector_store.py`'s
-  `[TopicBoost]` scores remain print-only (confirmed again today) — no
-  persisted signal exists to tell whether retrieval or generation is the
-  bottleneck on any given failure. Smallest viable next step: persist
-  boost/rerank scores per query to a log (same JSONL pattern as
-  `eval_history.py`) rather than building a full retrieval-eval harness
-  up front.
+- ~~Part C #4 (embedding closed-loop) is still blocked~~ — **retrieval
+  visibility landed 2026-07-29**: `vector_store.py`'s `TopicBoostedRetriever`
+  now appends one JSON line per query to `logs/retrieval_quality.jsonl`
+  (query, detected topics, per-doc rank/score/overlap, `boost_ratio`),
+  mirroring `eval_history.py`'s JSONL pattern. Best-effort (wrapped in
+  try/except so a logging failure can never break retrieval), path resolved
+  from `__file__` rather than cwd.
+
+  **This immediately surfaced a real production bug, not just a logging
+  win**: every real query logged showed `boost_ratio: 0.0` — the boost step
+  was finding zero topic-tagged docs in any result. Root cause: the entire
+  `base_knowledge` collection (24,818 chunks) had zero `doc_topics`/
+  `doc_keywords` metadata, because `scripts/enrich_v1_with_keywords.py`
+  hardcoded the *old* machine's path (`/mnt/ext/bare_NutriChatbot`) —
+  `load_dotenv()` silently failed to find `.env` since the 2026-07-23
+  hardware migration, `PGVECTOR_URL` stayed unset, and the script has been
+  exiting immediately ever since. `TopicBoostedRetriever`'s boost mechanism
+  has been a silent no-op in production for the life of this machine. Fixed:
+  the script now resolves its own path via `__file__`, and was re-run
+  against the live DB (user-approved, since it mutates 24k+ production
+  rows) — restored `doc_topics`/`doc_keywords` on 12,617 of 24,818 chunks
+  (the 36 documents the mapping file currently covers). Re-verified: the
+  same query that showed `boost_ratio: 0.0` before the fix now shows `1.0`.
+  See `CLAUDE.md`'s "Document / Knowledge Base" section for current
+  corrected coverage numbers (the old "24,268 chunks enriched" / "all
+  chunks have..." claims there were stale).
+
+  **Still open**: `doc_keyword_mapping.json` only covers 36 of the ~58+
+  document corpus — the remaining ~12,200 chunks (mostly docs added after
+  the mapping was written) have no topic tags and never get boosted.
+  Expanding the mapping is real Part C #4 follow-up work, now that the
+  mechanism to detect this kind of gap actually exists.
 - **Part C #1 (the actual LoRA/QLoRA training run) still hasn't happened** —
   `finetune/QWEN_FINETUNE.md` documents the plan, but running it needs real
   Mac Studio GPU time. `finetune/generate_training_data.py --focus-results`

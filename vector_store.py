@@ -1,4 +1,6 @@
 import os
+import json
+import time
 from typing import List, Set
 
 from dotenv import load_dotenv
@@ -19,6 +21,28 @@ PGVECTOR_URL = os.environ.get(
         "postgresql://postgres:postgres@localhost:5432/nutribot",
     ),
 )
+
+# Persisted retrieval-quality signal — the [TopicBoost] print line below was
+# previously the only record of retrieval behavior (stdout/journald only, no
+# way to analyze it later). This appends one JSON line per query instead,
+# so "is retrieval the bottleneck on this failure" can eventually be answered
+# from data instead of re-reading logs by hand (see docs/eval_and_roadmap.md
+# Part C #4 / Part D). Path is computed from this file's location, not cwd —
+# relative paths here have bitten cron jobs before in this project.
+RETRIEVAL_LOG_PATH = os.getenv(
+    "RETRIEVAL_LOG_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "retrieval_quality.jsonl"),
+)
+
+
+def _log_retrieval_quality(record: dict) -> None:
+    """Best-effort JSONL append. Never let logging break retrieval itself."""
+    try:
+        os.makedirs(os.path.dirname(RETRIEVAL_LOG_PATH), exist_ok=True)
+        with open(RETRIEVAL_LOG_PATH, "a") as f:
+            f.write(json.dumps(record) + "\n")
+    except Exception as e:
+        print(f"[TopicBoost] retrieval-quality log write failed: {e}")
 
 
 # ────────────────────────────────────────────────────────────────────────
@@ -241,6 +265,22 @@ class TopicBoostedRetriever(BaseRetriever):
 
         if not query_topics:
             # No topic signal → return base ranking, truncated
+            _log_retrieval_quality({
+                "timestamp": time.time(),
+                "query": query,
+                "conditions": self.patient_conditions,
+                "n_candidates": len(candidates),
+                "top_k": self.top_k,
+                "query_topics": [],
+                "boosted": False,
+                "n_boosted": 0,
+                "boost_ratio": None,
+                "results": [
+                    {"rank": rank, "doc_topics": doc.metadata.get("doc_topics", []),
+                     "source": doc.metadata.get("source")}
+                    for rank, doc in enumerate(candidates[: self.top_k])
+                ],
+            })
             return candidates[: self.top_k]
 
         # Score each candidate
@@ -254,15 +294,16 @@ class TopicBoostedRetriever(BaseRetriever):
                 else 0.0
             )
             final_score = base_score + self.boost_factor * overlap_ratio
-            scored.append((final_score, rank, doc))
+            scored.append((final_score, rank, overlap_ratio, doc))
 
         # Sort by score descending, original rank as tiebreaker
         scored.sort(key=lambda x: (-x[0], x[1]))
 
-        # Observability — visible in systemd logs
+        # Observability — visible in systemd logs, and persisted to
+        # RETRIEVAL_LOG_PATH for later analysis (see comment above).
         top = scored[: self.top_k]
         n_boosted = sum(
-            1 for _, _, d in top
+            1 for _, _, _, d in top
             if set(d.metadata.get("doc_topics", [])) & query_topics
         )
         print(
@@ -270,8 +311,26 @@ class TopicBoostedRetriever(BaseRetriever):
             f"boosted {n_boosted}/{self.top_k} | "
             f"conditions={self.patient_conditions}"
         )
+        _log_retrieval_quality({
+            "timestamp": time.time(),
+            "query": query,
+            "conditions": self.patient_conditions,
+            "n_candidates": len(candidates),
+            "top_k": self.top_k,
+            "query_topics": sorted(query_topics),
+            "boosted": True,
+            "n_boosted": n_boosted,
+            "boost_ratio": round(n_boosted / self.top_k, 3),
+            "results": [
+                {"rank": orig_rank, "final_score": round(score, 3),
+                 "overlap_ratio": round(overlap, 3),
+                 "doc_topics": doc.metadata.get("doc_topics", []),
+                 "source": doc.metadata.get("source")}
+                for score, orig_rank, overlap, doc in top
+            ],
+        })
 
-        return [doc for _, _, doc in top]
+        return [doc for _, _, _, doc in top]
 
 
 # ────────────────────────────────────────────────────────────────────────
