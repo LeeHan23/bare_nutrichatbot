@@ -568,14 +568,14 @@ NUTRIBOT_TEST_LIVE=1 python scripts/test_content_pipeline.py --test generation  
 
 ## Document / Knowledge Base
 
-Clinical PDFs ingested: 58 docs + CKD CPG + KDOQI 2020 = 24,268 chunks in PGVector `base_knowledge`.
+Clinical PDFs ingested: **57 distinct source documents, 24,818 chunks** in PGVector `base_knowledge` — corrected 2026-07-29 via direct DB query (previous figure of "58 docs... 24,268 chunks" was stale/approximate).
 Sources: Malaysian CPGs, NICE guidelines, WHO nutrition guidance, MDGV, KDOQI.
 Location on server: `/home/han/documents_clean/`
 Ingestion script: `build_base_db.py` (run with `BASE_DOCS_DIR=/home/han/documents_clean python build_base_db.py`)
 
-Chunk enrichment: **12,617 of 24,818 chunks** (the 36 documents listed in `data/encpt/doc_keyword_mapping.json`) have `doc_keywords`, `doc_topics`, `doc_topic_summary`, `doc_language` metadata — not "all chunks" as previously stated here. The mapping file doesn't yet cover the full ~58-document corpus, so the remaining ~12,200 chunks (mostly documents added after the mapping was written) have no topic tags and never get boosted by `TopicBoostedRetriever`.
+Chunk enrichment: **all 24,818 chunks** (57 documents, full corpus) have `doc_keywords`, `doc_topics`, `doc_topic_summary`, `doc_language` metadata — confirmed 2026-07-29.
 
-**2026-07-29 finding**: the hardware migration (2026-07-23) broke `enrich_v1_with_keywords.py` — it hardcoded the old machine's path (`/mnt/ext/bare_NutriChatbot`), so `load_dotenv()` silently failed to find `.env`, `PGVECTOR_URL` stayed unset, and the script exited immediately (`PGVECTOR_URL not set`) on this box. That meant the entire `base_knowledge` collection had **zero** enriched chunks since the migration — `TopicBoostedRetriever`'s boost step was a silent no-op the whole time (`[TopicBoost] boosted 0/5` on every query), invisible until `vector_store.py`'s new persisted retrieval-quality logging (`logs/retrieval_quality.jsonl`, see `docs/eval_and_roadmap.md` Part D) surfaced it. Fixed: the script now resolves its own path via `__file__` instead of a hardcoded one, and was re-run against the current DB (restoring the 12,617/24,818 figure above). Still open: expand `doc_keyword_mapping.json` to cover the remaining ~22 documents for full coverage.
+**2026-07-29 finding + fix**: the hardware migration (2026-07-23) broke `enrich_v1_with_keywords.py` — it hardcoded the old machine's path (`/mnt/ext/bare_NutriChatbot`), so `load_dotenv()` silently failed to find `.env`, `PGVECTOR_URL` stayed unset, and the script exited immediately (`PGVECTOR_URL not set`) on this box. That meant the entire `base_knowledge` collection had **zero** enriched chunks since the migration — `TopicBoostedRetriever`'s boost step was a silent no-op the whole time (`[TopicBoost] boosted 0/5` on every query), invisible until `vector_store.py`'s new persisted retrieval-quality logging (`logs/retrieval_quality.jsonl`, see `docs/eval_and_roadmap.md` Part D) surfaced it. Fixed the script's path resolution, then: (1) re-ran it against the 36 documents already in `data/encpt/doc_keyword_mapping.json` (restored 12,617/24,818), then (2) content-sampled and manually curated mapping entries for the remaining 21 previously-unmapped documents and re-ran it again, reaching full 24,818/24,818 coverage. Live-verified via `logs/retrieval_quality.jsonl`: `boost_ratio` across a smoke run now lands 0.4–1.0 (was 0.0 across the board pre-fix).
 Enrichment script: `scripts/enrich_v1_with_keywords.py --mapping data/encpt/doc_keyword_mapping.json`
 
 ---

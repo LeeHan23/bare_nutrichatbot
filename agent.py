@@ -452,7 +452,12 @@ def get_agent_response(
     Qwen is given all tool definitions. It calls tools as needed (up to
     MAX_TOOL_ROUNDS), then produces a grounded, patient-specific response.
     """
-    from rag import _to_second_person_profile, _LEVEL_INSTRUCTIONS, _LEVEL_INSTRUCTIONS_SELF
+    from rag import (
+        _to_second_person_profile,
+        _LEVEL_INSTRUCTIONS,
+        _LEVEL_INSTRUCTIONS_SELF,
+        _build_care_path_block,
+    )
 
     # ── System prompt ──────────────────────────────────────────────────────
     system_parts = [
@@ -479,6 +484,10 @@ def get_agent_response(
         system_parts.append(f"\n## Patient Profile\n{ctx}")
         if level_instruction:
             system_parts.append(f"\n## Personalization Level {level}\n{level_instruction}")
+
+        care_path_block = _build_care_path_block(profile)
+        if care_path_block:
+            system_parts.append(f"\n## Care Path & Objectives\n{care_path_block}")
 
     if is_patient_self:
         system_parts.append(

@@ -564,8 +564,15 @@ patients table
 ├── allergies       JSON  — list of allergen strings
 ├── notes           String — free-text clinical notes
 ├── username        String (UNIQUE, indexed)
-└── hashed_password String — werkzeug PBKDF2
+├── hashed_password String — werkzeug PBKDF2
+├── personalization_level  String — dietitian-assigned L0-L3
+├── care_path              String — external state machine: keep_well/reduce_risk/live_better/recover
+├── objective_ids           JSON  — external state machine: opaque objective-catalogue IDs
+├── difficulty_ceiling      String — external state machine: easy/intermediate/hard
+└── clinical_risk_tier      String — external risk-scoring module: LOW/MODERATE/HIGH/VERY_HIGH
 ```
+
+**External state-machine fields (`care_path`, `objective_ids`, `difficulty_ceiling`, `clinical_risk_tier`, added 2026-07-30):** owned by a care-path/rehab state machine and clinical risk-scoring module built outside this repo, never extractor-writable — same protection tier as hospital-owned clinical fields. Nullable, additive migration (`scripts/migrate_state_machine_fields.py`), placeholder contract documented in `docs/state_machine_contract.md`. See §8.7 for how `rag.py` consumes them.
 
 **Key design decisions:**
 
@@ -1014,7 +1021,9 @@ Wrapped in `RunnableWithMessageHistory` for per-session memory.
 
 **File:** `vector_store.py`
 
-`MergedRetriever` calls both `base_knowledge` and `client_{id}_knowledge` pgvector collections (top-5 each), merges, and deduplicates by `page_content`. Cosine similarity search using normalized embeddings.
+`get_retriever()` pulls a k=15 candidate pool from both `base_knowledge` and `client_{id}_knowledge` pgvector collections via `MergedRetriever` (merge + dedupe by `page_content`, cosine similarity on normalized embeddings), then re-ranks through **`TopicBoostedRetriever`**, which boosts chunks whose `doc_topics`/`doc_keywords` metadata matches the patient's conditions and trims to top-5. This boost step is the production-active path (`[TopicBoost]` log lines).
+
+**Retrieval-quality logging (added 2026-07-29):** `vector_store.py` persists per-query stats (`boost_ratio`, candidate/final counts) to `logs/retrieval_quality.jsonl`. This surfaced a real regression: the 2026-07-23 hardware migration silently broke chunk enrichment (`scripts/enrich_v1_with_keywords.py` hardcoded the old machine's path), leaving `base_knowledge`'s 24,818 chunks with zero topic metadata — `TopicBoostedRetriever` was boosting nothing (`boost_ratio: 0.0` on every query) until the log made it visible. Fixed and re-enriched to full coverage (24,818/24,818 chunks, `doc_keyword_mapping.json` expanded from 36 to 57 documents) — smoke-run `boost_ratio` now lands 0.4–1.0. See `docs/eval_and_roadmap.md` Part D.
 
 ### 8.4 LLM Configuration
 
@@ -1045,6 +1054,19 @@ If the RAG answer contains `"i don't know"`, `"i am not sure"`, or `"i cannot an
 **File:** `image_handler.py`
 
 Post-processes LLM output for `[IMAGE: <query>]` markers, matches against `data/image_annotations.csv` by keyword intersection, and returns the best-matching image filename.
+
+### 8.7 Care Path & Objectives Framing (added 2026-07-30)
+
+**File:** `rag.py` — `_build_care_path_block()`, wired into `_build_qwen_prompt()`, `get_rag_response()`, and `agent.py`'s tool-calling path.
+
+Reads `care_path` / `objective_ids` / `difficulty_ceiling` / `clinical_risk_tier` off the patient profile (sourced from an external care-path/rehab state machine and risk-scoring module owned outside this repo — placeholder contract in `docs/state_machine_contract.md`) and formats them into a prompt block that shifts dietary-advice framing:
+
+- `recover` (post-acute) → instructs the model to defer any change in restrictions to the patient's doctor/care team/cardiac rehab team.
+- `keep_well` / `reduce_risk` / `live_better` → prevention or sustainability framing, no clinician-deferral language.
+- `clinical_risk_tier` is a **fallback only** — surfaced when `personalization_level` (L0–L3, dietitian-assigned) is not set.
+- `difficulty_ceiling` governs activity/exercise framing only, not dietary limits.
+
+These fields are read-only from Nutribot's side (never extractor-writable, same protection tier as hospital-owned clinical fields). No real patient has them populated yet — `database.py` has the columns (`scripts/migrate_state_machine_fields.py`) and the profile dicts surface them, but the write path (direct DB write vs. an internal PATCH endpoint vs. webhook) isn't decided. `eval/test_rag.py` cases 35–38 cover the framing shift today via `profile_overrides` (simulated, not real patient data).
 
 ---
 
@@ -1422,21 +1444,20 @@ Enable with: `USE_OLLAMA=true`, `OLLAMA_MODEL=nutribot-lora`
 
 ## 19. Evaluation Framework
 
-**File:** `eval_ragas.py`
+**Active suite: `eval/test_rag.py`** (38 cases, pytest-collectible via `-m smoke` and CLI-runnable) — calls the real Option B pipeline (`rag.get_rag_response()`), not a legacy chain. Covers:
+- A systematic per-condition contraindication matrix, judged by `judge_stance()` — classifies the answer's actual RESTRICT/PERMIT/MODERATE stance via DeepEval's `GEval` metric (native `OllamaModel`, migrated 2026-07-29 from a bespoke prompt judge) rather than trusting keyword presence.
+- Bilingual (BM) cases, L0–L3 personalization coverage (`judge_personalization()`), and care-path framing cases (§8.7) that use required/forbidden-term checks instead of an LLM judge — a smaller judge model proved unreliable on that presence/absence binary.
+- `eval/test_extractor.py` — companion suite for the profile extractor.
 
-RAGAS evaluation over a ground-truth question set:
+Results are appended (not overwritten) to a JSONL history via `scripts/eval_history.py`: `{date, git_commit, passed/failed, category_breakdown}`. A weekly cron (Sunday 4am) runs the full suite automatically — see `docs/eval_and_roadmap.md` for the full evaluation-methodology history (keyword-match → stance-judge migration, retrieval-quality logging, chunk-enrichment regression, GEval migration).
 
-| Metric | Measures |
-|---|---|
-| `faithfulness` | Is the answer grounded in retrieved context? (Hallucination detection) |
-| `answer_relevancy` | Does the answer address the question? |
-| `context_precision` | Are retrieved chunks relevant? (Retrieval precision) |
-| `context_recall` | Do chunks cover the ground truth? (Retrieval recall) |
+**Legacy: `eval/eval_ragas.py`** — RAGAS evaluation over a ground-truth question set (`faithfulness`, `answer_relevancy`, `context_precision`, `context_recall`). Superseded by `test_rag.py` as the primary suite; kept for reference.
 
 ```bash
-python eval_ragas.py --limit 5          # smoke test
-python eval_ragas.py --category "Hypertension"
-python eval_ragas.py --out results.json
+python eval/test_rag.py --smoke --out eval/results/rag_smoke.json
+python eval/test_rag.py --out eval/results/rag_full.json
+pytest eval/test_rag.py -m smoke
+python scripts/eval_history.py --results eval/results/rag_smoke.json --suite rag_smoke
 ```
 
 ---

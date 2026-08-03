@@ -105,6 +105,56 @@ Food description:"""
     return result
 
 
+# Labels for the external state machine's care_path enum — see
+# docs/state_machine_contract.md. Nutribot only uses this for dietary-advice
+# framing; it never generates or references exercise programmes itself.
+_CARE_PATH_LABELS = {
+    "keep_well": "Keep me well — maintaining health, preventing decline",
+    "reduce_risk": "Reduce my risk — prevention-focused (e.g. hypertension, diabetes, obesity, dyslipidaemia)",
+    "live_better": "Live better with heart disease — stable chronic condition, structured ongoing support",
+    "recover": (
+        "Recover after a recent heart event or procedure — post-acute, clinician-governed. "
+        "Frame any dietary change (resuming foods, adjusting portions, lifting a restriction) as "
+        "something to confirm with their doctor, care team, or cardiac rehab team first — include "
+        "one of those literal phrases in your answer, not just implied caution."
+    ),
+}
+
+
+def _build_care_path_block(profile: dict | None) -> str:
+    """Format the external state machine's care path/objectives/risk tier into
+    a prompt block. Read-only signal from outside this repo — see
+    docs/state_machine_contract.md. Returns "" if none of it is set yet.
+    """
+    if not profile:
+        return ""
+    care_path = profile.get("care_path")
+    if not care_path:
+        return ""
+
+    lines = [_CARE_PATH_LABELS.get(care_path, care_path)]
+
+    objective_ids = profile.get("objective_ids") or []
+    if objective_ids:
+        lines.append(f"Current focus objectives: {', '.join(objective_ids)}")
+
+    if profile.get("difficulty_ceiling"):
+        lines.append(
+            f"Approved activity difficulty ceiling: {profile['difficulty_ceiling']} "
+            "(governs exercise/activity, not dietary limits)"
+        )
+
+    # clinical_risk_tier is a fallback signal, only surfaced when there is no
+    # dietitian-assigned personalization_level to rely on instead.
+    if not profile.get("personalization_level") and profile.get("clinical_risk_tier"):
+        lines.append(
+            f"Clinical risk tier from risk-scoring module: {profile['clinical_risk_tier']} "
+            "— no personalization level is set, so calibrate caution to this tier instead."
+        )
+
+    return "\n".join(lines)
+
+
 def _to_second_person_profile(patient_context: str) -> str:
     """Rewrite third-person profile labels to second-person for self-mode.
 
@@ -195,6 +245,10 @@ def _build_qwen_prompt(
 
         if level_instruction:
             parts.append(f"\n## Personalization Level {level}\n{level_instruction}")
+
+        care_path_block = _build_care_path_block(profile)
+        if care_path_block:
+            parts.append(f"\n## Care Path & Objectives\n{care_path_block}")
 
     parts.append(f"\n## Clinical Evidence Digest\n{digest}")
 
@@ -411,6 +465,9 @@ def get_rag_response(
                 header = f"Patient Profile:\n{patient_context}"
             if level_instruction:
                 header += f"\n\nPersonalization Level {level}: {level_instruction}"
+            care_path_block = _build_care_path_block(profile)
+            if care_path_block:
+                header += f"\n\nCare Path & Objectives:\n{care_path_block}"
             if is_patient_self:
                 instruction = (
                     "VOICE RULES — apply to every word of your reply:\n"
