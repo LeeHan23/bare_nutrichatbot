@@ -62,6 +62,15 @@ from deepeval.models.llms.ollama_model import OllamaModel  # noqa: E402
 #   check can pass on an answer that says bananas are "fine in moderation"
 #   for a CKD patient because "potassium" and "kidney" appear somewhere in
 #   the text, even though the actual clinical stance taken is wrong.
+# profile_overrides: dict merged onto the loaded patient profile before the
+#   RAG call — used to simulate fields the external state machine hasn't
+#   started writing yet (care_path, objective_ids, difficulty_ceiling,
+#   clinical_risk_tier — see docs/state_machine_contract.md), without
+#   mutating seed patient data. Care-path cases below use required_terms
+#   (recover should defer to a doctor/care team) and forbidden_terms (the
+#   other paths shouldn't) rather than an LLM judge — a smaller judge model
+#   proved unreliable on this presence/absence binary in testing, and a
+#   keyword check is the more reliable tool for it anyway.
 
 CASES = [
     {
@@ -524,6 +533,56 @@ CASES = [
         },
         "personalization_check": {"level": "L1"},
     },
+
+    # ─────────────────────────────────────────────────────────────────────
+    # CARE PATH FRAMING — verifies rag.py's _build_care_path_block actually
+    # shifts dietary-advice framing per the external state machine's
+    # care_path field (see docs/state_machine_contract.md, Phase 3). No real
+    # patient has care_path set yet, so these use profile_overrides to
+    # simulate it. Same patient/question pair (34/35) isolates the care_path
+    # effect from personalization_level, which patient 1 already sets to L2.
+    # ─────────────────────────────────────────────────────────────────────
+    {
+        "id": 35, "tags": ["care_path", "smoke"],
+        "desc": "care_path=recover: resuming normal diet should defer to care team",
+        "patient_id": 1,
+        "question": "Can I go back to eating normally now?",
+        "is_patient_self": True,
+        "profile_overrides": {"care_path": "recover"},
+        "required_terms": ["doctor", "care team", "physician", "clinician", "cardiac rehab", "dietitian"],
+        "min_required": 1,
+        "voice_check": True,
+    },
+    {
+        "id": 36, "tags": ["care_path"],
+        "desc": "care_path=keep_well: same question, should NOT add clinician-deferral",
+        "patient_id": 1,
+        "question": "Can I go back to eating normally now?",
+        "is_patient_self": True,
+        "profile_overrides": {"care_path": "keep_well"},
+        "forbidden_terms": ["doctor", "care team", "physician", "clinician", "cardiac rehab", "dietitian"],
+        "voice_check": True,
+    },
+    {
+        "id": 37, "tags": ["care_path"],
+        "desc": "care_path=reduce_risk: prevention-focused framing, not clinician-deferral",
+        "patient_id": 4,
+        "question": "What changes should I make to reduce my heart disease risk through diet?",
+        "is_patient_self": True,
+        "profile_overrides": {"care_path": "reduce_risk"},
+        "forbidden_terms": ["doctor", "care team", "physician", "clinician", "cardiac rehab", "dietitian"],
+        "voice_check": True,
+    },
+    {
+        "id": 38, "tags": ["care_path"],
+        "desc": "care_path=live_better: sustainability framing for chronic condition",
+        "patient_id": 2,
+        "question": "How do I stick to my diet long term?",
+        "is_patient_self": True,
+        "profile_overrides": {"care_path": "live_better"},
+        "forbidden_terms": ["doctor", "care team", "physician", "clinician", "cardiac rehab", "dietitian"],
+        "voice_check": True,
+    },
 ]
 
 
@@ -531,12 +590,15 @@ CASES = [
 # HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def load_profile(patient_id: int) -> dict | None:
+def load_profile(patient_id: int, overrides: dict | None = None) -> dict | None:
     with SessionLocal() as s:
         p = s.query(Patient).filter_by(id=patient_id).first()
         if not p:
             return None
-        return patient_to_profile_dict(p)
+        profile = patient_to_profile_dict(p)
+        if overrides:
+            profile.update(overrides)
+        return profile
 
 
 def check_terms(answer: str, required: list, min_required: int) -> tuple[bool, list, list]:
@@ -647,7 +709,7 @@ def check_contraindication(answer: str, check: dict) -> tuple[bool, str]:
 
 
 def run_case(case: dict) -> dict:
-    profile = load_profile(case["patient_id"])
+    profile = load_profile(case["patient_id"], case.get("profile_overrides"))
     if not profile:
         return {"id": case["id"], "passed": False,
                 "failures": [f"Patient {case['patient_id']} not found"], "answer": ""}

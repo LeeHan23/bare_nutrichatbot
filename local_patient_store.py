@@ -95,6 +95,12 @@ class LocalPatientStore(PatientStore):
             "height_cm":             patient.height_cm,
             "allergies":             patient.allergies            or [],
             "notes":                 patient.notes                or "",
+            "personalization_level": patient.personalization_level,
+            # External state-machine fields (see docs/state_machine_contract.md)
+            "care_path":             patient.care_path,
+            "objective_ids":         patient.objective_ids        or [],
+            "difficulty_ceiling":    patient.difficulty_ceiling,
+            "clinical_risk_tier":    patient.clinical_risk_tier,
         }
 
         # Supplementary fields — only included if they have values

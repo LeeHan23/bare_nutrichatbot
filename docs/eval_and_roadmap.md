@@ -226,11 +226,20 @@ weekly now catches full-suite drift automatically instead of by accident.
   corrected coverage numbers (the old "24,268 chunks enriched" / "all
   chunks have..." claims there were stale).
 
-  **Still open**: `doc_keyword_mapping.json` only covers 36 of the ~58+
-  document corpus — the remaining ~12,200 chunks (mostly docs added after
-  the mapping was written) have no topic tags and never get boosted.
-  Expanding the mapping is real Part C #4 follow-up work, now that the
-  mechanism to detect this kind of gap actually exists.
+  ~~Still open: `doc_keyword_mapping.json` only covers 36 of the ~58+
+  document corpus~~ — **closed 2026-07-29**: identified the 21 unmapped
+  documents via a direct DB query (56 distinct sources vs. 36 mapped),
+  content-sampled each one from the live DB (not filename-guessed) to write
+  accurate `primary_topics`/`keywords`/`topic_summary` entries — deliberately
+  kept narrow-condition documents (Pulmonary Arterial Hypertension, Infective
+  Endocarditis) off the generic `hypertension`/`cardiovascular health`
+  canonical tags where they'd wrongly surface for common BP/CVD questions.
+  Re-ran the enrichment script against the expanded mapping (user-approved) —
+  **all 24,818/24,818 chunks now have `doc_topics`/`doc_keywords`**, up from
+  12,617 (51%). Re-verified via `logs/retrieval_quality.jsonl`: a smoke run's
+  `boost_ratio` now lands 0.4–1.0 across all 4 queries (was 0.0 pre-fix,
+  0.2–1.0 at 51% coverage). `CLAUDE.md`'s knowledge-base section updated with
+  the corrected coverage numbers.
 - **Part C #1 (the actual LoRA/QLoRA training run) still hasn't happened** —
   `finetune/QWEN_FINETUNE.md` documents the plan, but running it needs real
   Mac Studio GPU time. `finetune/generate_training_data.py --focus-results`
@@ -252,6 +261,9 @@ weekly now catches full-suite drift automatically instead of by accident.
    genuine, documented limitation).
 2. ~~Add the weekly full-suite cron~~ — **done 2026-07-29**, see above.
 3. ~~DeepEval migration~~ — **done 2026-07-29**, see above.
-4. Remaining: retrieval-visibility logging and the actual fine-tune run —
-   larger, each deserves its own session rather than being squeezed in
+4. ~~Retrieval-visibility logging~~ — **done 2026-07-29**, see above (and it
+   led to fixing a real production regression + reaching 100% chunk
+   enrichment coverage, not just adding the logging itself).
+5. Remaining: the actual LoRA/QLoRA fine-tune run — needs real Mac Studio
+   GPU time, deserves its own session rather than being squeezed in
    alongside routine eval maintenance.

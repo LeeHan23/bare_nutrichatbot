@@ -150,6 +150,14 @@ class Patient(Base):
     # Dietitian-assigned personalization level (L0/L1/L2/L3)
     personalization_level = Column(String, nullable=True)
 
+    # ── External state-machine fields (owned by the care-path/rehab state
+    # machine + risk-scoring module, both built outside this repo) ──────
+    # Never extractor-writable — see docs/state_machine_contract.md.
+    care_path = Column(String, nullable=True)  # keep_well/reduce_risk/live_better/recover
+    objective_ids = Column(JSON, default=list)  # [primary, secondary?, secondary?]
+    difficulty_ceiling = Column(String, nullable=True)  # easy/intermediate/hard
+    clinical_risk_tier = Column(String, nullable=True)  # LOW/MODERATE/HIGH/VERY_HIGH
+
     # Provenance — which fields were filled by extractor + when
     extractor_metadata = Column(
         JSON, default=dict
@@ -816,6 +824,11 @@ def patient_to_profile_dict(patient) -> dict:
         "allergies": patient.allergies or [],
         "notes": patient.notes or "",
         "personalization_level": patient.personalization_level,
+        # External state-machine fields (see docs/state_machine_contract.md)
+        "care_path": patient.care_path,
+        "objective_ids": patient.objective_ids or [],
+        "difficulty_ceiling": patient.difficulty_ceiling,
+        "clinical_risk_tier": patient.clinical_risk_tier,
         # v2 cardiac supplementary fields (extractor-filled)
         "fat_intake_level": patient.fat_intake_level,
         "fat_sources": patient.fat_sources or [],

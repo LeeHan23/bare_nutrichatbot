@@ -722,6 +722,338 @@
         "CPG Malaysia"
       ],
       "language": "en"
+    },
+    "01.Buku-MDGM-web_02.08.2024.pdf": {
+      "keywords": [
+        "maternal nutrition",
+        "pregnancy nutrition",
+        "lactation",
+        "energy demand pregnancy",
+        "multiple gestation",
+        "maternal metabolism"
+      ],
+      "topic_summary": "Malaysian Dietary Guidelines for Mothers — maternal nutrition needs during pregnancy and lactation",
+      "primary_topics": [
+        "nutrition",
+        "diet",
+        "MDG",
+        "maternal nutrition"
+      ],
+      "language": "en"
+    },
+    "01.Buku-MDGOP-web_20.09.2024.pdf": {
+      "keywords": [
+        "older persons nutrition",
+        "sarcopenia",
+        "frailty",
+        "osteoporosis",
+        "protein intake older adults",
+        "healthy ageing"
+      ],
+      "topic_summary": "Malaysian Dietary Guidelines for Older Persons — nutrition for healthy ageing, sarcopenia and frailty prevention",
+      "primary_topics": [
+        "nutrition",
+        "diet",
+        "MDG",
+        "older persons nutrition"
+      ],
+      "language": "en"
+    },
+    "01.Buku-MDGV-Web-_12.07.24.pdf": {
+      "keywords": [
+        "vegetarian diet",
+        "phytochemicals",
+        "plant-based nutrition",
+        "legumes",
+        "vegetarian meal planning"
+      ],
+      "topic_summary": "Malaysian Dietary Guidelines for Vegetarians — plant-based nutrition and phytochemicals",
+      "primary_topics": [
+        "nutrition",
+        "diet",
+        "MDG",
+        "vegetarian diet"
+      ],
+      "language": "en"
+    },
+    "2020-international-society-of-hypertension-global-hypertension-practice-guidelines.pdf": {
+      "keywords": [
+        "hypertensive emergency",
+        "BP reduction",
+        "hypertension diagnosis",
+        "antihypertensive therapy",
+        "global practice guidelines"
+      ],
+      "topic_summary": "International Society of Hypertension global practice guidelines — diagnosis and management of hypertension including hypertensive emergencies",
+      "primary_topics": [
+        "hypertension",
+        "hypertension management",
+        "blood pressure",
+        "ISH guidelines"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Obesity 230518.pdf": {
+      "keywords": [
+        "anti-obesity drugs",
+        "orlistat",
+        "weight loss",
+        "obesity management",
+        "bariatric"
+      ],
+      "topic_summary": "Malaysian CPG for management of obesity — lifestyle, pharmacological and surgical management",
+      "primary_topics": [
+        "obesity",
+        "weight management",
+        "BMI",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Louise Burke, Vicki Deakin-Clinical Sports Nutrition-McGraw-Hill (2009).pdf": {
+      "keywords": [
+        "sports nutrition",
+        "athlete nutrition",
+        "exercise performance",
+        "sports dietetics"
+      ],
+      "topic_summary": "Clinical Sports Nutrition textbook — nutrition for athletic performance and exercise",
+      "primary_topics": [
+        "physical activity",
+        "exercise",
+        "sports nutrition"
+      ],
+      "language": "en"
+    },
+    "MNT_for_DM2.pdf": {
+      "keywords": [
+        "medical nutrition therapy",
+        "weight control",
+        "glycemic control",
+        "type 2 diabetes diet"
+      ],
+      "topic_summary": "Medical Nutrition Therapy for Type 2 Diabetes Mellitus — weight control and glycemic management",
+      "primary_topics": [
+        "diabetes",
+        "T2DM",
+        "diabetes management",
+        "nutrition",
+        "medical nutrition therapy"
+      ],
+      "language": "en"
+    },
+    "Management of Acute ST Segment Elevation Myocardial Infarction (STEMI) – (4th Edition).pdf": {
+      "keywords": [
+        "STEMI",
+        "acute MI",
+        "risk stratification",
+        "PCI",
+        "CABG"
+      ],
+      "topic_summary": "Malaysian CPG for management of acute ST-elevation myocardial infarction (STEMI)",
+      "primary_topics": [
+        "CAD",
+        "coronary heart disease",
+        "post-MI care",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Management of Atrial Fibrillation.pdf": {
+      "keywords": [
+        "atrial fibrillation",
+        "cardioversion",
+        "anticoagulation",
+        "arrhythmia"
+      ],
+      "topic_summary": "Malaysian CPG for management of atrial fibrillation — rhythm control and anticoagulation",
+      "primary_topics": [
+        "cardiovascular health",
+        "atrial fibrillation",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Management of Dyslipidaemia 2017 (5th Edition).pdf": {
+      "keywords": [
+        "cardiovascular risk",
+        "lipid profile",
+        "statin therapy",
+        "dyslipidaemia management"
+      ],
+      "topic_summary": "Malaysian CPG for management of dyslipidaemia (2017, 5th Edition) — superseded by the 6th Edition also in this corpus",
+      "primary_topics": [
+        "cholesterol",
+        "lipid management",
+        "dyslipidaemia",
+        "cholesterol management",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Management of Heart Failure  (4th Edition).pdf": {
+      "keywords": [
+        "heart failure diagnosis",
+        "natriuretic peptide",
+        "HF management",
+        "ejection fraction"
+      ],
+      "topic_summary": "Malaysian CPG for management of heart failure (4th Edition) — superseded by the 5th Edition also in this corpus",
+      "primary_topics": [
+        "heart failure",
+        "HF management",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Management of Ischaemic Stroke (3rd Edition).pdf": {
+      "keywords": [
+        "ischaemic stroke",
+        "stroke risk factors",
+        "stroke prevention",
+        "anticoagulant therapy"
+      ],
+      "topic_summary": "Malaysian CPG for management of ischaemic stroke — diagnosis, treatment and secondary prevention",
+      "primary_topics": [
+        "CVD prevention",
+        "cardiovascular health",
+        "ischaemic stroke",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Management of Non-ST Elevation Myocardial Infaction (NSTE-ACS) (Third Edition).pdf": {
+      "keywords": [
+        "NSTEMI",
+        "unstable angina",
+        "acute coronary syndrome",
+        "chest pain triage"
+      ],
+      "topic_summary": "Malaysian CPG for management of non-ST elevation acute coronary syndrome (NSTE-ACS)",
+      "primary_topics": [
+        "CAD",
+        "coronary heart disease",
+        "post-MI care",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Management of Pulmonary Arterial Hypertension.pdf": {
+      "keywords": [
+        "pulmonary arterial hypertension",
+        "PAH classification",
+        "vasodilator therapy",
+        "right heart"
+      ],
+      "topic_summary": "Malaysian CPG for pulmonary arterial hypertension — a distinct lung-vascular condition, not general/essential hypertension",
+      "primary_topics": [
+        "pulmonary arterial hypertension",
+        "cardiovascular health",
+        "CPG Malaysia"
+      ],
+      "language": "en"
+    },
+    "Modul Berhenti Merokok.pdf": {
+      "keywords": [
+        "perubahan tingkah laku",
+        "kaunseling berhenti merokok",
+        "proses berhenti merokok"
+      ],
+      "topic_summary": "Modul kaunseling berhenti merokok Malaysia — proses dan peringkat perubahan tingkah laku",
+      "primary_topics": [
+        "smoking cessation",
+        "tobacco",
+        "berhenti merokok"
+      ],
+      "language": "ms"
+    },
+    "NHLBI-Identification, Evaluation and Treatment of Overweight and Obesity.pdf": {
+      "keywords": [
+        "weight loss goals",
+        "obesity treatment",
+        "clinical guidelines",
+        "patient-clinician goal setting"
+      ],
+      "topic_summary": "NHLBI clinical guidelines for identification, evaluation and treatment of overweight and obesity",
+      "primary_topics": [
+        "obesity",
+        "weight management",
+        "BMI",
+        "NHLBI guidelines"
+      ],
+      "language": "en"
+    },
+    "NICE-Overweight and obesity.pdf": {
+      "keywords": [
+        "BMI thresholds",
+        "ethnicity obesity risk",
+        "weight management",
+        "central adiposity"
+      ],
+      "topic_summary": "NICE guideline for overweight and obesity management, including ethnicity-specific BMI considerations",
+      "primary_topics": [
+        "obesity",
+        "weight management",
+        "BMI",
+        "NICE guidelines"
+      ],
+      "language": "en"
+    },
+    "Prevention of Cardiovascular Disease in Women.pdf": {
+      "keywords": [
+        "women's cardiovascular health",
+        "non-obstructive CHD",
+        "sex differences cardiovascular risk"
+      ],
+      "topic_summary": "Cardiovascular disease prevention in women — sex-specific risk factors and presentation",
+      "primary_topics": [
+        "CVD prevention",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "Prevention, Diagnosis & Management of IE.pdf": {
+      "keywords": [
+        "infective endocarditis",
+        "antimicrobial prophylaxis",
+        "endocarditis risk"
+      ],
+      "topic_summary": "Guideline on prevention, diagnosis and management of infective endocarditis (IE)",
+      "primary_topics": [
+        "infective endocarditis",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "RNI 2017.pdf": {
+      "keywords": [
+        "recommended nutrient intake",
+        "energy requirements",
+        "basal metabolic rate",
+        "macronutrient reference"
+      ],
+      "topic_summary": "Malaysian Recommended Nutrient Intakes (RNI) 2017 — reference values for energy and nutrient requirements",
+      "primary_topics": [
+        "nutrition",
+        "diet",
+        "MDG",
+        "RNI Malaysia"
+      ],
+      "language": "en"
+    },
+    "WHO-guideline for tobacco cessation  in adults.pdf": {
+      "keywords": [
+        "tobacco cessation services",
+        "quitting smoking",
+        "health system capacity"
+      ],
+      "topic_summary": "WHO guideline for tobacco cessation in adults — access to cessation services",
+      "primary_topics": [
+        "smoking cessation",
+        "tobacco",
+        "WHO guidelines"
+      ],
+      "language": "en"
     }
   },
   "fallback_strategy": {
