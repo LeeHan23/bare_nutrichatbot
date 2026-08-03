@@ -129,24 +129,32 @@ def _build_care_path_block(profile: dict | None) -> str:
     if not profile:
         return ""
     care_path = profile.get("care_path")
-    if not care_path:
-        return ""
-
-    lines = [_CARE_PATH_LABELS.get(care_path, care_path)]
-
-    objective_ids = profile.get("objective_ids") or []
-    if objective_ids:
-        lines.append(f"Current focus objectives: {', '.join(objective_ids)}")
-
-    if profile.get("difficulty_ceiling"):
-        lines.append(
-            f"Approved activity difficulty ceiling: {profile['difficulty_ceiling']} "
-            "(governs exercise/activity, not dietary limits)"
-        )
 
     # clinical_risk_tier is a fallback signal, only surfaced when there is no
     # dietitian-assigned personalization_level to rely on instead.
-    if not profile.get("personalization_level") and profile.get("clinical_risk_tier"):
+    show_risk_tier = not profile.get("personalization_level") and profile.get(
+        "clinical_risk_tier"
+    )
+
+    if not care_path and not show_risk_tier:
+        return ""
+
+    lines = []
+
+    if care_path:
+        lines.append(_CARE_PATH_LABELS.get(care_path, care_path))
+
+        objective_ids = profile.get("objective_ids") or []
+        if objective_ids:
+            lines.append(f"Current focus objectives: {', '.join(objective_ids)}")
+
+        if profile.get("difficulty_ceiling"):
+            lines.append(
+                f"Approved activity difficulty ceiling: {profile['difficulty_ceiling']} "
+                "(governs exercise/activity, not dietary limits)"
+            )
+
+    if show_risk_tier:
         lines.append(
             f"Clinical risk tier from risk-scoring module: {profile['clinical_risk_tier']} "
             "— no personalization level is set, so calibrate caution to this tier instead."

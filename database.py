@@ -14,9 +14,7 @@ from sqlalchemy import (
     Text,
     create_engine,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.sql import func
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -806,11 +804,17 @@ def get_weekly_feed_for_conditions(
     ).all()
 
 
-def patient_to_profile_dict(patient) -> dict:
+def patient_to_profile_dict(patient, db_session=None) -> dict:
     """
     Convert a Patient ORM object to the profile dict consumed by rag.get_rag_response().
     Key 'condition' (not 'conditions') matches the existing rag.py dict schema.
     """
+    clinical_risk_tier = patient.clinical_risk_tier
+    if not clinical_risk_tier and db_session is not None:
+        screening = get_latest_mhr_screening(db_session, str(patient.id))
+        if screening:
+            clinical_risk_tier = screening.calculated_risk_category
+
     return {
         "condition": patient.conditions or [],
         "medications": patient.medications or [],
@@ -828,7 +832,7 @@ def patient_to_profile_dict(patient) -> dict:
         "care_path": patient.care_path,
         "objective_ids": patient.objective_ids or [],
         "difficulty_ceiling": patient.difficulty_ceiling,
-        "clinical_risk_tier": patient.clinical_risk_tier,
+        "clinical_risk_tier": clinical_risk_tier,
         # v2 cardiac supplementary fields (extractor-filled)
         "fat_intake_level": patient.fat_intake_level,
         "fat_sources": patient.fat_sources or [],
@@ -928,51 +932,36 @@ class CardiovascularScreening(Base):
     calculated_risk_category = Column(
         String(50), nullable=False
     )  # LOW, MODERATE, HIGH, VERY_HIGH
-    bmi = Column(Float, nullable=False)
-
-    # Lab / Self-Report (Nullable if blood tests are pending) (Protocol Section 16.1)
-    cholesterol_total = Column(Float, nullable=True)
-    glucose_fasting = Column(Float, nullable=True)
-
-    # Deterministic Risk Outputs (Protocol Section 16.1)
-    frs_score = Column(Float, nullable=True)
-    rediscover_score = Column(Float, nullable=True)
-    acs_risk_score = Column(Float, nullable=True)
-    calculated_risk_category = Column(
-        String(50), nullable=False
-    )  # LOW, MODERATE, HIGH, VERY_HIGH
 
     # Action & Follow-up (Protocol Section 16.1)
     referral_triggered = Column(Boolean, default=False, nullable=False)
+    referral_destination = Column(String(255), nullable=True)
     nudge_consent = Column(Boolean, default=False, nullable=False)
     chatbot_consent = Column(Boolean, default=False, nullable=False)
 
 
-async def create_mhr_screening(
-    db: AsyncSession, screening_data: dict
-) -> CardiovascularScreening:
+def create_mhr_screening(db_session, screening_data: dict) -> CardiovascularScreening:
     """
     Saves a completed MHR screening, including the deterministically
     calculated risk scores, to the database.
     """
-    db_screening = CardiovascularScreening(**screening_data)
-    db.add(db_screening)
-    await db.commit()
-    await db.refresh(db_screening)
+    valid_columns = {c.name for c in CardiovascularScreening.__table__.columns}
+    filtered_data = {k: v for k, v in screening_data.items() if k in valid_columns}
+    db_screening = CardiovascularScreening(**filtered_data)
+    db_session.add(db_screening)
+    db_session.commit()
+    db_session.refresh(db_screening)
     return db_screening
 
 
-async def get_latest_mhr_screening(
-    db: AsyncSession, patient_id: str
-) -> CardiovascularScreening:
+def get_latest_mhr_screening(db_session, patient_id: str):
     """
     Retrieves the most recent MHR screening for a patient.
     Crucial for hydrating the LLM context window during MyHeartCoach sessions.
     """
-    result = await db.execute(
-        select(CardiovascularScreening)
+    return (
+        db_session.query(CardiovascularScreening)
         .filter(CardiovascularScreening.patient_id == patient_id)
         .order_by(CardiovascularScreening.created_at.desc())
-        .limit(1)
+        .first()
     )
-    return result.scalar_one_or_none()

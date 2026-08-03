@@ -25,7 +25,7 @@ class LocalPatientStore(PatientStore):
             patient = db.get_patient(session, patient_id)
             if patient is None:
                 return None
-            return self._patient_to_full_profile(patient)
+            return self._patient_to_full_profile(patient, session)
         finally:
             session.close()
 
@@ -76,12 +76,18 @@ class LocalPatientStore(PatientStore):
     # Internal helpers
     # ──────────────────────────────────────────────────────────────────
 
-    def _patient_to_full_profile(self, patient) -> dict:
+    def _patient_to_full_profile(self, patient, session=None) -> dict:
         """
         Build the merged profile dict (clinical + supplementary).
         Backwards-compatible with the existing rag.get_rag_response() schema —
         clinical keys remain unchanged so existing prompt logic works.
         """
+        clinical_risk_tier = patient.clinical_risk_tier
+        if not clinical_risk_tier and session is not None:
+            screening = db.get_latest_mhr_screening(session, str(patient.id))
+            if screening:
+                clinical_risk_tier = screening.calculated_risk_category
+
         # Existing clinical fields (matches db.patient_to_profile_dict shape)
         profile: dict[str, Any] = {
             "condition":             patient.conditions           or [],
@@ -100,7 +106,7 @@ class LocalPatientStore(PatientStore):
             "care_path":             patient.care_path,
             "objective_ids":         patient.objective_ids        or [],
             "difficulty_ceiling":    patient.difficulty_ceiling,
-            "clinical_risk_tier":    patient.clinical_risk_tier,
+            "clinical_risk_tier":    clinical_risk_tier,
         }
 
         # Supplementary fields — only included if they have values

@@ -99,7 +99,7 @@ def _resolve_patient_profile(
             status_code=403,
             detail="Patient does not belong to this client",
         )
-    return db.patient_to_profile_dict(patient)
+    return db.patient_to_profile_dict(patient, database)
 
 
 async def _record_first_chat(patient_id: int):
