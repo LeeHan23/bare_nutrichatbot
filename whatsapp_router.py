@@ -165,7 +165,7 @@ def _process_and_reply(patient_id: int, client_id: int, question: str, to_phone:
         if not patient:
             return
 
-        profile = db.patient_to_profile_dict(patient)
+        profile = db.patient_to_profile_dict(patient, session)
         session_id = f"whatsapp-{patient_id}"
 
         db.set_first_chat_at(session, patient_id)

@@ -19,6 +19,9 @@ class MHRScreeningCreate(BaseModel):
 
     # Basic Demographics & Vitals for context
     age: int
+    sex: str
+    ethnicity: str
+    postcode: str
     systolic_bp: int
     diastolic_bp: int
     heart_rate: int

@@ -558,7 +558,7 @@ async def _get_nutrition_advice(
         try:
             patient = db.get_patient(db_session, patient_id)
             if patient:
-                profile = db.patient_to_profile_dict(patient)
+                profile = db.patient_to_profile_dict(patient, db_session)
         finally:
             db_session.close()
 
