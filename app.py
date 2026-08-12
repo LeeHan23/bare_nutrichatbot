@@ -35,6 +35,7 @@ from admin_router import router as admin_router
 from content_api_router import router as content_router
 from dependencies import get_api_client, get_db
 from process_client_docs import calculate_file_hash, process_client_document
+from rag import _CARE_PATH_LABELS
 from website_chat_router import chat_router
 
 # --- Load Environment Variables ---
@@ -639,6 +640,7 @@ async def patient_login(
                 "dietary_restrictions": p.dietary_restrictions or [],
                 "allergies": p.allergies or [],
                 "personalization_level": p.personalization_level,
+                "care_path": p.care_path,
             }
         # IC provided but not matched — fall through to create new
         matches = []
@@ -660,6 +662,7 @@ async def patient_login(
             "dietary_restrictions": p.dietary_restrictions or [],
             "allergies": p.allergies or [],
             "personalization_level": p.personalization_level,
+            "care_path": p.care_path,
         }
 
     if len(matches) > 1:
@@ -675,6 +678,39 @@ async def patient_login(
         "found": False,
         "message": "No patient record found with that name. Please check your spelling or contact your clinic.",
     }
+
+
+@app.get("/patient/care-path-options", tags=["Patients"])
+async def care_path_options(client=Depends(get_api_client)):
+    """The 4 selectable care paths (see docs/state_machine_contract.md)."""
+    return {"options": [{"value": k, "label": v} for k, v in _CARE_PATH_LABELS.items()]}
+
+
+class CarePathRequest(_BaseModel):
+    care_path: str
+
+
+@app.post("/patient/{patient_id}/care_path", tags=["Patients"])
+async def set_care_path(
+    patient_id: int,
+    request: CarePathRequest,
+    client=Depends(get_api_client),
+    database: Session = Depends(get_db),
+):
+    """Patient-selected care path — interim self-service write path pending
+    the external state machine integration (docs/state_machine_contract.md)."""
+    if request.care_path not in _CARE_PATH_LABELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid care_path. Must be one of: {list(_CARE_PATH_LABELS)}",
+        )
+    patient = db.get_patient(database, patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    if patient.client_id != client.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    db.set_patient_care_path(database, patient_id, request.care_path)
+    return {"patient_id": patient_id, "care_path": request.care_path}
 
 
 # --- Patient Endpoints ---

@@ -155,6 +155,7 @@ class Patient(Base):
     objective_ids = Column(JSON, default=list)  # [primary, secondary?, secondary?]
     difficulty_ceiling = Column(String, nullable=True)  # easy/intermediate/hard
     clinical_risk_tier = Column(String, nullable=True)  # LOW/MODERATE/HIGH/VERY_HIGH
+    onboarding_stage = Column(String, nullable=True)  # OB1/OB2/OB3 — see taxonomy.py
 
     # Provenance — which fields were filled by extractor + when
     extractor_metadata = Column(
@@ -350,6 +351,10 @@ class ContentMaterial(Base):
     week_number = Column(
         Integer, nullable=True, index=True
     )  # ISO week number (weekly EKA only)
+    component = Column(
+        String, nullable=True, index=True
+    )  # MyHeartCoach Component slug (taxonomy.py) — NULL for legacy rows,
+    # orthogonal to condition_group (disease-niche axis, unchanged)
     topic = Column(String, nullable=False)  # "breakfast_choices"
     title = Column(String, nullable=False)  # human-readable
     raw_tips = Column(
@@ -552,6 +557,19 @@ def set_first_chat_at(db_session, patient_id: int):
 def get_all_patients_with_first_chat(db_session):
     """Return all patients that have chatted at least once."""
     return db_session.query(Patient).filter(Patient.first_chat_at.isnot(None)).all()
+
+
+def set_patient_care_path(db_session, patient_id: int, care_path: str):
+    """Patient-selected care path (see docs/state_machine_contract.md — this
+    is the interim self-service write path pending the external state
+    machine integration)."""
+    patient = get_patient(db_session, patient_id)
+    if not patient:
+        return None
+    patient.care_path = care_path
+    db_session.commit()
+    db_session.refresh(patient)
+    return patient
 
 
 def upsert_content_material(
@@ -833,6 +851,7 @@ def patient_to_profile_dict(patient, db_session=None) -> dict:
         "objective_ids": patient.objective_ids or [],
         "difficulty_ceiling": patient.difficulty_ceiling,
         "clinical_risk_tier": clinical_risk_tier,
+        "onboarding_stage": patient.onboarding_stage,
         # v2 cardiac supplementary fields (extractor-filled)
         "fat_intake_level": patient.fat_intake_level,
         "fat_sources": patient.fat_sources or [],
