@@ -80,6 +80,9 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .pm{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.18)}
 .pd{background:rgba(200,232,213,.15);color:#c8e8d5;border:1px solid rgba(200,232,213,.25)}
 .pa{background:rgba(220,38,38,.2);color:#fca5a5;border:1px solid rgba(220,38,38,.3)}
+.pcp{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);cursor:pointer;transition:all .15s;font-family:system-ui,sans-serif}
+.pcp:hover{border-color:rgba(255,255,255,.4);color:#fff}
+.pcp.active{background:rgba(245,158,11,.22);color:#fef3c7;border-color:rgba(245,158,11,.4);font-weight:700}
 .sbe{font-family:system-ui,sans-serif;font-size:.74rem;opacity:.32;font-style:italic}
 .sbft{margin-top:auto;padding:18px 22px;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0}
 .bso{width:100%;background:rgba(255,255,255,.08);color:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.15);padding:9px;border-radius:8px;font-family:system-ui,sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .18s}
@@ -233,6 +236,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
       <div class="bmic" id="bmic" style="display:none">BMI&nbsp;<span class="bmin" id="bmiv">—</span>&nbsp;<span id="bmicat" style="opacity:.58;font-family:system-ui,sans-serif;font-size:.68rem">—</span></div>
       <div class="blvl" id="blvl"><span class="blvl-badge" id="blvlb"></span><span class="blvl-label" id="blvll"></span></div>
     </div>
+    <div class="sbs"><div class="sbst">Care Path</div><div class="pills" id="s-cp"></div></div>
     <div class="sbs"><div class="sbst">Conditions</div><div class="pills" id="s-c"><span class="sbe">None recorded</span></div></div>
     <div class="sbs"><div class="sbst">Medications</div><div class="pills" id="s-m"><span class="sbe">None recorded</span></div></div>
     <div class="sbs"><div class="sbst">Dietary restrictions</div><div class="pills" id="s-d"><span class="sbe">None recorded</span></div></div>
@@ -336,6 +340,7 @@ function goDash(data){
     document.getElementById('bmiv').textContent=bmi;document.getElementById('bmicat').textContent=cat;document.getElementById('bmic').style.display='inline-flex';
   }
   fillP('s-c',data.conditions,'pc');fillP('s-m',data.medications,'pm');fillP('s-d',data.dietary_restrictions,'pd');fillP('s-a',data.allergies,'pa');
+  renderCarePath();
   var lvlMap={
     'L0':{bg:'rgba(34,197,94,.2)',color:'#4ade80',label:'General Wellness'},
     'L1':{bg:'rgba(96,165,250,.2)',color:'#93c5fd',label:'Moderate Risk'},
@@ -369,6 +374,37 @@ function fillP(id,arr,cls){
   var el=document.getElementById(id);
   if(!arr||arr.length===0){el.innerHTML='<span class="sbe">None recorded</span>';return;}
   el.innerHTML=arr.map(function(i){return '<span class="pill '+cls+'">'+esc(i)+'</span>';}).join('');
+}
+var CP_OPTS=null;
+async function ensureCP(){
+  if(CP_OPTS)return CP_OPTS;
+  try{
+    var r=await fetch('/patient/care-path-options',{headers:{'X-API-Key':KEY}});
+    var d=await r.json();
+    CP_OPTS=d.options||[];
+  }catch(e){CP_OPTS=[];}
+  return CP_OPTS;
+}
+async function renderCarePath(){
+  var opts=await ensureCP();
+  var el=document.getElementById('s-cp');
+  if(!el)return;
+  if(!opts.length){el.innerHTML='<span class="sbe">Unavailable</span>';return;}
+  el.innerHTML=opts.map(function(o){
+    var active=pat&&pat.care_path===o.value;
+    var shortLabel=o.label.split(' — ')[0];
+    return '<span class="pill pcp'+(active?' active':'')+'" onclick="selectCarePath(\''+o.value+'\')" title="'+esc(o.label)+'">'+esc(shortLabel)+'</span>';
+  }).join('');
+}
+async function selectCarePath(v){
+  if(!pat||busy)return;
+  var pid=pat.patient_id||pat.id;
+  try{
+    var r=await fetch('/patient/'+pid+'/care_path',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({care_path:v})});
+    if(!r.ok)return;
+    pat.care_path=v;
+    renderCarePath();
+  }catch(e){}
 }
 async function sendMsg(){
   if(busy)return;
@@ -413,6 +449,7 @@ function signOut(){
   document.getElementById('ln').value='';document.getElementById('vi').value='';
   clrSt('ls');clrSt('vs');document.getElementById('bmic').style.display='none';
   document.getElementById('blvl').classList.remove('show');
+  document.getElementById('s-cp').innerHTML='';
   document.getElementById('wf').innerHTML='';delete document.getElementById('wf').dataset.loaded;
   switchTab('chat');
   closeSB();showScr('scr-login');setTimeout(function(){document.getElementById('ln').focus();},350);

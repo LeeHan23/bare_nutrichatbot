@@ -9,7 +9,41 @@ from llm import (
     call_ollama_generate,
     get_direct_llm_response,
 )
-from vector_store import get_retriever
+from exercise_lookup import find_exercise_video, list_exercise_samples_for_level
+from taxonomy import ONBOARDING_STAGE_LABELS, component_scope_block
+from vector_store import detect_query_component, get_retriever
+
+# Keyword check for "is this question asking to see/demo an exercise" — same
+# style as the food-context detection above. Deliberately separate from
+# component detection: a question can be exercise-Component without asking
+# for a video (e.g. "is walking safe for me"), and vice versa is not
+# possible today since "exercise video"/"senaman video" already routes to
+# the exercise component (see vector_store.COMPONENT_HINTS).
+_VIDEO_INTENT_WORDS = ("video", "show me", "demo", "watch", "senaman video")
+
+
+def _wants_exercise_video(question: str) -> bool:
+    q = question.lower()
+    return any(w in q for w in _VIDEO_INTENT_WORDS)
+
+
+def _build_exercise_catalog_block(profile: dict | None) -> str:
+    """Level-filtered sample of the approved exercise-video catalog (see
+    exercise_lookup.py) — the only source of exercise specifics the model
+    may cite for the "exercise" component (taxonomy.COMPONENT_SCOPE).
+    Returns "" if there's no personalization_level to filter by or no
+    matching entries, in which case the component's out-of-scope guard
+    (defer to care team) is all that renders.
+    """
+    level = profile.get("personalization_level") if profile else None
+    exercises = list_exercise_samples_for_level(level)
+    if not exercises:
+        return ""
+    return "\n".join(
+        f"- {e['title']} ({e['type']}) — {e['intensity_tier']} intensity, "
+        f"{e['body_focus']}, {e['video_duration']}"
+        for e in exercises
+    )
 
 _LEVEL_INSTRUCTIONS = {
     "L0": (
@@ -163,6 +197,21 @@ def _build_care_path_block(profile: dict | None) -> str:
     return "\n".join(lines)
 
 
+def _build_onboarding_block(profile: dict | None) -> str:
+    """Format the external state machine's onboarding_stage into a prompt
+    block explaining what that stage means. Read-only signal — an external
+    solution owns progressing the patient through OB1-3, Nutribot only needs
+    to understand it. See taxonomy.ONBOARDING_STAGE_LABELS and
+    docs/state_machine_contract.md. Returns "" if not set.
+    """
+    if not profile:
+        return ""
+    stage = profile.get("onboarding_stage")
+    if not stage:
+        return ""
+    return ONBOARDING_STAGE_LABELS.get(stage, stage)
+
+
 def _to_second_person_profile(patient_context: str) -> str:
     """Rewrite third-person profile labels to second-person for self-mode.
 
@@ -228,6 +277,7 @@ def _build_qwen_prompt(
     profile: dict | None,
     is_patient_self: bool,
     history_text: str = "",
+    component: str | None = None,
 ) -> str:
     """Build the Qwen generation prompt for Option B (CLaRa-compress → Qwen-generate).
 
@@ -238,8 +288,14 @@ def _build_qwen_prompt(
         "You are NutriBot, a clinical nutrition assistant for Malaysian cardiac patients.\n"
     ]
 
+    # Read outside the patient_context guard below: word_limit further down
+    # references `level` regardless of whether patient_context ended up
+    # non-empty (a profile with only personalization_level set and no other
+    # populated fields — e.g. a brand-new patient — previously crashed here
+    # with UnboundLocalError).
+    level = profile.get("personalization_level") if profile else None
+
     if patient_context:
-        level = profile.get("personalization_level") if profile else None
         level_map = _LEVEL_INSTRUCTIONS_SELF if is_patient_self else _LEVEL_INSTRUCTIONS
         level_instruction = level_map.get(level, "") if level else ""
 
@@ -257,6 +313,19 @@ def _build_qwen_prompt(
         care_path_block = _build_care_path_block(profile)
         if care_path_block:
             parts.append(f"\n## Care Path & Objectives\n{care_path_block}")
+
+        onboarding_block = _build_onboarding_block(profile)
+        if onboarding_block:
+            parts.append(f"\n## Onboarding Stage\n{onboarding_block}")
+
+    scope_block = component_scope_block(component)
+    if scope_block:
+        parts.append(f"\n## Component Scope\n{scope_block}")
+
+    if component == "exercise":
+        catalog_block = _build_exercise_catalog_block(profile)
+        if catalog_block:
+            parts.append(f"\n## Approved Exercise Catalog\n{catalog_block}")
 
     parts.append(f"\n## Clinical Evidence Digest\n{digest}")
 
@@ -347,6 +416,21 @@ def _persist_turn(
         db_session.close()
 
 
+def _attach_exercise_video(
+    result: dict, question: str, component: str | None, profile: dict | None
+) -> dict:
+    """Deterministic, code-only exercise-video citation — the LLM's answer
+    text is untouched; the URL comes straight from exercise_lookup.py, never
+    from the model. See exercise_lookup.find_exercise_video().
+    """
+    if component == "exercise" and _wants_exercise_video(question):
+        level = profile.get("personalization_level") if profile else None
+        video = find_exercise_video(level)
+        if video:
+            result["exercise_video"] = video
+    return result
+
+
 def get_rag_response(
     question: str,
     client_id: int,
@@ -411,6 +495,11 @@ def get_rag_response(
     # Load persisted conversation history (survives bot restarts).
     history_text = _load_history_text(chat_session_id)
 
+    # MyHeartCoach Component detection (see taxonomy.py) — scopes retrieval
+    # and, for components with no grounded content yet, injects a safety
+    # guard instead of letting the LLM answer from general knowledge.
+    component = detect_query_component(question)
+
     # ============================================================
     # Agent path — Qwen with MCP tool calling (USE_AGENT_TOOLS=true)
     # ============================================================
@@ -424,6 +513,7 @@ def get_rag_response(
             patient_context=patient_context,
             is_patient_self=is_patient_self,
             profile=profile,
+            component=component,
         )
         if not answer:
             answer = (
@@ -431,7 +521,7 @@ def get_rag_response(
                 "Please try again shortly."
             )
         _persist_turn(chat_session_id, patient_id, question, answer)
-        return parse_response_for_image(answer)
+        return _attach_exercise_video(parse_response_for_image(answer), question, component, profile)
 
     # ============================================================
     # CLaRa primary path — main RAG generation on Mac Studio
@@ -439,7 +529,7 @@ def get_rag_response(
     if USE_CLARA:
         print("[DEBUG] Using CLaRa for generation")
         conditions_list = profile.get("condition", []) if profile else []
-        retriever = get_retriever(str(client_id), patient_conditions=conditions_list)
+        retriever = get_retriever(str(client_id), patient_conditions=conditions_list, component=component)
         retrieval_query = (
             f"{', '.join(conditions_list)}: {question}" if conditions_list else question
         )
@@ -476,6 +566,9 @@ def get_rag_response(
             care_path_block = _build_care_path_block(profile)
             if care_path_block:
                 header += f"\n\nCare Path & Objectives:\n{care_path_block}"
+            onboarding_block = _build_onboarding_block(profile)
+            if onboarding_block:
+                header += f"\n\nOnboarding Stage:\n{onboarding_block}"
             if is_patient_self:
                 instruction = (
                     "VOICE RULES — apply to every word of your reply:\n"
@@ -508,13 +601,25 @@ def get_rag_response(
             history_block = (
                 f"\n\nConversation so far:\n{history_text}" if history_text else ""
             )
-            clara_prompt = f"{header}{food_block}{history_block}\n\nInstruction: {instruction}\n\nQuestion: {question}\n\nAnswer:"
+            scope_block = component_scope_block(component)
+            scope_prefix = f"\n\nComponent Scope:\n{scope_block}" if scope_block else ""
+            if component == "exercise":
+                catalog_block = _build_exercise_catalog_block(profile)
+                if catalog_block:
+                    scope_prefix += f"\n\nApproved Exercise Catalog:\n{catalog_block}"
+            clara_prompt = f"{header}{scope_prefix}{food_block}{history_block}\n\nInstruction: {instruction}\n\nQuestion: {question}\n\nAnswer:"
         else:
             food_block = f"Food context: {food_context}\n\n" if food_context else ""
             history_block = (
                 f"Conversation so far:\n{history_text}\n\n" if history_text else ""
             )
-            clara_prompt = f"{food_block}{history_block}Instruction: Be conversational and practical; skip definitions and unnecessary preamble.\n\nQuestion: {question}\n\nAnswer:"
+            scope_block = component_scope_block(component)
+            scope_prefix = f"Component Scope:\n{scope_block}\n\n" if scope_block else ""
+            if component == "exercise":
+                catalog_block = _build_exercise_catalog_block(profile)
+                if catalog_block:
+                    scope_prefix += f"Approved Exercise Catalog:\n{catalog_block}\n\n"
+            clara_prompt = f"{scope_prefix}{food_block}{history_block}Instruction: Be conversational and practical; skip definitions and unnecessary preamble.\n\nQuestion: {question}\n\nAnswer:"
 
         answer = call_clara_api(clara_prompt, documents=doc_texts)
 
@@ -525,7 +630,7 @@ def get_rag_response(
             )
 
         _persist_turn(chat_session_id, patient_id, question, answer)
-        return parse_response_for_image(answer)
+        return _attach_exercise_video(parse_response_for_image(answer), question, component, profile)
 
     # ============================================================
     # Option B: CLaRa compress → Qwen generate
@@ -535,7 +640,7 @@ def get_rag_response(
     if USE_CLARA_COMPRESS:
         print("[DEBUG] Using Option B: CLaRa compress → Qwen generate")
         conditions_list = profile.get("condition", []) if profile else []
-        retriever = get_retriever(str(client_id), patient_conditions=conditions_list)
+        retriever = get_retriever(str(client_id), patient_conditions=conditions_list, component=component)
         # Prefix query with patient conditions so condition-specific guideline
         # chunks score higher than generic nutrition content in vector search.
         retrieval_query = (
@@ -571,6 +676,7 @@ def get_rag_response(
             profile,
             is_patient_self,
             history_text,
+            component,
         )
         print(f"[DEBUG] Qwen prompt length: {len(qwen_prompt)} chars")
 
@@ -583,7 +689,7 @@ def get_rag_response(
             )
 
         _persist_turn(chat_session_id, patient_id, question, answer)
-        return parse_response_for_image(answer)
+        return _attach_exercise_video(parse_response_for_image(answer), question, component, profile)
 
     # ============================================================
     # No generation path enabled — misconfiguration guard.

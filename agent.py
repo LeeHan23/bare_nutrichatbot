@@ -445,6 +445,7 @@ def get_agent_response(
     patient_context: str,
     is_patient_self: bool,
     profile: dict | None,
+    component: str | None = None,
 ) -> str:
     """
     Run the Qwen tool-calling loop and return the final answer string.
@@ -457,7 +458,10 @@ def get_agent_response(
         _LEVEL_INSTRUCTIONS,
         _LEVEL_INSTRUCTIONS_SELF,
         _build_care_path_block,
+        _build_onboarding_block,
+        _build_exercise_catalog_block,
     )
+    from taxonomy import component_scope_block
 
     # ── System prompt ──────────────────────────────────────────────────────
     system_parts = [
@@ -488,6 +492,19 @@ def get_agent_response(
         care_path_block = _build_care_path_block(profile)
         if care_path_block:
             system_parts.append(f"\n## Care Path & Objectives\n{care_path_block}")
+
+        onboarding_block = _build_onboarding_block(profile)
+        if onboarding_block:
+            system_parts.append(f"\n## Onboarding Stage\n{onboarding_block}")
+
+    scope_block = component_scope_block(component)
+    if scope_block:
+        system_parts.append(f"\n## Component Scope\n{scope_block}")
+
+    if component == "exercise":
+        catalog_block = _build_exercise_catalog_block(profile)
+        if catalog_block:
+            system_parts.append(f"\n## Approved Exercise Catalog\n{catalog_block}")
 
     if is_patient_self:
         system_parts.append(

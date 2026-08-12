@@ -1,7 +1,7 @@
 import os
 import json
 import time
-from typing import List, Set
+from typing import List, Optional, Set
 
 from dotenv import load_dotenv
 from pydantic import Field
@@ -199,6 +199,97 @@ def detect_query_topics(query: str) -> Set[str]:
 
 
 # ────────────────────────────────────────────────────────────────────────
+# COMPONENT DETECTION (MyHeartCoach 10-Component taxonomy — see taxonomy.py)
+# ────────────────────────────────────────────────────────────────────────
+# Deliberately conservative: only phrases with essentially no plausible
+# dietary framing are mapped. Condition words also present in TOPIC_HINTS
+# (hypertension, diabetes, cholesterol, CKD, heart failure...) are NOT
+# mapped here — today's live traffic asks about those conditions almost
+# entirely in a dietary context (e.g. "what can I eat with CKD"), and 100%
+# of existing base_knowledge chunks are tagged doc_components=["nutrition"].
+# Gating those phrases to a non-nutrition component would hard-filter real,
+# working Nutrition retrieval down to zero chunks — the one regression this
+# feature must not cause. Detection defaults to None (no filter, current
+# behavior) whenever it isn't confident.
+# ponytail: keyword heuristic, will misclassify some phrasings — acceptable
+# because 9/10 components have zero content today (a miss just means the
+# guard doesn't fire, same as before this feature existed). Upgrade path:
+# an LLM intent-classification pass, if misses on a populated component
+# prove costly in eval.
+COMPONENT_HINTS = {
+    # Medication — the explicit safety case (dosing/stopping/replacing a
+    # prescribed medicine): broadest net of the group since an ungrounded
+    # answer here is the highest-harm miss.
+    "should i stop my medication":   "medication",
+    "should i stop taking":          "medication",
+    "stop my medication":            "medication",
+    "skip my medication":            "medication",
+    "double my dose":                "medication",
+    "dose of my":                    "medication",
+    "my prescription":               "medication",
+    "statin dose":                   "medication",
+    "ubat saya":                     "medication",
+    "dos ubat":                      "medication",
+    "berhenti ambil ubat":           "medication",
+
+    # Tobacco / Nicotine / Alcohol — cessation framing, not dietary
+    "quit smoking":                  "tobacco_nicotine_alcohol",
+    "stop smoking":                  "tobacco_nicotine_alcohol",
+    "vaping":                        "tobacco_nicotine_alcohol",
+    "e-cigarette":                   "tobacco_nicotine_alcohol",
+    "berhenti merokok":              "tobacco_nicotine_alcohol",
+    "cut down on alcohol":           "tobacco_nicotine_alcohol",
+    "quit drinking":                 "tobacco_nicotine_alcohol",
+
+    # Psychosocial — mental health / stress framing
+    "i feel depressed":              "psychosocial",
+    "i feel anxious":                "psychosocial",
+    "i am stressed":                 "psychosocial",
+    "mental health":                 "psychosocial",
+    "cemas":                         "psychosocial",
+    "tertekan":                      "psychosocial",
+
+    # Exercise — structured workout framing
+    "workout plan":                  "exercise",
+    "exercise routine":              "exercise",
+    "exercise video":                "exercise",
+    "senaman video":                 "exercise",
+    "training plan":                 "exercise",
+    "what exercise should i":        "exercise",
+    "what exercises should i":       "exercise",
+    "type of exercise":              "exercise",
+    "exercise intensity":            "exercise",
+    "safe to exercise":              "exercise",
+    "how often should i exercise":   "exercise",
+    "senaman apa":                   "exercise",
+    "jenis senaman":                 "exercise",
+
+    # Physical Activity — general daily movement framing
+    "how many steps":                "physical_activity",
+    "daily movement":                "physical_activity",
+    "sedentary":                     "physical_activity",
+    "aktiviti harian":               "physical_activity",
+
+    # Foundations — pure disease-definition / "what is X" framing
+    "what is a heart attack":        "foundations",
+    "what is heart failure":         "foundations",
+    "what causes heart disease":     "foundations",
+    "apa itu penyakit jantung":      "foundations",
+}
+
+
+def detect_query_component(query: str) -> str | None:
+    """Best-effort match against COMPONENT_HINTS. Returns None (no filter)
+    when nothing confidently matches — see COMPONENT_HINTS comment above.
+    """
+    q = " " + query.lower() + " "
+    for phrase, component in COMPONENT_HINTS.items():
+        if phrase in q:
+            return component
+    return None
+
+
+# ────────────────────────────────────────────────────────────────────────
 # RETRIEVERS
 # ────────────────────────────────────────────────────────────────────────
 def get_connection_string() -> str:
@@ -247,6 +338,7 @@ class TopicBoostedRetriever(BaseRetriever):
     top_k: int = 5
     boost_factor: float = 0.5
     patient_conditions: List[str] = Field(default_factory=list)
+    component: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -257,6 +349,20 @@ class TopicBoostedRetriever(BaseRetriever):
         candidates = self.base_retriever.invoke(query)
         if not candidates:
             return []
+
+        # Component gate (hard filter, not a boost): keep a chunk if it has
+        # no doc_components tag (legacy/unscoped — never silently excluded)
+        # or if self.component is one of its tags. A chunk tagged only for
+        # e.g. "medication" should not surface for a Nutrition question.
+        if self.component:
+            candidates = [
+                d
+                for d in candidates
+                if not d.metadata.get("doc_components")
+                or self.component in d.metadata["doc_components"]
+            ]
+            if not candidates:
+                return []
 
         # Detect topics — combine query and patient condition signals
         query_topics = detect_query_topics(query)
@@ -293,7 +399,11 @@ class TopicBoostedRetriever(BaseRetriever):
                 if query_topics
                 else 0.0
             )
-            final_score = base_score + self.boost_factor * overlap_ratio
+            # Clinically-approved chunks (from Chatbot_Chunks, see
+            # scripts/ingest_chatbot_chunks.py) outrank raw PDF chunks at
+            # equal topic overlap.
+            trust_boost = 0.3 if doc.metadata.get("trust_tier") == "clinical_approved" else 0.0
+            final_score = base_score + self.boost_factor * overlap_ratio + trust_boost
             scored.append((final_score, rank, overlap_ratio, doc))
 
         # Sort by score descending, original rank as tiebreaker
@@ -339,10 +449,12 @@ class TopicBoostedRetriever(BaseRetriever):
 def get_retriever(
     client_id: str,
     patient_conditions: List[str] = None,
+    component: str | None = None,
 ) -> BaseRetriever:
     """
     Hybrid retriever:
         base_knowledge + client_{id}_knowledge → merge & dedupe
+                                              → component gate (if set)
                                               → topic-boost re-rank
                                               → return top K
 
@@ -351,6 +463,9 @@ def get_retriever(
         patient_conditions: optional list of clinical conditions
             (e.g., ["Heart Failure", "Hypertension"]). When provided,
             chunks tagged with related topics are boosted further.
+        component: optional MyHeartCoach Component slug (see taxonomy.py).
+            When set, chunks tagged with a different doc_components list
+            are excluded. None (default) = no filtering, current behavior.
     """
     connection_string = get_connection_string()
     embedding_function = get_embedding_function()
@@ -381,10 +496,12 @@ def get_retriever(
         top_k=5,
         boost_factor=0.5,
         patient_conditions=patient_conditions or [],
+        component=component,
     )
 
     print(
         f"[VectorStore] Topic-boosted hybrid retriever | "
-        f"client_id={client_id} | conditions={patient_conditions or []}"
+        f"client_id={client_id} | conditions={patient_conditions or []} | "
+        f"component={component}"
     )
     return boosted
