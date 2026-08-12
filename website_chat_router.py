@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import re
 
@@ -46,6 +47,24 @@ class ChatRequest(BaseModel):
     )
 
 
+# Trailing marker for structured fields (exercise_video, image_url) that
+# don't fit a plain-text stream. Appended by this router, never by the LLM —
+# see _split_meta(). Kept human-readable (not a control character) so it
+# survives any text-layer proxying between here and the client unmangled.
+META_MARKER = "\n\n[[NUTRIBOT_META]]"
+
+
+def _split_meta(text: str) -> tuple[str, dict]:
+    """Split a streamed response back into (display_text, structured_fields)."""
+    if META_MARKER not in text:
+        return text, {}
+    answer, _, meta_json = text.partition(META_MARKER)
+    try:
+        return answer, json.loads(meta_json)
+    except (json.JSONDecodeError, ValueError):
+        return text, {}
+
+
 async def stream_rag_response(
     question: str,
     client_id: int,
@@ -67,6 +86,13 @@ async def stream_rag_response(
         for chunk in response_data.get("answer", ""):
             yield chunk
             await asyncio.sleep(0.01)
+        meta = {
+            k: response_data[k]
+            for k in ("exercise_video", "image_url")
+            if response_data.get(k)
+        }
+        if meta:
+            yield META_MARKER + json.dumps(meta)
     except Exception as e:
         logger.error(f"RAG Error: {e}")
         yield "I'm sorry, I encountered an error processing your request. Please try again shortly."
@@ -257,4 +283,5 @@ async def get_chat_response_sync(
     ):
         full_response += chunk
 
-    return {"answer": full_response, "session_id": request.session_id}
+    answer, meta = _split_meta(full_response)
+    return {"answer": answer, "session_id": request.session_id, **meta}
