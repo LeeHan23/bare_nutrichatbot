@@ -31,4 +31,9 @@ COPY data /app/data_seed
 
 # Default command runs the patient chat bot (app:app). docker-compose.yml
 # overrides this for the docs_api service (docs_api:app, no patient DB access).
-CMD gunicorn -w 1 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT
+# --timeout 120: gunicorn's default (30s) kills mid-flight requests here --
+# the RAG pipeline's own documented latency is 30-60s (cold), up to ~90s
+# worst-case per llm.py's CLARA/OLLAMA timeout budget (CLAUDE.md), so the
+# default silently SIGABRTs and restarts the worker on completely normal
+# requests. Found live 2026-08-18 verifying this image, not a hypothetical.
+CMD gunicorn -w 1 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT --timeout 120

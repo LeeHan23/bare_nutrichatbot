@@ -35,6 +35,13 @@ services:
       PGVECTOR_URL: postgresql://postgres:postgres@pgvector:5432/nutribot
     ports:
       - "8000:8000"
+    volumes:
+      # Without this, the container's HF cache starts empty and re-downloads
+      # BAAI/bge-m3 (~2GB) on every start, which alone blows past gunicorn's
+      # --timeout (found live 2026-08-18 verifying this image: a request
+      # that's normally 30-90s took >120s and got SIGABRT'd mid-flight).
+      # Bind-mounts the host's already-populated cache instead.
+      - ~/.cache/huggingface:/root/.cache/huggingface
     depends_on:
       pgvector:
         condition: service_healthy
@@ -52,6 +59,10 @@ services:
       PGVECTOR_URL: postgresql://postgres:postgres@pgvector:5432/nutribot
     ports:
       - "8100:8100"
+    volumes:
+      # Same embedding model, same cold-start-timeout issue — see nutribot's
+      # volumes comment above.
+      - ~/.cache/huggingface:/root/.cache/huggingface
     depends_on:
       pgvector:
         condition: service_healthy
