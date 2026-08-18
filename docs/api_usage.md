@@ -7,6 +7,8 @@ Two separate APIs, depending on what the calling application needs:
 
 Both are plain REST POST + JSON — no SDK needed.
 
+**Keys below are placeholders** (`<NUTRIBOT_API_KEY>` / `<DOCS_API_KEY>`) — get the real values from `.env` (`NUTRIBOT_API_KEY`, `DOCS_API_KEY`), never commit or paste the real key into this file.
+
 ---
 
 ## 1. Patient Chat API
@@ -21,7 +23,7 @@ POST https://nutribot.computationalrd.com/chat/get_response_sync
 
 ```
 Content-Type: application/json
-X-API-Key: nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3
+X-API-Key: <NUTRIBOT_API_KEY>
 ```
 
 ### Request body
@@ -58,7 +60,7 @@ First call ~30-60s (cold start), warm calls ~10-30s. Set your client timeout to 
 ```bash
 curl -X POST https://nutribot.computationalrd.com/chat/get_response_sync \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3" \
+  -H "X-API-Key: <NUTRIBOT_API_KEY>" \
   -d '{"question":"What should I eat for breakfast?","patient_id":2,"session_id":"your-app-session-1"}'
 ```
 
@@ -69,7 +71,7 @@ import requests
 
 resp = requests.post(
     "https://nutribot.computationalrd.com/chat/get_response_sync",
-    headers={"X-API-Key": "nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3"},
+    headers={"X-API-Key": "<NUTRIBOT_API_KEY>"},
     json={"question": "What should I eat for breakfast?", "patient_id": 2, "session_id": "your-app-session-1"},
     timeout=100,
 )
@@ -98,7 +100,7 @@ POST https://docs-api.computationalrd.com/ask
 
 ```
 Content-Type: application/json
-X-API-Key: nbk_docs_5d1744c666134f94c38ebc015be12b7cf7b79e00a38b6493
+X-API-Key: <DOCS_API_KEY>
 ```
 
 Required as of 2026-07-23 — requests without a valid `X-API-Key` get `401 Invalid or missing X-API-Key`.
@@ -126,7 +128,7 @@ Required as of 2026-07-23 — requests without a valid `X-API-Key` get `401 Inva
 ```bash
 curl -X POST https://docs-api.computationalrd.com/ask \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: nbk_docs_5d1744c666134f94c38ebc015be12b7cf7b79e00a38b6493" \
+  -H "X-API-Key: <DOCS_API_KEY>" \
   -d '{"question":"What foods should someone with high blood pressure avoid?"}'
 ```
 
@@ -137,7 +139,7 @@ import requests
 
 resp = requests.post(
     "https://docs-api.computationalrd.com/ask",
-    headers={"X-API-Key": "nbk_docs_5d1744c666134f94c38ebc015be12b7cf7b79e00a38b6493"},
+    headers={"X-API-Key": "<DOCS_API_KEY>"},
     json={"question": "What foods should someone with high blood pressure avoid?"},
     timeout=100,
 )
