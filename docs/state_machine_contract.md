@@ -1,6 +1,23 @@
 # State Machine → Nutribot Consumption Contract
 
-Written 2026-07-30, updated 2026-08-03. **Placeholder, not a finalized spec** — the care-path/rehab state machine and the clinical risk-scoring module are being built by separate teams. This doc defines the minimal fields Nutribot's dietetics LLM needs to consume from them for personalization, so those teams have something concrete to build against. Update this doc (and the adaptation points listed below) once the real interfaces are chosen — same pattern as `remote_patient_store.py`'s placeholder hospital-API contract.
+Written 2026-07-30, updated 2026-08-03, **updated 2026-08-18 with the real staging schema**. Sections below marked "placeholder" are still speculative; the new "Real staging DB" section is not — it's from directly exploring the actual My Heart Coach staging database.
+
+**Placeholder, not a finalized spec** — the care-path/rehab state machine and the clinical risk-scoring module are being built by separate teams. This doc defines the minimal fields Nutribot's dietetics LLM needs to consume from them for personalization, so those teams have something concrete to build against. Update this doc (and the adaptation points listed below) once the real interfaces are chosen — same pattern as `remote_patient_store.py`'s placeholder hospital-API contract.
+
+## Real staging DB (found 2026-08-18) — supersedes the placeholder guesses below where they conflict
+
+Received direct read credentials to the My Heart Coach companion app's staging MySQL DB (`.env`: `MYHEART_DB_*`). Explored live: MySQL 8.4.11, 21 tables (Sequelize-managed — `sequelize_meta` present), **all tables empty** — this is a genuinely fresh pre-launch staging environment, not a broken/stale one. No sample data exists yet, so field *shapes* are confirmed but real *values* are not.
+
+This is a **separate identity space** from our own `Patient` table — the join key is `users.phone_no` (matches our `Patient.phone_number`) or `users.ic_no` (matches `Patient.ic_number`), not `patient_id`.
+
+What matches our placeholder contract cleanly:
+- **`users.risk_level`** — `enum('L0','L1','L2','L3')`. This is the **exact same vocabulary** as our own `Patient.personalization_level`, not `clinical_risk_tier` (which uses LOW/MODERATE/HIGH/VERY_HIGH). **Wired in 2026-08-18**: `myheart_db.py` (new, read-only, `pymysql`) queries this by phone number; `database.patient_to_profile_dict()` and `local_patient_store._patient_to_full_profile()` now fall back to it when `patient.personalization_level` is unset — same tier/pattern as the existing MHR-screening fallback for `clinical_risk_tier` below. Fails soft (unreachable DB, unset env, or no match all just return `None`) — never blocks a chat reply, never writes.
+
+What does **not** match — the placeholder guessed wrong:
+- **No `care_path`, `objective_ids`, or `difficulty_ceiling` fields exist anywhere in the real schema.** The closest analog is a `goals` table (`primary_goal`, `health_challenge`, `daily_active_level`, `exercise_type`, `physical_injury`, `average_sleep_hours`, `daily_exercise_minute`, `height`/`current_weight`/`target_weight` — all free-text-ish `varchar`, one row per `user_id`), which is a different shape entirely from the 4-way `keep_well/reduce_risk/live_better/recover` enum this repo already built `rag._build_care_path_block()` against. **Not wired in** — mapping `goals` onto `care_path`/`objective_ids` would be guessing at intent with zero sample data to check against. Needs the My Heart Coach team to confirm before building anything here.
+- **`risk_score` table** has real intake fields (cholesterol, blood pressure, diabetes status/meds, ECG, prior heart attack/procedure) that overlap with our own `cardiovascular_screenings`/MHR intake (`risk_calculator.py`), but different field names, no computed category, and a different `user_id` FK space — not the same table our `POST /api/v1/mhr/screen` endpoint writes to. Not wired in.
+
+Other tables of note, not yet consumed anywhere: `eka_sets`/`exercises`/`knowledge_articles` (a real risk-level-gated Exercise/Knowledge/Activity content schema — directly relevant to our weekly EKA pipeline, worth a closer look before more EKA content-generation work), `user_vital_signs` (pulse, BP, blood sugar, SpO2, HbA1c, cholesterol — an actual vitals channel; `docs/component_taxonomy_contract.md` had flagged this as not existing anywhere), `medicine`/`medicine_history` (JSON medicine list per user).
 
 ## Why this exists
 
@@ -42,6 +59,6 @@ This is a read-time fallback, not a write to `Patient.clinical_risk_tier` — th
 
 ## Still open
 
-1. **No write path for `care_path` / `objective_ids` / `difficulty_ceiling`.** No transport (API endpoint, message queue, shared DB) from the external care-path/rehab state machine into this repo's `Patient` table exists anywhere in this codebase. These three fields will read as `None`/empty until that integration is built by whoever owns that state machine.
-2. **`personalization_level` relationship**: currently coexists unchanged. `clinical_risk_tier` (whether hand-set or MHR-screening-derived) is a fallback signal only where `personalization_level` is null — not a replacement, until told otherwise.
+1. **No write path for `care_path` / `objective_ids` / `difficulty_ceiling` — and, per the 2026-08-18 schema exploration above, it's now unclear these will ever map 1:1 onto anything in the real My Heart Coach DB.** The interim patient-self-service picker (`app.py`, added 2026-08-12) remains the only way these fields get set today. Whether `goals` (the real schema's closest analog) should eventually drive these, and how, needs the My Heart Coach team's input, not a guess from this side.
+2. **`personalization_level` relationship**: `clinical_risk_tier` (hand-set or MHR-screening-derived) remains a fallback signal only where `personalization_level` is null. **As of 2026-08-18**, `personalization_level` itself now has its own further fallback — the My Heart Coach staging DB's `users.risk_level` (same L0-L3 enum) — checked only when `personalization_level` is unset (see "Real staging DB" above). Priority order, most to least authoritative: dietitian-set `personalization_level` → My Heart Coach `users.risk_level` → (separately) `clinical_risk_tier`, hand-set or MHR-screening-derived.
 3. **`onboarding_stage` (OB1–OB3)** — updated 2026-08-12, see `docs/component_taxonomy_contract.md`. Still owned by an external solution (never written by this repo), but now consumed read-only: `Patient.onboarding_stage` + `rag._build_onboarding_block()`. This repo does not gate or progress the stage, only renders what it means once told.

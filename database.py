@@ -833,6 +833,12 @@ def patient_to_profile_dict(patient, db_session=None) -> dict:
         if screening:
             clinical_risk_tier = screening.calculated_risk_category
 
+    personalization_level = patient.personalization_level
+    if not personalization_level:
+        import myheart_db
+
+        personalization_level = myheart_db.get_myheart_risk_level(patient.phone_number)
+
     return {
         "condition": patient.conditions or [],
         "medications": patient.medications or [],
@@ -845,7 +851,7 @@ def patient_to_profile_dict(patient, db_session=None) -> dict:
         "height_cm": patient.height_cm,
         "allergies": patient.allergies or [],
         "notes": patient.notes or "",
-        "personalization_level": patient.personalization_level,
+        "personalization_level": personalization_level,
         # External state-machine fields (see docs/state_machine_contract.md)
         "care_path": patient.care_path,
         "objective_ids": patient.objective_ids or [],

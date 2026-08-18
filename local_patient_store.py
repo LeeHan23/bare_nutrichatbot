@@ -88,6 +88,12 @@ class LocalPatientStore(PatientStore):
             if screening:
                 clinical_risk_tier = screening.calculated_risk_category
 
+        personalization_level = patient.personalization_level
+        if not personalization_level:
+            import myheart_db
+
+            personalization_level = myheart_db.get_myheart_risk_level(patient.phone_number)
+
         # Existing clinical fields (matches db.patient_to_profile_dict shape)
         profile: dict[str, Any] = {
             "condition":             patient.conditions           or [],
@@ -101,7 +107,7 @@ class LocalPatientStore(PatientStore):
             "height_cm":             patient.height_cm,
             "allergies":             patient.allergies            or [],
             "notes":                 patient.notes                or "",
-            "personalization_level": patient.personalization_level,
+            "personalization_level": personalization_level,
             # External state-machine fields (see docs/state_machine_contract.md)
             "care_path":             patient.care_path,
             "objective_ids":         patient.objective_ids        or [],
