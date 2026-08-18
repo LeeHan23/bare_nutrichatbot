@@ -2,7 +2,80 @@
 
 Per the decision recorded in `docs/eval_and_roadmap.md` Part C: fine-tuning targets **`qwen2.5:32b` directly** — the actual production generation model (Option B's Qwen-generate step) — not the existing Gemma-3 experiment track (`finetune/Modelfile`, `finetune/colab_finetune.ipynb`). That track can continue separately if there's ever a reason to ship a smaller/cheaper model, but it doesn't improve what's in production today.
 
-This file documents the recommended approach and starting configuration. It is **not** a runnable training script — actually running a 32B LoRA/QLoRA job needs real GPU time (the Mac Studio's M3 Ultra, or a cloud GPU) that isn't available in the session that wrote this, so the config below is a documented starting point to verify empirically, not a promise it's already tuned.
+This file documents the recommended approach and starting configuration. Everything past "## Runbook" below is a concrete, copy-pasteable sequence to run on the Mac Studio itself — the rest of the doc (framework rationale, pipeline diagram) is background, not steps.
+
+## Runbook (ready to execute, 2026-08-18)
+
+Run this on the **Mac Studio** (M3 Ultra), not the RTX 3050 — `mlx-lm` needs Apple Silicon. Steps marked **(RTX 3050)** happen back on this repo's usual box instead.
+
+**0. Get the data onto the Mac Studio.** The Mac Studio's existing clone (`/Users/bing/Desktop/clara_lyh/clara-nutri/`) is CLaRa-inference-only, not this repo — you need `finetune/data_mlx/` from `bare_NutriChatbot`, which is now committed (`origin/main`, commit `95de211`). Either clone the full repo somewhere convenient, or just pull that one directory:
+```bash
+git clone https://github.com/LeeHan23/bare_nutrichatbot.git ~/nutribot-finetune
+cd ~/nutribot-finetune
+ls finetune/data_mlx/    # expect train.jsonl (148 examples) and valid.jsonl (17 examples)
+```
+
+**1. Set up mlx-lm in its own venv** (separate from the `clara` conda env — don't mix):
+```bash
+python3 -m venv ~/mlx-finetune-env
+source ~/mlx-finetune-env/bin/activate
+pip install mlx-lm
+df -h ~   # sanity-check free disk before the ~18-20GB base-model download below
+```
+
+**2. Run the LoRA fine-tune.** The config below (`--iters 200`, `--num-layers 16`) was originally sized for a hypothetical ~20-example dataset; the real committed set is **148 train / 17 valid examples** (7x larger — `data_focus_v2`'s 45 focus-weighted examples + `data_uniform_100`'s 100 background examples, combined). That's still a reasonable conservative starting point (still small by LLM fine-tuning standards), just don't assume the original "risk of overfitting on ~20 examples repeated a lot" framing still applies unchanged — 200 iters now means less repetition per example than originally planned:
+```bash
+mlx_lm.lora --model mlx-community/Qwen2.5-32B-Instruct-4bit --train \
+    --data ~/nutribot-finetune/finetune/data_mlx \
+    --iters 200 \
+    --batch-size 1 \
+    --num-layers 16 \
+    --adapter-path ~/nutribot-finetune/finetune/adapters/qwen25-32b-lora-v1
+```
+This auto-downloads the ~18-20GB base model on first run — expect that alone to take a while depending on bandwidth.
+
+**3. Fast-path sanity check** before spending time on merge/quantize/deploy:
+```bash
+mlx_lm.generate --model mlx-community/Qwen2.5-32B-Instruct-4bit \
+    --adapter-path ~/nutribot-finetune/finetune/adapters/qwen25-32b-lora-v1 \
+    --prompt "A CKD Stage 3 patient with hypertension asks if they can eat a banana. What do you tell them?"
+```
+Expect a firm RESTRICT/strictly-limit stance (this is exactly the `data_focus_v2` combo the focus-weighted examples targeted). If it still hedges MODERATE here, iterate on iters/data before going further — don't spend time on GGUF conversion yet.
+
+**4. Merge the adapter into the base weights:**
+```bash
+mlx_lm.fuse --model mlx-community/Qwen2.5-32B-Instruct-4bit \
+    --adapter-path ~/nutribot-finetune/finetune/adapters/qwen25-32b-lora-v1 \
+    --save-path ~/nutribot-finetune/finetune/merged/qwen25-32b-lora-v1
+```
+
+**5. Convert to GGUF and quantize.** Needs `llama.cpp` cloned/built on the Mac Studio (not currently confirmed present — check first, `git clone https://github.com/ggerganov/llama.cpp` if not). Match production's existing quantization, confirmed live from the running Ollama model: `qwen2` family, `Q4_K_M`, ChatML template (`<|im_start|>`/`<|im_end|>`):
+```bash
+python llama.cpp/convert-hf-to-gguf.py ~/nutribot-finetune/finetune/merged/qwen25-32b-lora-v1 \
+    --outfile ~/nutribot-finetune/finetune/nutribot-qwen-lora.gguf --outtype f16
+llama.cpp/llama-quantize ~/nutribot-finetune/finetune/nutribot-qwen-lora.gguf \
+    ~/nutribot-finetune/finetune/nutribot-qwen-lora.Q4_K_M.gguf Q4_K_M
+```
+
+**6. Write an Ollama Modelfile and create the tag.** Unlike `finetune/Modelfile` (Gemma-3, different stop tokens), this needs Qwen2's ChatML stop token:
+```
+FROM ./nutribot-qwen-lora.Q4_K_M.gguf
+PARAMETER temperature 0.5
+PARAMETER num_predict 800
+PARAMETER stop "<|im_end|>"
+```
+```bash
+ollama create nutribot-qwen-lora -f Modelfile
+ollama run nutribot-qwen-lora "test prompt"   # confirm it loads and generates before the eval gate
+```
+
+**7. Run the eval gate — (RTX 3050), not the Mac Studio.** `eval/test_rag.py` needs this repo's Postgres/patient data, which only lives on the RTX 3050; it reaches the Mac Studio's Ollama over the existing tunnel. Once the `nutribot-qwen-lora` tag exists (step 6), tell the RTX-3050 session (or run it yourself there) to point at it and re-run the gate — see "Gating promotion" below for the exact commands. **Only flip `OLLAMA_MODEL` in `.env` on a `PROMOTE` verdict.**
+
+**Scope reminder**: this dataset is nutrition-only (single-disease ADIME persona), predating the 2026-08-12/14 multi-component taxonomy work. A successful run here improves the original dietetics persona only — it does not touch the 9 non-nutrition components, which have no training data yet.
+
+---
+
+Everything below this point is background/rationale for the runbook above, not additional steps — actually running a 32B LoRA/QLoRA job needs real GPU time (the Mac Studio's M3 Ultra, or a cloud GPU) that wasn't available in the session that originally wrote this doc, so the config below was a documented starting point to verify empirically, not a promise it was already tuned.
 
 **Correction (2026-07-17): the framework recommendation below (Unsloth + bitsandbytes QLoRA) does not work on the Mac Studio.** Unsloth depends on Triton/CUDA and has no real Apple Silicon support as of this date (MLX support is in early development upstream, not GA). `bitsandbytes` 4-bit quantization on MPS is also not solid — only a community package, not upstream support. The framework section below has been corrected to use **Apple's own MLX / `mlx-lm`**, which has native LoRA fine-tuning, first-class Qwen2 support, and pre-quantized Qwen2.5 checkpoints on Hugging Face (`mlx-community/Qwen2.5-32B-Instruct-4bit`) — this is the actually-viable path on an M3 Ultra today. The pipeline stages (merge → GGUF → Ollama → eval gate) are unchanged, just the training-framework step.
 
