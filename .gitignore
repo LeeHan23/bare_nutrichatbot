@@ -72,6 +72,11 @@ eval_dataset.json
 rag_evaluation_report.csv
 results_baseline.json
 
+# Generated eval report roll-ups (regenerable from eval/results/*.json — see
+# TRIPOD_LLM_Report.md and EVAL_RESULTS_SUMMARY.md's own generation notes)
+eval/results/EVAL_RESULTS_SUMMARY.md
+eval/results/*_SUMMARY.md
+
 # Evaluation & fine-tuning scripts (not needed for deployment)
 evaluate_rag.py
 eval_ragas.py
@@ -101,6 +106,7 @@ cloudflared
 .claude/
 .claude.json
 CLAUDE.local.md
+CLAUDE.md
 
 # Ignore large PDFs in the root
 Food Group .pdf
