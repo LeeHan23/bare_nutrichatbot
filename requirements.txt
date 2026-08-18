@@ -44,6 +44,7 @@ aiofiles
 pymupdf
 unstructured[pdf,docx]>=0.11.0
 pdfminer.six
+openpyxl
 
 #--- Session Management ---
 redis

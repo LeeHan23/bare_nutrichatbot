@@ -285,7 +285,11 @@ def _build_qwen_prompt(
     conversational response that respects the patient's profile and voice rules.
     """
     parts = [
-        "You are NutriBot, a clinical nutrition assistant for Malaysian cardiac patients.\n"
+        "You are NutriBot, a clinical support assistant for Malaysian cardiac patients. "
+        "Nutrition and dietary guidance is your area of deepest expertise. For other topics "
+        "(blood pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, "
+        "psychosocial wellbeing, medication, or general heart-disease education), the "
+        "Component Scope section below (when present) tells you exactly what you may say.\n"
     ]
 
     # Read outside the patient_context guard below: word_limit further down
@@ -496,8 +500,10 @@ def get_rag_response(
     history_text = _load_history_text(chat_session_id)
 
     # MyHeartCoach Component detection (see taxonomy.py) — scopes retrieval
-    # and, for components with no grounded content yet, injects a safety
-    # guard instead of letting the LLM answer from general knowledge.
+    # and injects each component's in_scope/out_of_scope prompt block.
+    # nutrition/exercise are grounded in retrieved content; the other 8 are
+    # general-education-only (no clinical specifics, always defer to the
+    # care team) since they have no ingested clinical documents.
     component = detect_query_component(question)
 
     # ============================================================

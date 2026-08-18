@@ -1,16 +1,22 @@
 """
 weekly_eka_scheduler.py — Cron entry point for weekly E/K/A content generation.
 
+Retired 2026-08-12 (pre-taxonomy generator), restored 2026-08-14 on the
+rebuilt, taxonomy-guardrailed generate_weekly_eka.py — see that file's
+docstring and docs/component_taxonomy_contract.md for why.
+
 Runs every Monday at 06:00 via cron:
-    0 6 * * 1 /home/han/miniconda3/bin/python /mnt/ext/bare_NutriChatbot/scripts/weekly_eka_scheduler.py
+    0 6 * * 1 /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python /home/han/Desktop/projects/bare_NutriChatbot/scripts/weekly_eka_scheduler.py >> /home/han/Desktop/projects/bare_NutriChatbot/logs/weekly_eka.log 2>&1
 
 What it does each Monday:
   1. Deletes expired EKA materials (expires_at < now, set to created_at + 14 days)
      → materials generated 2 weeks ago are removed on this run
   2. Checks if content for THIS week already exists (idempotent — won't regenerate unless --force)
   3. Generates all 21 E/K/A items (7 groups × 3 types, 4-week topic rotation)
-  4. Saves to DB (is_active=False pending admin review)
-  5. Exports Excel to materials/ for the design team
+  4. Saves to DB (is_active=False pending admin review — nothing here reaches a patient
+     until a human calls POST /content/materials/{id}/approve)
+  5. Exports Excel to materials/ for the design team, and is browsable at
+     https://docs-api.computationalrd.com/eka-review (X-API-Key gated)
 
 Expiry lifecycle example:
   Mon week 22: cleanup (nothing old) → generate week 22 (expires_at = +14 days = end of week 23)

@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EKA Content Review</title>
+<style>
+  :root {
+    --bg: #F2F5F3;
+    --surface: #FFFFFF;
+    --surface-2: #E7EDEA;
+    --border: #D7DFDB;
+    --text: #16211D;
+    --text-dim: #5C6A64;
+    --accent: #0E6B5C;
+    --accent-soft: #DCEEE8;
+    --warn: #8A5E10;
+    --warn-soft: #F3E4C2;
+    --danger: #A5362B;
+    --danger-soft: #F5D9D4;
+    --good: #2F7A4C;
+    --good-soft: #DCEEE1;
+    --cat-exercise: #B5502E;
+    --cat-exercise-soft: #F3E1D8;
+    --cat-knowledge: #33538F;
+    --cat-knowledge-soft: #DEE6F2;
+    --cat-activity: var(--accent);
+    --cat-activity-soft: var(--accent-soft);
+    --shadow: 0 1px 2px rgba(20, 30, 26, 0.06), 0 8px 20px -12px rgba(20, 30, 26, 0.18);
+    --radius: 10px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101513; --surface: #171F1D; --surface-2: #1D2825; --border: #29332F;
+      --text: #E8EFEB; --text-dim: #93A19B; --accent: #4FBFA6; --accent-soft: rgba(79,191,166,.16);
+      --warn: #E0AC4C; --warn-soft: rgba(224,172,76,.16);
+      --danger: #E2726A; --danger-soft: rgba(226,114,106,.16);
+      --good: #63C084; --good-soft: rgba(99,192,132,.16);
+      --cat-exercise: #E39169; --cat-exercise-soft: rgba(227,145,105,.16);
+      --cat-knowledge: #8AA6E3; --cat-knowledge-soft: rgba(138,166,227,.16);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  header.page { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1 { font-size: clamp(24px, 3vw, 32px); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+  .lede { max-width: 66ch; color: var(--text-dim); font-size: 15px; }
+  code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+  .callout { display: flex; gap: 12px; align-items: flex-start; padding: 13px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); font-size: 13.5px; color: var(--text-dim); max-width: 84ch; }
+  .callout b { color: var(--text); font-weight: 600; }
+  .callout .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; background: var(--warn); }
+
+  .filterbar { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 16px 0 12px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border); }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .scrollrow { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+
+  .tab { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); cursor: pointer; }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+  .tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #F4FBF9; font-weight: 600; }
+
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  .seg button { font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 7px 13px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; border-right: 1px solid var(--border); }
+  .seg button:last-child { border-right: none; }
+  .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }
+
+  .chip { font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  .search { flex: 1 1 220px; min-width: 180px; position: relative; }
+  .search input { width: 100%; font-family: var(--sans); font-size: 13.5px; padding: 8px 12px 8px 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+  .search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); opacity: .5; }
+
+  .toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); cursor: pointer; user-select: none; padding: 6px 4px; }
+  .toggle input { accent-color: var(--accent); width: 14px; height: 14px; }
+
+  button.iconbtn { font-family: var(--sans); font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); cursor: pointer; }
+  button.iconbtn:hover { border-color: var(--accent); color: var(--text); }
+
+  .summary { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--text-dim); padding: 14px 0 18px; }
+  .summary .count { font-size: 13px; color: var(--text); font-weight: 600; }
+  .summary .stat { display: inline-flex; align-items: center; gap: 5px; }
+  .swatch { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--cat-border, var(--border)); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+  .card-head { display: flex; flex-direction: column; gap: 6px; }
+  .card-tags { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 700; padding: 2px 7px; border-radius: 5px; }
+  .tag.group { background: var(--surface-2); color: var(--text-dim); }
+  .tag.status-pending { background: var(--warn-soft); color: var(--warn); }
+  .tag.status-approved { background: var(--good-soft); color: var(--good); }
+  .tag.status-expired { background: var(--danger-soft); color: var(--danger); }
+
+  .card h3 { margin: 0; font-size: 16px; line-height: 1.3; font-weight: 650; text-wrap: balance; }
+  .card .topic-slug { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+
+  .card-body { display: flex; flex-direction: column; gap: 11px; }
+  .field { display: flex; flex-direction: column; gap: 3px; }
+  .field-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--text-dim); }
+  .field-value { font-size: 13.5px; color: var(--text); }
+  .field-value.prose { line-height: 1.55; }
+
+  .stat-row { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+  .stat-row .field { flex: 0 0 auto; }
+
+  ol.steps, ul.bullets { margin: 0; padding-left: 18px; font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
+  ul.bullets { list-style: disc; }
+
+  .lp-list { display: flex; flex-direction: column; gap: 10px; }
+  .lp { padding: 9px 11px; background: var(--surface-2); border-radius: 7px; display: flex; flex-direction: column; gap: 3px; }
+  .lp-point { font-size: 13.5px; font-weight: 650; }
+  .lp-explain { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+  .lp-why { font-size: 12px; color: var(--text-dim); font-style: italic; }
+  .lp-why b { font-style: normal; color: var(--text); }
+
+  .kv-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 13px; }
+  .kv-grid dt { font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); padding-top: 1px; }
+  .kv-grid dd { margin: 0; }
+
+  .empty-state, .loading-state, .error-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-dim); font-size: 14px; }
+  .empty-state .big, .error-state .big { font-size: 15px; color: var(--text); font-weight: 600; margin-bottom: 4px; }
+  .error-state .big { color: var(--danger); }
+
+  /* ---------- Actions / editing ---------- */
+  .reviewer { display: flex; align-items: center; gap: 6px; }
+  .reviewer label { font-size: 12.5px; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+  .reviewer input { font-family: var(--sans); font-size: 12.5px; padding: 6px 9px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 130px; }
+  .reviewer input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 4px; border-top: 1px solid var(--border); margin-top: 2px; }
+  .abtn { font-family: var(--sans); font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); cursor: pointer; }
+  .abtn:hover { border-color: var(--accent); color: var(--text); }
+  .abtn.primary { background: var(--accent); border-color: var(--accent); color: #F4FBF9; }
+  .abtn.primary:hover { opacity: .92; }
+  .abtn.danger-outline { color: var(--danger); border-color: var(--danger-soft); }
+  .abtn.danger-outline:hover { border-color: var(--danger); }
+  .abtn:disabled { opacity: .5; cursor: default; }
+  .card-msg { font-size: 12px; color: var(--text-dim); }
+  .card-msg.err { color: var(--danger); }
+
+  .edit-input, .edit-textarea { width: 100%; font-family: var(--sans); font-size: 13.5px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; resize: vertical; }
+  .edit-input:focus-visible, .edit-textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .edit-title { font-family: var(--sans); font-size: 16px; font-weight: 650; width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; color: var(--text); }
+  .lp-edit { display: flex; flex-direction: column; gap: 6px; }
+  .lp-edit .edit-input, .lp-edit .edit-textarea { font-size: 13px; }
+  .lp-static { font-size: 12.5px; color: var(--text-dim); }
+
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-dim); font-family: var(--mono); display: flex; flex-direction: column; gap: 4px; }
+
+  /* ---------- API key gate ---------- */
+  #gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  #gate .box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 26px; max-width: 380px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  #gate h2 { margin: 0; font-size: 17px; }
+  #gate p { margin: 0; font-size: 13.5px; color: var(--text-dim); }
+  #gate input { font-family: var(--mono); font-size: 13.5px; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 100%; }
+  #gate input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  #gate button { font-family: var(--sans); font-weight: 600; font-size: 13.5px; padding: 9px 14px; border-radius: 8px; border: none; background: var(--accent); color: #F4FBF9; cursor: pointer; }
+  #gate .err { color: var(--danger); font-size: 12.5px; display: none; }
+  #gate.hidden { display: none; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <h2>EKA Content Review</h2>
+    <p>Enter the docs-api key to load this week's draft Exercise / Knowledge / Activity content.</p>
+    <input type="password" id="gateKey" placeholder="X-API-Key" autocomplete="off" />
+    <div class="err" id="gateErr">Invalid key — try again.</div>
+    <button id="gateSubmit">Continue</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="page">
+    <div class="eyebrow">MyHeartCoach — Weekly Content Pipeline</div>
+    <h1>EKA Content Review</h1>
+    <p class="lede">This week's Exercise / Knowledge / Activity drafts, generated every Monday 06:00 and shown here live from the database — nothing is delivered to a patient until a human approves it.</p>
+    <div class="callout">
+      <span class="dot"></span>
+      <div>Approve, unapprove, or edit any item right here — anyone with the page link and the API key can. Nothing reaches a patient until an item is approved. There's no per-person login behind this key, so each action is logged with whatever name is entered below (not verified) for a lightweight audit trail. Items expire and are removed automatically 14 days after generation.</div>
+    </div>
+  </header>
+
+  <div class="filterbar">
+    <div class="row scrollrow" id="weekTabs"></div>
+    <div class="row">
+      <div class="seg" id="categorySeg"></div>
+      <div class="row scrollrow" id="groupChips" style="flex:1 1 auto;"></div>
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="Search title, topic, group…" autocomplete="off" />
+      </div>
+      <label class="toggle"><input type="checkbox" id="includeExpired" /> Include expired</label>
+      <button class="iconbtn" id="refreshBtn">↻ Refresh</button>
+    </div>
+    <div class="row">
+      <div class="reviewer">
+        <label for="reviewerName">Reviewing as</label>
+        <input type="text" id="reviewerName" placeholder="your name" autocomplete="off" />
+      </div>
+    </div>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <main class="grid" id="grid"><div class="loading-state">Loading…</div></main>
+
+  <footer>
+    <span>eka-review · source: content_materials (live) · generated by scripts/generate_weekly_eka.py</span>
+    <span>Historical Weeks 22-25 archive (pre-taxonomy generator): see the team's shared EKA Content Review artifact link.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var GROUP_ORDER = ["T2DM", "HTN", "CKD", "Cardiac", "PCOS", "Dyslipidaemia", "General"];
+  var CATEGORIES = ["Exercise", "Knowledge", "Activity"];
+  var CAT_COLORS = { Exercise: "var(--cat-exercise)", Knowledge: "var(--cat-knowledge)", Activity: "var(--cat-activity)" };
+  var KEY_STORAGE = "eka_review_api_key";
+  var REVIEWER_STORAGE = "eka_review_reviewer_name";
+
+  var state = { week: null, category: "All", groups: new Set(), query: "", includeExpired: false };
+  var ALL_ITEMS = [];
+
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    attrs = attrs || {};
+    for (var k in attrs) {
+      if (k === "text") e.textContent = attrs[k];
+      else if (k === "html") e.innerHTML = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    (children || []).forEach(function (c) { if (c) e.appendChild(c); });
+    return e;
+  }
+
+  function prettyLabel(key) {
+    return key.replace(/_/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  // ---------- API key gate ----------
+  function getKey() { return localStorage.getItem(KEY_STORAGE) || ""; }
+  function setKey(k) { localStorage.setItem(KEY_STORAGE, k); }
+  function showGate(errMsg) {
+    document.getElementById("gate").classList.remove("hidden");
+    var err = document.getElementById("gateErr");
+    if (errMsg) { err.textContent = errMsg; err.style.display = "block"; } else { err.style.display = "none"; }
+  }
+  function hideGate() { document.getElementById("gate").classList.add("hidden"); }
+
+  document.getElementById("gateSubmit").addEventListener("click", submitKey);
+  document.getElementById("gateKey").addEventListener("keydown", function (e) { if (e.key === "Enter") submitKey(); });
+  function submitKey() {
+    var k = document.getElementById("gateKey").value.trim();
+    if (!k) return;
+    setKey(k);
+    loadData();
+  }
+
+  // ---------- Reviewer name ----------
+  var reviewerInput = document.getElementById("reviewerName");
+  reviewerInput.value = localStorage.getItem(REVIEWER_STORAGE) || "";
+  reviewerInput.addEventListener("input", function (e) {
+    localStorage.setItem(REVIEWER_STORAGE, e.target.value);
+  });
+  function getReviewer() { return reviewerInput.value.trim() || null; }
+
+  // ---------- Write actions ----------
+  function apiPost(path, body) {
+    return fetch(path, {
+      method: "POST",
+      headers: { "X-API-Key": getKey(), "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    }).then(function (res) {
+      if (res.status === 401) { localStorage.removeItem(KEY_STORAGE); showGate("Invalid key — try again."); throw new Error("unauthorized"); }
+      if (!res.ok) return res.json().then(function (e) { throw new Error(e.detail || ("HTTP " + res.status)); }).catch(function (e) { throw e instanceof Error ? e : new Error("HTTP " + res.status); });
+      return res.json();
+    });
+  }
+
+  function updateItemInPlace(updated) {
+    for (var i = 0; i < ALL_ITEMS.length; i++) {
+      if (ALL_ITEMS[i].id === updated.id) { ALL_ITEMS[i] = updated; return; }
+    }
+  }
+
+  function refreshCardAndSummary(oldCardEl, updatedItem) {
+    updateItemInPlace(updatedItem);
+    var newCard = buildCard(updatedItem);
+    oldCardEl.replaceWith(newCard);
+    var weekItems = ALL_ITEMS.filter(function (m) { return m.week_number === state.week; });
+    renderSummary(weekItems, weekItems.filter(matchesFilters).length);
+  }
+
+  // ---------- Data loading ----------
+  function loadData() {
+    var key = getKey();
+    if (!key) { showGate(); return; }
+    document.getElementById("grid").innerHTML = '<div class="loading-state">Loading…</div>';
+    var qs = state.includeExpired ? "?include_expired=true" : "";
+    fetch("/eka-review/data" + qs, { headers: { "X-API-Key": key } })
+      .then(function (res) {
+        if (res.status === 401) { localStorage.removeItem(KEY_STORAGE); showGate("Invalid key — try again."); throw new Error("unauthorized"); }
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        hideGate();
+        ALL_ITEMS = data.materials || [];
+        if (state.week === null) {
+          var weeks = Array.from(new Set(ALL_ITEMS.map(function (m) { return m.week_number; }))).sort(function (a, b) { return b - a; });
+          state.week = weeks.length ? weeks[0] : null;
+        }
+        buildWeekTabs();
+        buildGroupChips();
+        render();
+      })
+      .catch(function (e) {
+        if (e.message === "unauthorized") return;
+        document.getElementById("grid").innerHTML = "";
+        document.getElementById("grid").appendChild(el("div", { class: "error-state" }, [
+          el("div", { class: "big", text: "Couldn't load content" }),
+          el("div", { text: String(e.message || e) }),
+        ]));
+      });
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", loadData);
+  document.getElementById("includeExpired").addEventListener("change", function (e) {
+    state.includeExpired = e.target.checked;
+    loadData();
+  });
+  document.getElementById("searchInput").addEventListener("input", function (e) {
+    state.query = e.target.value.trim().toLowerCase();
+    render();
+  });
+
+  function buildWeekTabs() {
+    var wrap = document.getElementById("weekTabs");
+    wrap.innerHTML = "";
+    var weeks = Array.from(new Set(ALL_ITEMS.map(function (m) { return m.week_number; }))).sort(function (a, b) { return b - a; });
+    if (weeks.length === 0) {
+      wrap.appendChild(el("span", { style: "font-family:var(--mono);font-size:12.5px;color:var(--text-dim);padding:7px 0;", text: "No content in the database yet" }));
+      return;
+    }
+    weeks.forEach(function (w) {
+      var count = ALL_ITEMS.filter(function (m) { return m.week_number === w; }).length;
+      var t = el("button", { class: "tab", "aria-pressed": String(w === state.week), text: "Week " + w + " · " + count });
+      t.addEventListener("click", function () {
+        state.week = w;
+        Array.prototype.forEach.call(wrap.children, function (c) { c.setAttribute("aria-pressed", "false"); });
+        t.setAttribute("aria-pressed", "true");
+        render();
+      });
+      wrap.appendChild(t);
+    });
+  }
+
+  function buildCategorySeg() {
+    var wrap = document.getElementById("categorySeg");
+    ["All"].concat(CATEGORIES).forEach(function (cat) {
+      var b = el("button", { "aria-pressed": String(cat === state.category), text: cat });
+      b.addEventListener("click", function () {
+        state.category = cat;
+        Array.prototype.forEach.call(wrap.children, function (c) { c.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+        render();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  function buildGroupChips() {
+    var wrap = document.getElementById("groupChips");
+    wrap.innerHTML = "";
+    state.groups = new Set();
+    var present = new Set(ALL_ITEMS.map(function (m) { return m.condition_group; }));
+    GROUP_ORDER.filter(function (g) { return present.has(g); }).forEach(function (g) {
+      var c = el("button", { class: "chip", "aria-pressed": "false", text: g });
+      c.addEventListener("click", function () {
+        if (state.groups.has(g)) { state.groups.delete(g); c.setAttribute("aria-pressed", "false"); }
+        else { state.groups.add(g); c.setAttribute("aria-pressed", "true"); }
+        render();
+      });
+      wrap.appendChild(c);
+    });
+  }
+
+  // ---------- Field rendering ----------
+  function isLearningPointList(arr) {
+    return arr.length > 0 && typeof arr[0] === "object" && arr[0] !== null && !Array.isArray(arr[0]) && ("point" in arr[0]);
+  }
+  function isCatalogHighlightList(arr) {
+    return arr.length > 0 && typeof arr[0] === "object" && arr[0] !== null && !Array.isArray(arr[0]) && ("why_it_helps" in arr[0]);
+  }
+
+  function renderLearningPoints(arr) {
+    var box = el("div", { class: "lp-list" });
+    arr.forEach(function (lp) {
+      var item = el("div", { class: "lp" });
+      item.appendChild(el("div", { class: "lp-point", text: lp.point || lp.title || "" }));
+      if (lp.explanation) item.appendChild(el("div", { class: "lp-explain", text: lp.explanation }));
+      if (lp.why_it_matters) {
+        var why = el("div", { class: "lp-why" });
+        why.appendChild(el("b", { text: "Why it matters: " }));
+        why.appendChild(document.createTextNode(lp.why_it_matters));
+        item.appendChild(why);
+      }
+      box.appendChild(item);
+    });
+    return box;
+  }
+
+  function renderCatalogHighlights(arr) {
+    var box = el("div", { class: "lp-list" });
+    arr.forEach(function (h) {
+      var item = el("div", { class: "lp" });
+      item.appendChild(el("div", { class: "lp-point", text: h.title || "" }));
+      if (h.why_it_helps) item.appendChild(el("div", { class: "lp-explain", text: h.why_it_helps }));
+      var meta = [h.type, h.intensity_tier, h.body_focus, h.video_duration].filter(Boolean).join(" · ");
+      if (meta) item.appendChild(el("div", { class: "lp-why", text: meta }));
+      box.appendChild(item);
+    });
+    return box;
+  }
+
+  function renderValue(value) {
+    if (Array.isArray(value)) {
+      if (isLearningPointList(value)) return renderLearningPoints(value);
+      if (isCatalogHighlightList(value)) return renderCatalogHighlights(value);
+      var listTag = value.length > 1 ? "ol" : "ul";
+      var list = el(listTag, { class: listTag === "ol" ? "steps" : "bullets" });
+      value.forEach(function (v) { list.appendChild(el("li", { text: typeof v === "string" ? v : JSON.stringify(v) })); });
+      return list;
+    }
+    if (value !== null && typeof value === "object") {
+      var dl = el("dl", { class: "kv-grid" });
+      Object.keys(value).forEach(function (k) { dl.appendChild(el("dt", { text: k })); dl.appendChild(el("dd", { text: String(value[k]) })); });
+      return dl;
+    }
+    return el("div", { class: "field-value prose", text: String(value) });
+  }
+
+  // ---------- Edit-mode form builders ----------
+  // Each returns {el, collect()} — collect() re-reads the live form and
+  // returns the value in the same shape it was given, so Save can never
+  // change a field's type, only its text.
+  function makeTextarea(cls, value, rows) {
+    var ta = document.createElement("textarea");
+    ta.className = cls;
+    ta.value = value == null ? "" : String(value);
+    ta.rows = rows || Math.min(8, Math.max(2, Math.ceil(String(value || "").length / 60)));
+    return ta;
+  }
+  function makeInput(cls, value) {
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.className = cls;
+    inp.value = value == null ? "" : String(value);
+    return inp;
+  }
+
+  function buildLearningPointsEditor(arr) {
+    var box = el("div", { class: "lp-list" });
+    var itemCollectors = [];
+    arr.forEach(function (lp) {
+      var item = el("div", { class: "lp lp-edit" });
+      var pointInput = makeInput("edit-input", lp.point || "");
+      var explainTa = makeTextarea("edit-textarea", lp.explanation || "");
+      var whyTa = makeTextarea("edit-textarea", lp.why_it_matters || "");
+      item.appendChild(pointInput);
+      item.appendChild(explainTa);
+      item.appendChild(whyTa);
+      box.appendChild(item);
+      itemCollectors.push(function () {
+        return { point: pointInput.value, explanation: explainTa.value, why_it_matters: whyTa.value };
+      });
+    });
+    return { el: box, collect: function () { return itemCollectors.map(function (fn) { return fn(); }); } };
+  }
+
+  function buildCatalogHighlightsEditor(arr) {
+    var box = el("div", { class: "lp-list" });
+    var itemCollectors = [];
+    arr.forEach(function (h) {
+      var item = el("div", { class: "lp lp-edit" });
+      var meta = [h.type, h.intensity_tier, h.body_focus, h.video_duration].filter(Boolean).join(" · ");
+      item.appendChild(el("div", { class: "lp-static", text: (h.title || "") + (meta ? " — " + meta : "") + " (from the approved catalog, not editable)" }));
+      var whyTa = makeTextarea("edit-textarea", h.why_it_helps || "");
+      item.appendChild(whyTa);
+      box.appendChild(item);
+      itemCollectors.push(function () {
+        var copy = Object.assign({}, h);
+        copy.why_it_helps = whyTa.value;
+        return copy;
+      });
+    });
+    return { el: box, collect: function () { return itemCollectors.map(function (fn) { return fn(); }); } };
+  }
+
+  function buildFieldEditor(value) {
+    if (Array.isArray(value)) {
+      if (isLearningPointList(value)) return buildLearningPointsEditor(value);
+      if (isCatalogHighlightList(value)) return buildCatalogHighlightsEditor(value);
+      var ta = makeTextarea("edit-textarea", value.map(function (v) { return typeof v === "string" ? v : JSON.stringify(v); }).join("\n"), Math.max(2, value.length));
+      return { el: ta, collect: function () { return ta.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean); } };
+    }
+    if (value !== null && typeof value === "object") {
+      var box = el("div", { class: "kv-grid" });
+      var subCollectors = [];
+      Object.keys(value).forEach(function (subKey) {
+        box.appendChild(el("dt", { text: subKey }));
+        var subTa = makeTextarea("edit-textarea", value[subKey]);
+        var dd = el("dd", {}, [subTa]);
+        box.appendChild(dd);
+        subCollectors.push(function () { return [subKey, subTa.value]; });
+      });
+      return {
+        el: box,
+        collect: function () {
+          var out = {};
+          subCollectors.forEach(function (fn) { var kv = fn(); out[kv[0]] = kv[1]; });
+          return out;
+        },
+      };
+    }
+    var ta2 = makeTextarea("edit-textarea", value);
+    return { el: ta2, collect: function () { return ta2.value; } };
+  }
+
+  function buildEditForm(fields) {
+    var body = el("div", { class: "card-body" });
+    var collectors = [];
+    Object.keys(fields || {}).forEach(function (key) {
+      var editor = buildFieldEditor(fields[key]);
+      body.appendChild(el("div", { class: "field" }, [el("div", { class: "field-label", text: prettyLabel(key) }), editor.el]));
+      collectors.push(function () { return [key, editor.collect()]; });
+    });
+    return {
+      el: body,
+      collect: function () {
+        var out = {};
+        collectors.forEach(function (fn) { var kv = fn(); out[kv[0]] = kv[1]; });
+        return out;
+      },
+    };
+  }
+
+  var SHORT_SCALAR_KEYS = new Set(["exercise_type", "duration_min", "frequency_per_week", "intensity", "task_name", "tracking_method", "weekly_goal"]);
+
+  function renderCardBody(fields) {
+    var body = el("div", { class: "card-body" });
+    var statRow = null;
+    Object.keys(fields || {}).forEach(function (key) {
+      var value = fields[key];
+      if (SHORT_SCALAR_KEYS.has(key) && typeof value !== "object") {
+        if (!statRow) { statRow = el("div", { class: "stat-row" }); body.appendChild(statRow); }
+        statRow.appendChild(el("div", { class: "field" }, [
+          el("div", { class: "field-label", text: prettyLabel(key) }),
+          el("div", { class: "field-value", text: String(value) }),
+        ]));
+        return;
+      }
+      var wrapper = el("div", { class: "field" }, [el("div", { class: "field-label", text: prettyLabel(key) }), renderValue(value)]);
+      body.appendChild(wrapper);
+    });
+    return body;
+  }
+
+  function statusTag(item) {
+    if (item.is_expired) return el("span", { class: "tag status-expired", text: "expired" });
+    if (item.is_active) return el("span", { class: "tag status-approved", text: "✓ approved" });
+    return el("span", { class: "tag status-pending", text: "pending review" });
+  }
+
+  function buildCard(item) {
+    var category = item.content_type_label;
+    var card = el("div", { class: "card" });
+    card.style.setProperty("--cat-border", "var(--cat-" + category.toLowerCase() + ")");
+
+    var tags = el("div", { class: "card-tags" }, [
+      el("span", { class: "tag group", text: item.condition_group }),
+      el("span", { class: "tag", style: "background:var(--cat-" + category.toLowerCase() + "-soft);color:var(--cat-" + category.toLowerCase() + ")", text: category }),
+      statusTag(item),
+    ]);
+
+    var titleEl = el("h3", { text: item.title });
+    var head = el("div", { class: "card-head" }, [
+      tags,
+      titleEl,
+      el("div", { class: "topic-slug", text: "week " + item.week_number + " · " + item.topic }),
+    ]);
+
+    var bodyEl = renderCardBody(item.content);
+    var msg = el("div", { class: "card-msg" });
+
+    var approveBtn = el("button", { class: "abtn primary", text: "✓ Approve" });
+    var unapproveBtn = el("button", { class: "abtn danger-outline", text: "Unapprove" });
+    var editBtn = el("button", { class: "abtn", text: "Edit" });
+    var actions = el("div", { class: "card-actions" }, [item.is_active ? unapproveBtn : approveBtn, editBtn, msg]);
+
+    card.appendChild(head);
+    card.appendChild(bodyEl);
+    card.appendChild(actions);
+
+    function setBusy(busy, text) {
+      approveBtn.disabled = busy; unapproveBtn.disabled = busy; editBtn.disabled = busy;
+      msg.classList.remove("err");
+      msg.textContent = text || "";
+    }
+
+    approveBtn.addEventListener("click", function () {
+      setBusy(true, "Approving…");
+      apiPost("/eka-review/materials/" + item.id + "/approve", { reviewer: getReviewer() })
+        .then(function (updated) { refreshCardAndSummary(card, updated); })
+        .catch(function (e) { if (e.message !== "unauthorized") { setBusy(false, "Failed: " + e.message); msg.classList.add("err"); } });
+    });
+    unapproveBtn.addEventListener("click", function () {
+      setBusy(true, "Unapproving…");
+      apiPost("/eka-review/materials/" + item.id + "/unapprove", { reviewer: getReviewer() })
+        .then(function (updated) { refreshCardAndSummary(card, updated); })
+        .catch(function (e) { if (e.message !== "unauthorized") { setBusy(false, "Failed: " + e.message); msg.classList.add("err"); } });
+    });
+
+    editBtn.addEventListener("click", function () {
+      var titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.className = "edit-title";
+      titleInput.value = item.title;
+      titleEl.replaceWith(titleInput);
+
+      var form = buildEditForm(item.content);
+      bodyEl.replaceWith(form.el);
+
+      var saveBtn = el("button", { class: "abtn primary", text: "Save" });
+      var cancelBtn = el("button", { class: "abtn", text: "Cancel" });
+      var editMsg = el("div", { class: "card-msg" });
+      var newActions = el("div", { class: "card-actions" }, [saveBtn, cancelBtn, editMsg]);
+      actions.replaceWith(newActions);
+
+      cancelBtn.addEventListener("click", function () {
+        var freshCard = buildCard(item);
+        card.replaceWith(freshCard);
+      });
+      saveBtn.addEventListener("click", function () {
+        saveBtn.disabled = true; cancelBtn.disabled = true;
+        editMsg.textContent = "Saving…"; editMsg.classList.remove("err");
+        apiPost("/eka-review/materials/" + item.id + "/content", {
+          content: form.collect(),
+          title: titleInput.value.trim() || item.title,
+          reviewer: getReviewer(),
+        })
+          .then(function (updated) { refreshCardAndSummary(card, updated); })
+          .catch(function (e) {
+            if (e.message === "unauthorized") return;
+            saveBtn.disabled = false; cancelBtn.disabled = false;
+            editMsg.textContent = "Failed: " + e.message; editMsg.classList.add("err");
+          });
+      });
+    });
+
+    return card;
+  }
+
+  // ---------- Render ----------
+  function matchesFilters(item) {
+    if (item.week_number !== state.week) return false;
+    if (state.category !== "All" && item.content_type_label !== state.category) return false;
+    if (state.groups.size > 0 && !state.groups.has(item.condition_group)) return false;
+    if (state.query) {
+      var hay = (item.title + " " + item.topic + " " + item.condition_group + " " + item.content_type_label + " " + JSON.stringify(item.content)).toLowerCase();
+      if (hay.indexOf(state.query) === -1) return false;
+    }
+    return true;
+  }
+
+  function renderSummary(weekItems, shown) {
+    var s = document.getElementById("summary");
+    s.innerHTML = "";
+    s.appendChild(el("span", { class: "count", text: shown + " of " + weekItems.length + " items shown" }));
+    CATEGORIES.forEach(function (cat) {
+      var n = weekItems.filter(function (it) { return it.content_type_label === cat; }).length;
+      s.appendChild(el("span", { class: "stat" }, [el("span", { class: "swatch", style: "background:" + CAT_COLORS[cat] }), document.createTextNode(cat + " " + n)]));
+    });
+    var approved = weekItems.filter(function (it) { return it.is_active; }).length;
+    s.appendChild(el("span", { class: "stat", text: approved + " approved" }));
+  }
+
+  function render() {
+    var grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    var weekItems = ALL_ITEMS.filter(function (m) { return m.week_number === state.week; });
+    var items = weekItems.filter(matchesFilters);
+    renderSummary(weekItems, items.length);
+
+    if (items.length === 0) {
+      grid.appendChild(el("div", { class: "empty-state" }, [
+        el("div", { class: "big", text: "No items match these filters" }),
+        el("div", { text: "Try clearing the search, category, or group filters, or pick another week." }),
+      ]));
+      return;
+    }
+    items.forEach(function (item) { grid.appendChild(buildCard(item)); });
+  }
+
+  buildCategorySeg();
+  var saved = getKey();
+  if (saved) loadData(); else showGate();
+})();
+</script>
+</body>
+</html>

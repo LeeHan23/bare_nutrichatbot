@@ -136,7 +136,13 @@ def _build_qwen_prompt(question, patient_context, digest, profile, is_patient_se
     """Ported verbatim (minus food_context/history_text, both empty here since
     there's no extractor/chat-history DB to draw from) from rag.py's
     _build_qwen_prompt()."""
-    parts = ["You are NutriBot, a clinical nutrition assistant for Malaysian cardiac patients.\n"]
+    parts = [
+        "You are NutriBot, a clinical support assistant for Malaysian cardiac patients. "
+        "Nutrition and dietary guidance is your area of deepest expertise. For other topics "
+        "(blood pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, "
+        "psychosocial wellbeing, medication, or general heart-disease education), the "
+        "Component Scope section below (when present) tells you exactly what you may say.\n"
+    ]
 
     if patient_context:
         level = profile.get("personalization_level") if profile else None

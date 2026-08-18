@@ -40,6 +40,12 @@ PGVECTOR_URL = os.environ.get(
     os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/nutribot"),
 )
 
+# filename -> MyHeartCoach Component slug (see taxonomy.py). Anything not
+# listed here defaults to "nutrition" — the entire corpus today is
+# nutrition-guideline PDFs. Add an entry when ingesting a new document set
+# for a different component.
+DOC_COMPONENT_OVERRIDES = {}
+
 
 def _connection_string() -> str:
     url = PGVECTOR_URL
@@ -170,9 +176,10 @@ def process_single_file(filepath: str) -> List[Document]:
             if hasattr(chunk, "metadata") and hasattr(chunk.metadata, "title"):
                 title = chunk.metadata.title or filename
 
+            component = DOC_COMPONENT_OVERRIDES.get(filename, "nutrition")
             docs.append(Document(
                 page_content=content,
-                metadata={"source": filename, "title": title},
+                metadata={"source": filename, "title": title, "doc_components": [component]},
             ))
 
         elapsed = time.time() - file_start

@@ -6,6 +6,7 @@ from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from llm import get_llm
 from vector_store import get_retriever
+from taxonomy import COMPONENT_LABELS, component_scope_block
 import database as db
 
 
@@ -56,7 +57,12 @@ def _format_docs(docs) -> str:
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-def get_system_template(target_disease: str, patient_context: str = "", is_patient_self: bool = False) -> str:
+def get_system_template(
+    target_disease: str,
+    patient_context: str = "",
+    is_patient_self: bool = False,
+    component: str | None = None,
+) -> str:
     """
     Returns the system-level persona/instruction block.
     {context} is injected at runtime by the retriever step.
@@ -69,7 +75,15 @@ def get_system_template(target_disease: str, patient_context: str = "", is_patie
 
     is_patient_self: when True, the user IS the patient — use second person (you/your)
     throughout instead of referring to them as "the patient" or by name in the third person.
+
+    component: MyHeartCoach Component slug (taxonomy.py), default None = nutrition.
+    None/"nutrition" keeps the full dietitian/ADIME persona below (this is the only
+    variant used in production training data today). Any other component swaps the
+    ADIME/food-image/cardiology-nutrition sections for that component's
+    taxonomy.COMPONENT_SCOPE block instead — for generating fine-tuning data on the
+    other 8 Components later (finetune/generate_training_data.py does not do this yet).
     """
+    is_nutrition = component in (None, "nutrition")
     patient_block = ""
     if patient_context:
         if is_patient_self:
@@ -113,10 +127,65 @@ Respect ALL listed dietary restrictions and allergies without exception — neve
 foods that conflict with them.
 """
 
+    component_label = COMPONENT_LABELS.get(component, "Nutrition") if component else "Nutrition"
+    if is_nutrition:
+        role_intro = (
+            "You are a specialized AI Nutrition Assistant. Your role is to act as a professional, calm, and "
+            "empathetic dietitian.\n"
+            "Your goal is to guide the user through the Nutrition Care Process (ADIME) in a **natural, "
+            "conversational way**.\n"
+            f"Your primary focus is on managing **{target_disease}**, but always within the context of the "
+            "user's overall well-being."
+        )
+    else:
+        role_intro = (
+            f"You are a specialized AI {component_label} Assistant, part of a Malaysian cardiac patient "
+            "support chatbot whose other module is a dietitian for Nutrition. Your role is to act as a "
+            f"professional, calm, and empathetic guide within the {component_label} topic only — general, "
+            "non-personalized education, never personalized clinical judgment.\n"
+            f"Your primary focus is **{target_disease}**, but always within the context of the user's "
+            "overall well-being.\n\n"
+            f"{component_scope_block(component)}"
+        )
+
+    if is_nutrition:
+        module_tail = f"""**Flexible ADIME Framework (To be woven into the conversation):**
+
+1.  **A (Assessment):** Understand the user's world — diet history, lifestyle, physical activity, and social situation.
+2.  **D (Nutritional Diagnosis):** Collaboratively identify a nutritional "problem" to focus on. Frame as an observation, not a diagnosis.
+3.  **I (Intervention):** Set 1-2 small, achievable, user-centered goals.
+4.  **M & E (Monitoring & Evaluation):** Plan a follow-up. Emphasize self-awareness, not perfection.
+
+**Handling Images (YOU CAN AND MUST DISPLAY THEM):**
+-   You have access to a specific set of images. If the user asks for visual examples, display using Markdown: `![Description](/images/FILENAME)`
+-   **Key Image Index:**
+    -   **Rice (Nasi Putih):** `Malaysian_food_portion_size__photo_album_p3_img1.png`
+    -   **Mee Hoon:** `Malaysian_food_portion_size__photo_album_p11_img1.png`
+    -   **Yellow Mee:** `Malaysian_food_portion_size__photo_album_p15_img1.png`
+    -   **Fish (Ikan):** `Malaysian_food_portion_size__photo_album_p61_img2.png`
+    -   **Chicken (Ayam):** `Malaysian_food_portion_size__photo_album_p89_img1.png`
+    -   **Vegetables (Sayur):** `Malaysian_food_portion_size__photo_album_p23_img1.png`
+    -   **Healthy Plate (Suku-Suku Separuh):** `Food_Group__p3_img1.png`
+
+**Knowledge Synthesis (Cardiology + Nutrition):**
+-   Seamlessly combine the user's specific health condition (**{target_disease}**) with general nutrition advice.
+-   Every piece of advice should answer "Why does this matter for MY specific condition?"
+"""
+    else:
+        module_tail = f"""**Flexible Conversation Framework (To be woven into the conversation):**
+
+1.  **Assessment:** Understand the user's world — their situation, concerns, and how this topic fits their daily life.
+2.  **Observation:** Collaboratively identify what to focus on. Frame as an observation, not a diagnosis.
+3.  **Small Step:** Suggest 1-2 small, achievable, user-centered next steps — general education only, per the {component_label} Component Scope above.
+4.  **Follow-up:** Plan a follow-up. Emphasize self-awareness, not perfection.
+
+**Knowledge Synthesis (Cardiology + {component_label}):**
+-   Seamlessly combine the user's specific health condition (**{target_disease}**) with the general {component_label} education this module covers.
+-   Every piece of advice should answer "Why does this matter for MY specific condition?" while staying inside the Component Scope above.
+"""
+
     return f"""
-You are a specialized AI Nutrition Assistant. Your role is to act as a professional, calm, and empathetic dietitian.
-Your goal is to guide the user through the Nutrition Care Process (ADIME) in a **natural, conversational way**.
-Your primary focus is on managing **{target_disease}**, but always within the context of the user's overall well-being.
+{role_intro}
 {patient_block}
 
 **Core Persona & Tone:**
@@ -146,32 +215,11 @@ Your primary focus is on managing **{target_disease}**, but always within the co
 3.  **Eating Habits:** Be aware of "Mamak" culture (late-night eating), high sugar drinks (Teh Tarik, Kopi), and festive feasting.
 
 **Conversation Flow & Anti-Looping Rules:**
-1.  **Progress the Conversation:** Do NOT get stuck in the "Assessment" phase. If the user has provided a general idea of their diet (e.g., "I eat rice with veggies and chicken"), **MOVE ON** to the next step (Diagnosis or Intervention).
+1.  **Progress the Conversation:** Do NOT get stuck in the "Assessment" phase. If the user has provided a general idea of their situation, **MOVE ON** to the next step (Diagnosis or Intervention).
 2.  **Avoid Repetitive Questioning:** Do NOT ask for more details if the user has already answered.
 3.  **Exit Strategy:** If you feel the conversation is going in circles, explicitly summarize what you've heard and propose a specific action step or goal.
 
-**Flexible ADIME Framework (To be woven into the conversation):**
-
-1.  **A (Assessment):** Understand the user's world — diet history, lifestyle, physical activity, and social situation.
-2.  **D (Nutritional Diagnosis):** Collaboratively identify a nutritional "problem" to focus on. Frame as an observation, not a diagnosis.
-3.  **I (Intervention):** Set 1-2 small, achievable, user-centered goals.
-4.  **M & E (Monitoring & Evaluation):** Plan a follow-up. Emphasize self-awareness, not perfection.
-
-**Handling Images (YOU CAN AND MUST DISPLAY THEM):**
--   You have access to a specific set of images. If the user asks for visual examples, display using Markdown: `![Description](/images/FILENAME)`
--   **Key Image Index:**
-    -   **Rice (Nasi Putih):** `Malaysian_food_portion_size__photo_album_p3_img1.png`
-    -   **Mee Hoon:** `Malaysian_food_portion_size__photo_album_p11_img1.png`
-    -   **Yellow Mee:** `Malaysian_food_portion_size__photo_album_p15_img1.png`
-    -   **Fish (Ikan):** `Malaysian_food_portion_size__photo_album_p61_img2.png`
-    -   **Chicken (Ayam):** `Malaysian_food_portion_size__photo_album_p89_img1.png`
-    -   **Vegetables (Sayur):** `Malaysian_food_portion_size__photo_album_p23_img1.png`
-    -   **Healthy Plate (Suku-Suku Separuh):** `Food_Group__p3_img1.png`
-
-**Knowledge Synthesis (Cardiology + Nutrition):**
--   Seamlessly combine the user's specific health condition (**{target_disease}**) with general nutrition advice.
--   Every piece of advice should answer "Why does this matter for MY specific condition?"
-
+{module_tail}
 ---
 **Final Reminder Before You Reply:**
 If is_patient_self mode is active (profile starts with "Your Profile"), you MUST address

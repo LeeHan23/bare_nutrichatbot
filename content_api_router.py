@@ -10,13 +10,20 @@ Endpoints:
   GET  /content/weekly-feed         — this week's E+K+A for given conditions
   GET  /content/patient-feed/{id}   — this week's feed matched to a specific patient
   POST /content/materials/{id}/approve  — mark is_active=True (admin)
-  POST /content/generate-weekly     — trigger generation for current week (admin)
+
+Note: the generator itself (scripts/generate_weekly_eka.py) was retired
+2026-08-12, then restored 2026-08-14 rebuilt on the taxonomy safety
+guardrails (see that script's docstring) and driven by a Monday 06:00 cron
+(scripts/weekly_eka_scheduler.py), not an API trigger. The POST
+/content/generate-weekly admin endpoint that used to trigger it on demand
+was not restored — re-add it here if on-demand generation is needed;
+until then, use the script directly: `python scripts/generate_weekly_eka.py`.
 """
 import os
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 
 import database as db
@@ -264,61 +271,6 @@ def unapprove_material(
     mat.is_active = False
     database.commit()
     return {"status": "unapproved", "material_id": mat.id}
-
-
-# ---------------------------------------------------------------------------
-# POST /content/generate-weekly  (admin — triggers background generation)
-# ---------------------------------------------------------------------------
-
-@router.post("/generate-weekly")
-def trigger_weekly_generation(
-    x_admin_password: str = Header(..., alias="X-Admin-Password"),
-    week_number: Optional[int] = Query(None, description="ISO week (default: current week)"),
-    force:       bool = Query(False, description="Overwrite existing rows"),
-    dry_run:     bool = Query(False),
-    group:       Optional[str] = Query(None),
-    content_type: Optional[str] = Query(None),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
-    client = Depends(get_api_client),
-):
-    """
-    Trigger weekly E/K/A content generation for the current (or specified) week.
-
-    Runs in the background — returns immediately with a job description.
-    Requires X-Admin-Password header.
-
-    Results appear in /content/materials (is_active=False) within ~30-60 min
-    depending on Ollama throughput.
-    """
-    if x_admin_password != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Invalid admin password")
-
-    if week_number is None:
-        week_number = date.today().isocalendar()[1]
-
-    def _run():
-        import sys, os
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from scripts.generate_weekly_eka import generate_weekly_eka  # type: ignore
-        generate_weekly_eka(
-            iso_week=week_number,
-            filter_group=group,
-            filter_type=content_type,
-            dry_run=dry_run,
-            force=force,
-        )
-
-    background_tasks.add_task(_run)
-
-    return {
-        "status":      "started",
-        "week_number": week_number,
-        "dry_run":     dry_run,
-        "force":       force,
-        "group":       group,
-        "content_type": content_type,
-        "message":     "Generation running in background. Check /content/materials to see results.",
-    }
 
 
 # ---------------------------------------------------------------------------

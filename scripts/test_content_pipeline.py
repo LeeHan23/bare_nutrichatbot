@@ -6,12 +6,13 @@ Tests:
   2. first_chat_at tracking — set_first_chat_at is idempotent (second call is a no-op)
   3. Content generation — General group, Day 3 (dry run, no DB writes)
   4. Scheduler dry run — prints due patients and materials, no DB writes
-  5. EKA migration check — content_type and week_number columns exist
-  6. EKA case builder — build_eka_cases returns 21 items covering all 7 groups and 3 types
-  7. EKA generation dry run — weekly_eka_scheduler dry run, no DB writes
-  8. EKA upsert idempotency — upsert_eka_material skips duplicate (group/type/week/topic)
-  9. EKA expiry and cleanup — expires_at set on insert; cleanup_expired_eka_materials deletes only expired
-  10. Content API DB layer — get_materials_by_filters and get_weekly_feed_for_conditions work
+  5. EKA migration check — content_type and week_number columns exist (columns are kept and
+     reused by the taxonomy-driven pipeline even though the LLM-hallucinated weekly
+     generate_weekly_eka.py/weekly_eka_scheduler.py itself was retired — see
+     docs/component_taxonomy_contract.md)
+  6. EKA upsert idempotency — upsert_eka_material skips duplicate (group/type/week/topic)
+  7. EKA expiry and cleanup — expires_at set on insert; cleanup_expired_eka_materials deletes only expired
+  8. Content API DB layer — get_materials_by_filters and get_weekly_feed_for_conditions work
 
 Usage:
     # Run all tests
@@ -19,8 +20,6 @@ Usage:
 
     # Run only EKA tests
     python scripts/test_content_pipeline.py --test eka_migration
-    python scripts/test_content_pipeline.py --test eka_cases
-    python scripts/test_content_pipeline.py --test eka_dry_run
     python scripts/test_content_pipeline.py --test eka_idempotency
     python scripts/test_content_pipeline.py --test eka_api_db
 
@@ -249,73 +248,9 @@ def test_eka_migration():
     return ok1 and ok2
 
 
-def test_eka_cases():
-    """build_eka_cases returns 21 items (7 groups × 3 types) for a given week, all fields present."""
-    print("\n[6] EKA case builder")
-    try:
-        from generate_weekly_eka import build_eka_cases
-        cases = build_eka_cases(22)
-        ok1 = _print_result("21 cases generated", len(cases) == 21, f"got {len(cases)}")
-
-        types  = {c["content_type"] for c in cases}
-        groups = {c["group"] for c in cases}
-        ok2 = _print_result("all 3 types present (E/K/A)", types == {"E", "K", "A"},
-                            f"got {sorted(types)}")
-        ok3 = _print_result("all 7 groups present", len(groups) == 7, f"got {sorted(groups)}")
-
-        required = {"group", "condition_type", "content_type", "week_number",
-                    "topic", "title", "rag_query", "prompt_topic"}
-        # condition_type is not in the dict — the key is condition_tags
-        required = {"group", "content_type", "week_number", "topic", "title", "rag_query", "prompt_topic"}
-        missing_fields = [f for f in required if f not in cases[0]]
-        ok4 = _print_result("required fields present", not missing_fields,
-                            f"missing: {missing_fields}" if missing_fields else "")
-
-        rotation2 = ((22 - 1) % 4) + 1  # should be 2
-        sample = next(c for c in cases if c["group"] == "T2DM" and c["content_type"] == "E")
-        ok5 = _print_result("4-week rotation (week 22 → slot 2)",
-                            sample["topic"] == "resistance_basics",
-                            f"topic={sample['topic']}")
-
-        return ok1 and ok2 and ok3 and ok4 and ok5
-    except Exception as e:
-        return _print_result("build_eka_cases", False, str(e))
-
-
-def test_eka_dry_run():
-    """Run weekly_eka_scheduler in dry-run mode — no DB writes, no Ollama call."""
-    SENTINEL_WEEK = 996  # week that will never have real data
-    print("\n[7] EKA generation dry run")
-    try:
-        # Count before
-        session = _get_session()
-        before = session.query(db_module.ContentMaterial).filter(
-            db_module.ContentMaterial.week_number == SENTINEL_WEEK,
-            db_module.ContentMaterial.content_type.isnot(None),
-        ).count()
-        session.close()
-
-        from weekly_eka_scheduler import run
-        run(dry_run=True, iso_week=SENTINEL_WEEK)
-
-        # Count after — must be identical
-        session = _get_session()
-        after = session.query(db_module.ContentMaterial).filter(
-            db_module.ContentMaterial.week_number == SENTINEL_WEEK,
-            db_module.ContentMaterial.content_type.isnot(None),
-        ).count()
-        session.close()
-
-        ok = _print_result("dry run wrote 0 rows to DB", after == before,
-                           f"before={before} after={after} (no change expected)")
-        return ok
-    except Exception as e:
-        return _print_result("weekly_eka_scheduler dry run", False, str(e))
-
-
 def test_eka_idempotency():
     """upsert_eka_material skips duplicate rows; force=True overwrites."""
-    print("\n[8] EKA upsert idempotency")
+    print("\n[6] EKA upsert idempotency")
     session = _get_session()
     TEST_WEEK = 999  # sentinel week that won't clash with real data
 
@@ -376,7 +311,7 @@ def test_eka_idempotency():
 
 def test_eka_expiry():
     """expires_at is set on insert; cleanup_expired_eka_materials deletes only expired rows."""
-    print("\n[9] EKA expiry and cleanup")
+    print("\n[7] EKA expiry and cleanup")
     from datetime import datetime, timedelta
     session = _get_session()
     TEST_WEEK = 997
@@ -454,7 +389,7 @@ def test_eka_expiry():
 
 def test_eka_api_db():
     """get_materials_by_filters and get_weekly_feed_for_conditions return correct results."""
-    print("\n[10] Content API DB layer")
+    print("\n[8] Content API DB layer")
     session = _get_session()
     TEST_WEEK = 998
 
@@ -518,8 +453,6 @@ ALL_TESTS = {
     "generation":      test_generation,
     "scheduler":       test_scheduler,
     "eka_migration":   test_eka_migration,
-    "eka_cases":       test_eka_cases,
-    "eka_dry_run":     test_eka_dry_run,
     "eka_idempotency": test_eka_idempotency,
     "eka_expiry":      test_eka_expiry,
     "eka_api_db":      test_eka_api_db,
