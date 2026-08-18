@@ -41,11 +41,10 @@ COMPONENT_LABELS = {
     "medication": "Medication",
 }
 
-# Shared guard for every component with no clinically-approved grounded
-# content yet. Safety requirement: a cardiac patient must never get a
-# confident, ungrounded answer on e.g. medication dosing just because the
-# LLM "knows" something about it in general. One shared template, not 9
-# bespoke blocks — see docs/component_taxonomy_contract.md.
+# Fallback guard for any component that reaches component_scope_block()
+# without a COMPONENT_SCOPE entry (e.g. a new component slug added to
+# COMPONENTS before its scope text is written). All 10 current components
+# have real entries below — see docs/component_taxonomy_contract.md.
 _NO_CONTENT_GUARD = (
     "This question is about {label}, which does not yet have clinically-approved "
     "grounded content in this system. Do NOT answer from general knowledge or "
@@ -54,9 +53,14 @@ _NO_CONTENT_GUARD = (
     "with unrelated advice unless they re-ask a Nutrition question."
 )
 
-# component -> {"in_scope": str, "out_of_scope": str}. Only "nutrition" has a
-# real block (ported from the Taxonomy tab's Nutrition row); the rest render
-# the shared guard above via component_scope_block().
+# component -> {"in_scope": str, "out_of_scope": str}. "nutrition" and
+# "exercise" are grounded in real retrieved content (base_knowledge chunks /
+# the approved exercise-video catalog, respectively). The other 8 have no
+# ingested clinical documents at all — their blocks are scoped to general,
+# non-prescriptive lay education only (2026-08-14 decision): explain
+# concepts, never interpret the patient's own numbers/results, never give
+# dosing/timing/programming advice, always defer anything personalized or
+# clinical to the care team.
 COMPONENT_SCOPE = {
     "nutrition": {
         "in_scope": (
@@ -92,6 +96,102 @@ COMPONENT_SCOPE = {
             "at all), prescribing a structured programme or progression plan, judging whether a "
             "specific intensity or duration is medically safe beyond what the level filter already "
             "reflects — defer these to the patient's care team."
+        ),
+    },
+    "foundations": {
+        "in_scope": (
+            "General, plain-language explanations of what heart disease is, common types (coronary "
+            "artery disease, heart failure, arrhythmia), well-known risk factors, why regular "
+            "check-ups and screening matter, and how the heart works at a lay level."
+        ),
+        "out_of_scope": (
+            "Diagnosing or explaining the patient's own condition, interpreting their personal test "
+            "results or imaging, prognosis for their specific case, or anything that could substitute "
+            "for their doctor explaining their actual diagnosis — defer these to the patient's care team."
+        ),
+    },
+    "blood_pressure": {
+        "in_scope": (
+            "General education on what blood pressure is, what systolic/diastolic numbers mean in "
+            "general, well-known non-drug lifestyle factors linked to blood pressure (sodium, weight, "
+            "stress, activity, sleep), and why regular monitoring matters."
+        ),
+        "out_of_scope": (
+            "Interpreting the patient's own blood pressure readings, telling them whether their own "
+            "BP is controlled, target-number advice, or any guidance on antihypertensive medication "
+            "(starting, stopping, timing, dosing) — defer these to the patient's care team."
+        ),
+    },
+    "lipid": {
+        "in_scope": (
+            "General education on cholesterol and lipids (LDL, HDL, triglycerides) at a lay level, "
+            "why they matter for heart health, and well-known general lifestyle factors linked to them."
+        ),
+        "out_of_scope": (
+            "Interpreting the patient's own lipid panel results, target-number advice, or any "
+            "guidance on lipid-lowering medication such as statins (starting, stopping, dosing, side "
+            "effects) — defer these to the patient's care team."
+        ),
+    },
+    "diabetes": {
+        "in_scope": (
+            "General education on what diabetes and prediabetes are, what blood glucose and HbA1c "
+            "mean in general, well-known non-drug lifestyle factors, and why monitoring matters."
+        ),
+        "out_of_scope": (
+            "Interpreting the patient's own glucose readings or HbA1c results, diagnosing diabetes, "
+            "or any guidance on insulin or other diabetes medication (dosing, timing, adjustment) — "
+            "defer these to the patient's care team."
+        ),
+    },
+    "tobacco_nicotine_alcohol": {
+        "in_scope": (
+            "General education on how tobacco, nicotine, and alcohol affect cardiovascular health, "
+            "encouragement to cut down or quit, and general well-known information about the kinds of "
+            "support and resources (e.g. quitlines, counselling) that exist."
+        ),
+        "out_of_scope": (
+            "Prescribing a specific cessation programme, nicotine-replacement dosing, medical detox "
+            "or withdrawal management, or judging whether a specific reduction plan is medically safe "
+            "for this patient — defer these to the patient's care team."
+        ),
+    },
+    "physical_activity": {
+        "in_scope": (
+            "General, non-structured lay encouragement around everyday movement — walking more, "
+            "reducing sitting time, general safety principles for staying active with a heart "
+            "condition. This is broader lifestyle framing, not exercise programming."
+        ),
+        "out_of_scope": (
+            "Structured exercise programmes, specific intensities/durations/progressions, or naming "
+            "specific exercises — that belongs to the 'exercise' component and its Approved Exercise "
+            "Catalog only. Clearing the patient for a specific activity level — defer to the patient's "
+            "care team."
+        ),
+    },
+    "psychosocial": {
+        "in_scope": (
+            "General education on the well-known link between stress/mental health and heart disease, "
+            "normalizing common emotional experiences after a cardiac diagnosis (anxiety, low mood), "
+            "general self-care and coping information, and encouragement to seek support."
+        ),
+        "out_of_scope": (
+            "Therapy, diagnosing a mental health condition, medication for mental health, or crisis "
+            "intervention — if the patient expresses any self-harm or crisis language, direct them to "
+            "emergency services or a crisis line immediately, then defer ongoing care to a mental "
+            "health professional or their care team."
+        ),
+    },
+    "medication": {
+        "in_scope": (
+            "General, non-personalized education about what common cardiac medication classes are "
+            "generally used for (e.g. 'statins are commonly used to help manage cholesterol'), and "
+            "the general importance of taking medication as prescribed."
+        ),
+        "out_of_scope": (
+            "Any dosing, timing, starting/stopping/switching medication, side-effect management, drug "
+            "interactions, or confirming/denying whether a specific medicine is right for this patient "
+            "— always defer these to the patient's doctor or pharmacist, no exceptions."
         ),
     },
 }
@@ -134,3 +234,19 @@ ONBOARDING_STAGE_LABELS = {
         "or medication."
     ),
 }
+
+
+if __name__ == "__main__":
+    # Every component must resolve to its own real scope block, never the
+    # generic fallback guard — a missing entry here means that component
+    # would silently refuse to answer anything.
+    for _c in COMPONENTS:
+        assert _c in COMPONENT_SCOPE, f"{_c} has no COMPONENT_SCOPE entry"
+        block = component_scope_block(_c)
+        assert "does not yet have clinically-approved" not in block, (
+            f"{_c} fell through to the fallback guard"
+        )
+        assert "In scope:" in block and "Out of scope:" in block
+    assert component_scope_block(None) == ""
+    assert component_scope_block("made_up_component").startswith("This question is about")
+    print(f"OK — all {len(COMPONENTS)} components have real scope blocks")

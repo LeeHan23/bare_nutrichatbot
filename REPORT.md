@@ -358,7 +358,7 @@ content failures), **Extractor: 20/20 passed** (up from 17/20). Full detail:
 
 ---
 
-## Recommended next steps
+## Recommended next steps (superseded — kept for history; see "Next steps (current, as of Part 8 / 2026-08-03)" below for what's actually still open)
 
 1. ~~Decide on the MODERATE-vs-RESTRICT contraindication disagreement~~ — **resolved 2026-07-24, no dietitian/cardiologist available**: judgment calls made directly against published guidelines (KDOQI, AHA/DASH) already in the system's knowledge base — see "Clinical judgment calls" above. **Still recommend a qualified professional review these before scaling beyond mock/demo patients.**
 2. ~~Decide the L3 word-budget tension~~ — **fixed 2026-07-24**: L3 word budget raised 100→130 words; case 14 now passes reliably, case 25 not yet re-verified individually but no longer in the latest full-run failure list.
@@ -377,3 +377,148 @@ content failures), **Extractor: 20/20 passed** (up from 17/20). Full detail:
 15. ~~Expand `doc_keyword_mapping.json` to full coverage~~ — **done 2026-07-29**: identified the 21 previously-unmapped documents via direct DB query, content-sampled each from the live DB to write accurate topic/keyword entries (not filename-guessed), deliberately avoided over-broad tagging for narrow-condition docs (PAH, IE) that would wrongly surface for common BP/CVD questions. Re-ran enrichment (user-approved) — **100% coverage, 24,818/24,818 chunks**. Smoke-run `boost_ratio` now 0.4–1.0 across the board (was 0.0 before any of this session's enrichment work). `CLAUDE.md` and `docs/eval_and_roadmap.md` Part D updated with final numbers.
 
 ~~If the RTX 3050 comes back online, remember DNS won't auto-revert~~ — **resolved as of Part 7**: that machine has been reimaged/replaced outright, so this scenario no longer applies in its original form.
+
+---
+
+## Next steps as of the end of Part 7
+
+Everything raised in Parts 1–7 was resolved by 2026-07-29 (dietitian-judgment
+calls made against published guidelines in lieu of an available professional,
+L3 word budget, Siti Hajar profile mismatch, extractor gap, personalization
+judge migration, weekly eval cron, DeepEval `GEval` migration, retrieval-quality
+logging + full keyword-mapping coverage). Final eval state at that point:
+RAG **31/34**, extractor **20/20**. See the consolidated **Next Steps** section
+at the end of this document for what's still open after Part 8.
+
+---
+
+## Part 8 — "My Heart Coach" state-machine consumption + MHR risk-screening fix (2026-08-03)
+
+### Why
+
+A separate team is building a 4-path cardiac-rehab state machine ("My Heart Coach": `keep_well`/`reduce_risk`/`live_better`/`recover` care paths, objective selection, WhatsApp delivery, risk scoring) around this dietetics bot. This repo's job is explicitly scoped to **consuming** whatever that state machine and the risk-scoring module produce, and using it to personalize dietary advice — never building the state machine, risk algorithm, or WhatsApp UI itself. Reviewed against the architecture PDF ("Evidence-based architecture for My Heart Coach after onboarding") and a rules/policy spreadsheet (`MyHeartCoach_RulesPolicyTables_v2.xlsx`) the client supplied.
+
+### Part 8a — External state-machine fields (`care_path`, `objective_ids`, `difficulty_ceiling`, `clinical_risk_tier`)
+
+- `database.py`: 4 new nullable `Patient` columns, additive migration `scripts/migrate_state_machine_fields.py` (idempotent, verified run twice — added then correctly skipped). Surfaced in `patient_to_profile_dict()` and `local_patient_store._patient_to_full_profile()`.
+- `rag.py`: new `_build_care_path_block()` helper + `_CARE_PATH_LABELS`, wired into all three RAG paths (Option B `_build_qwen_prompt`, CLaRa-primary, and `agent.py`'s agent-tool path) under a "Care Path & Objectives" prompt heading — same reuse pattern as the existing `personalization_level`/`_LEVEL_INSTRUCTIONS` injection.
+- `clinical_risk_tier` was deliberately scoped as a **fallback-only** signal: only surfaced to the prompt when `personalization_level` is unset, never a replacement for the dietitian-set value.
+- `docs/state_machine_contract.md` (new): the consumption contract for the external team — field table, ownership/read-only guarantees, "still open" list.
+- `eval/test_rag.py`: 4 new cases (35-38, tag `care_path`) using a new `profile_overrides` mechanism on `load_profile()` to simulate `care_path` values no real patient has yet. Checked via deterministic `required_terms`/`forbidden_terms`, not an LLM judge — a `qwen2.5:14b` judge proved unreliable on this specific presence/absence binary (self-contradictory reasoning observed directly in test output), so the existing deterministic-keyword mechanism already in the file was reused instead.
+- One real gap found and fixed via this eval work: the `recover` care path's prompt text was originally descriptive ("post-acute, clinician-governed") rather than directive, so it never actually produced a doctor/care-team reference in generated answers. Reworded to explicitly require one of those literal phrases — verified via a live re-run, answer now reads *"it's important to stick with your current dietary plan until confirmed by your doctor or care team."*
+- `onboarding_stage` (OB1/OB2/OB3 — a separate concept in the same spreadsheet, gating a sibling "EKA" Exercise/Knowledge/Activity coaching module) was reviewed and confirmed **out of scope** for this dietetics bot.
+
+### Part 8b — Fixing the broken MHR/NADI risk-screening intake
+
+While reviewing the risk-scoring side, found that `risk_calculator.py` + `myheartrisk_router.py` (`POST /api/v1/mhr/screen`) already existed in this repo (committed 19 June, "included MHR things") as the intended intake path for external risk scores — but it was never wired to anything and didn't actually work:
+
+| Problem found | Fix |
+|---|---|
+| `create_mhr_screening()`/`get_latest_mhr_screening()` were `async def` using `AsyncSession` methods, but the rest of `database.py` (and the `Session` the router's `Depends(get_db)` hands it) is entirely sync | Converted both to plain sync functions matching the rest of the file |
+| `CardiovascularScreening` model had `bmi`/`cholesterol_total`/`glucose_fasting`/`frs_score`/`rediscover_score`/`acs_risk_score`/`calculated_risk_category` declared twice in the same class body | Removed the duplicate block |
+| Missing `referral_destination` column referenced by the router's payload | Added |
+| A stored `calculated_risk_category` (LOW/MODERATE/HIGH/VERY_HIGH) never reached the dietetics prompt — completely disconnected from `clinical_risk_tier`/`rag.py` | `patient_to_profile_dict()`/`_patient_to_full_profile()` now fall back to the latest MHR screening's `calculated_risk_category` when `Patient.clinical_risk_tier` is unset, reusing the exact fallback slot already coded in `rag._build_care_path_block()` |
+| `_build_care_path_block()` itself had a bug: it returned `""` before ever checking `clinical_risk_tier` if `care_path` was unset — silently defeating the whole fallback for every real patient today (none have `care_path` set yet) | Decoupled the two checks |
+
+Note: `risk_calculator.py`'s actual scoring algorithms (Framingham/REDISCOVER coefficients, protocol cutoffs) were deliberately left untouched — that's the biostats/NADI team's responsibility per the file's own comments, not this repo's.
+
+### How this got built and merged (process note)
+
+This work was planned locally, then handed off to an Ultraplan cloud session for implementation of Part 8b specifically. That cloud sandbox had no `origin` git remote configured and couldn't push, so its work was exported as a patch file and applied here manually: `git am -3` on a branch cut from `origin/main` (3-way merge, since the patch's context assumed Part 8a's code was already present), with one manual conflict resolution (`docs/state_machine_contract.md` — both sides had independently written a version of this new file; merged into one). Verified with `py_compile` before merging into `main`. Pushed to `origin/main` as two commits: `5803855` (Part 8a) and `e21f2de` (Part 8b).
+
+### Verification
+
+- `scripts/migrate_state_machine_fields.py` run twice against live dev Postgres — added 4 columns, then correctly no-op'd.
+- Eval cases 35-38 (`care_path`) all pass; case 35 (`recover`) individually re-verified live after the prompt-wording fix.
+- Cloud session verified the MHR fix with real code execution against a temp SQLite DB: CRUD round-trip, the `/api/v1/mhr/screen` endpoint via `TestClient` (201, real persisted row), `_build_care_path_block` across 5 cases, and the full fallback chain (screening → profile dict → `clinical_risk_tier == "HIGH"`) all passed.
+- `py_compile` on all 7 touched files after the merge, clean.
+- Did not re-run the full `eval/test_rag.py` suite for Part 8b — no prompt text changed, only how `clinical_risk_tier` gets populated upstream.
+
+### Part 8c — Onboarding → personalized diet advice (flowchart)
+
+How a patient's care path, objectives, and risk tier — set by systems outside this repo — end up shaping what the dietetics bot actually says. Solid arrows are built and working; dashed arrows are not built yet. The left-hand (care-path/objectives) lane has no real data flowing through it today, so its nodes carry **mock placeholder values** — one worked example, for Patient #11 (Rajendran), showing what it will look like once the state-machine team builds their side.
+
+```mermaid
+flowchart TD
+    subgraph ONB["My Heart Coach app — onboarding (external)"]
+        A1["Onboarding complete"] --> A2["Safety gate"]
+        A2 --> A3["Care path selection<br/>keep_well · reduce_risk · live_better · <b>recover</b><br/><i>mock: patient selects 'recover'</i>"]
+        A3 --> A4["Objective selection<br/><i>mock: primary = restore-safe-eating<br/>secondary = fluid-sodium-control</i>"]
+        A4 --> A5["Difficulty calibration<br/><i>mock: easy</i>"]
+    end
+
+    subgraph RISK["Risk-scoring module — NADI / MHR (external)"]
+        R1["Clinical screening<br/>BP, BMI, smoking, diabetes, prior CVD..."] --> R2["POST /api/v1/mhr/screen"]
+        R2 --> R3[("cardiovascular_screenings<br/>table")]
+    end
+
+    A5 -.->|"not built yet —<br/>values below are mock"| SM1["Patient.care_path = 'recover'<br/>Patient.objective_ids = ['restore-safe-eating',<br/>'fluid-sodium-control']<br/>Patient.difficulty_ceiling = 'easy'"]
+
+    R3 --> F1{"Patient.clinical_risk_tier<br/>already hand-set?"}
+    F1 -->|"yes"| F2["use the hand-set value"]
+    F1 -->|"no — fixed 2026-08-03"| F3["fall back to the latest screening's<br/>calculated_risk_category"]
+
+    subgraph NUTRI["Nutribot — this repo"]
+        L1["Dietitian sets<br/>personalization_level = 'L3'<br/><i>(already set, so the risk-tier<br/>fallback stays quiet this time)</i>"]
+        P1["patient_to_profile_dict()<br/>_patient_to_full_profile()"]
+
+        SM1 -.->|"mock"| P1
+        F2 --> P1
+        F3 --> P1
+        L1 --> P1
+
+        P1 --> CB["_build_care_path_block()<br/>rag.py"]
+        P1 --> LV["_LEVEL_INSTRUCTIONS<br/>rag.py"]
+
+        CB -.->|"mock output"| PR["## Care Path &amp; Objectives<br/>'Recover after a recent heart event...<br/>confirm with doctor, care team,<br/>or cardiac rehab team first'<br/>Current focus objectives: restore-safe-eating,<br/>fluid-sodium-control<br/>Approved difficulty ceiling: easy"]
+        LV --> PL["## Personalization Level L3<br/>prompt block"]
+
+        PR -.-> GEN["Qwen 2.5:32b generates<br/>the answer"]
+        PL --> GEN
+    end
+
+    GEN -.->|"mock — illustrative only,<br/>no real care_path exists yet"| OUT["Patient asks: 'Can I go back to<br/>eating normally now?'<br/><br/>Bot replies: 'Not yet — it's important to<br/>stick with your current plan for now. Any<br/>change, like resuming rice or loosening<br/>your fluid limit, needs a check with your<br/>doctor or care team first...'"]
+```
+
+**Reading the diagram:**
+
+- **Two boxes at the top are owned by other teams** — the care-path state machine and the NADI/MHR risk-scoring module. Nutribot never generates or writes their data, only reads it.
+- **The risk path (right) is real and working**, fixed this session: a screening reaches `cardiovascular_screenings`, and `clinical_risk_tier` falls back to it whenever no dietitian has set a `personalization_level` yet.
+- **The care-path/objectives path (left) has no write path yet** — `care_path`, `objective_ids`, and `difficulty_ceiling` exist as columns and are already wired into the prompt, but nothing in this codebase or elsewhere writes real values into them today. The mock values along that lane (`care_path = 'recover'`, the two objective IDs, `difficulty_ceiling = 'easy'`) are a worked example, not live data — every dashed edge downstream of onboarding carries that same "mock" label for exactly this reason.
+- **The mock trace is end-to-end**: the example `care_path` and `objective_ids` values shown at `SM1` are the literal input to `_build_care_path_block()`, whose output is shown verbatim at `PR` (this is the real function's real output for that input, reproduced exactly — not paraphrased). The reply at `OUT` is an illustrative answer in the style the real, live-verified "recover" behavior produces (see Part 8a) — written for Patient #11's actual CKD4/fluid-restricted profile specifically, matching the interactive demo linked below, rather than reusing another patient's verified wording out of context.
+- **`personalization_level` and `clinical_risk_tier` are independent signals**, not a replacement for one another — a dietitian's own assessment always wins over the risk-scoring fallback. The mock example sets `personalization_level = 'L3'` so that fallback branch stays inactive, keeping this particular worked example focused on the care-path lane rather than mixing in the risk-tier one.
+- Everything under **Nutribot** is this repo's actual, shipped code — `patient_to_profile_dict()`, `_build_care_path_block()`, and `_LEVEL_INSTRUCTIONS` in `rag.py`, mirrored in `agent.py`'s agent-tool path (not pictured, same logic).
+
+An interactive version of this exact worked example — with a live toggle across all four care paths and a live prompt trace — is published at `https://claude.ai/code/artifact/9e01aa01-a5fb-44b1-bf7b-a187b19678e0`, and the standalone flowchart at `https://claude.ai/code/artifact/a2e598cb-fc76-41fb-b285-206bd2e7dbd7`.
+
+---
+
+## Next steps (current, as of Part 8 / 2026-08-03)
+
+Everything from Parts 1–7 is resolved (see the note at the end of Part 7).
+What's actually still open:
+
+1. **Dietitian/cardiologist review of the MODERATE-vs-RESTRICT clinical calls.**
+   No qualified professional has reviewed the moderation-vs-restriction judgment
+   calls made in Part 7 (acar, coconut milk, deep-fried chicken, instant/processed
+   food) against KDOQI/AHA-DASH guidance. Needed before this scales beyond
+   mock/demo patients.
+2. **No write path yet for `care_path` / `objective_ids` / `difficulty_ceiling`.**
+   These columns exist and are already wired into the RAG prompt (Part 8a), but
+   nothing populates them with real values — blocked on the external My Heart
+   Coach state-machine team building their side. Only `clinical_risk_tier` has a
+   working intake today (`POST /api/v1/mhr/screen`, fixed in Part 8b).
+3. **`CardiovascularScreening.patient_id` is a bare string with no FK to
+   `Patient.id`.** The assumed convention (`str(Patient.id)`) is a guess — confirm
+   with whoever owns the NADI screening intake once real data starts flowing.
+4. **LoRA embedding adapter not present on this machine** — retrieval runs on
+   base `BAAI/bge-m3` instead of the RTX 3050's fine-tuned adapter. Copy
+   `~/models/embedding_lora` over if retrieval-quality parity matters.
+5. **Docker Compose stack is built and verified but not the live deployment.**
+   Production still runs bare-`.venv` + systemd. Decide whether to cut over.
+6. **WhatsApp provider credentials still unset** (`TWILIO_*` or `META_*` in
+   `.env`, per `CLAUDE.md` pending item 5). Integration code is complete and
+   tested — this is purely a credentials + webhook-registration step.
+7. **`.env`'s `BASE_DOCS_DIR` still points at the old RTX-3050-only path**
+   (`/mnt/ssd/documents_to_ingest`). Harmless unless `build_base_db.py` is
+   re-run without passing `BASE_DOCS_DIR` explicitly.

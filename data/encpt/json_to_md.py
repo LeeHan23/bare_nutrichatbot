@@ -1,9 +1,14 @@
 """Convert encpt_curated.json (v2 cardiac) into dietitian-friendly Markdown."""
 
 import json
+import os
 from collections import defaultdict
 
-with open("/mnt/ssd/bare_NutriChatbot/data/encpt/encpt_curated.json") as f:
+_DIR = os.path.dirname(os.path.abspath(__file__))
+_CURATED_PATH = os.path.join(_DIR, "encpt_curated.json")
+_MD_PATH = os.path.join(_DIR, "encpt_curated.md")
+
+with open(_CURATED_PATH) as f:
     data = json.load(f)
 
 fields = data["fields"]
@@ -188,9 +193,8 @@ lines.append("   ischemic heart disease vs valvular), what fields would shift in
 lines.append("")
 lines.append("Please mark any suggested changes directly in this document or send feedback to Lee Yean Han.")
 
-with open("/mnt/ssd/bare_NutriChatbot/data/encpt/encpt_curated.json", "w") as f:
+with open(_MD_PATH, "w") as f:
     f.write("\n".join(lines))
 
-import os
-print(f"Wrote {len(lines)} lines to /mnt/ssd/bare_NutriChatbot/data/encpt/encpt_curated.json")
-print(f"File size: {os.path.getsize('/mnt/ssd/bare_NutriChatbot/data/encpt/encpt_curated.json'):,} bytes")
+print(f"Wrote {len(lines)} lines to {_MD_PATH}")
+print(f"File size: {os.path.getsize(_MD_PATH):,} bytes")

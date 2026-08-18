@@ -2,9 +2,18 @@
 generate_weekly_eka.py — Weekly Exercise / Knowledge / Activity content generator.
 
 Generates three content types per condition group on a 4-week rotating schedule:
-  E — Exercise: structured sessions with warm-up, main activity, cool-down, level modifications
-  K — Knowledge: 6 educational points on a health topic
-  A — Activity: daily/weekly behavioural task with micro-actions
+  E — Exercise: framing copy grounded in the REAL approved exercise-video catalog
+      (exercise_lookup.py) — never an invented session plan, see _generate_exercise().
+  K — Knowledge: 6 educational points on a health topic, general-education only.
+  A — Activity: daily/weekly behavioural task with micro-actions.
+
+Retired 2026-08-12, rebuilt 2026-08-14 on the taxonomy safety guardrails
+(_SAFETY_GUARDRAILS, and Exercise grounded in the real catalog instead of
+invented) after a dietitian flag on the old generator's output (material
+id=68 — see materials/eka_dietitian_review_flags.md) recommended a
+high-potassium food swap to CKD patients. All output still lands as
+is_active=False — nothing here reaches a patient without a human approving
+it via POST /content/materials/{id}/approve. See docs/component_taxonomy_contract.md.
 
 Usage:
     # Generate all E/K/A for current ISO week
@@ -549,40 +558,89 @@ L2 (established conditions, higher CV risk): Low-intensity only; symptom monitor
 L3 (high clinical risk, recent cardiac event): Medical oversight only; extremely gentle; include emergency guidance.
 """
 
+# General-education guardrail (added 2026-08-14, see docs/component_taxonomy_contract.md
+# and taxonomy.COMPONENT_SCOPE): this is what changed when the weekly EKA generator was
+# rebuilt after the material id=68 dietitian flag (a Knowledge item recommended lentils/
+# beans — high-potassium — as a low-protein swap for CKD patients). Nothing here is
+# personalized clinical advice; it's lay education that always routes specifics back to
+# the patient's own care team, matching the boundary taxonomy.py enforces in live chat.
+_SAFETY_GUARDRAILS = """\
+Safety rules — do not violate these:
+- Do NOT recommend a specific food, supplement swap, or medication change as a direct instruction
+  (e.g. never say "eat X instead of Y" or "stop/reduce your medication dose"). If the topic touches
+  diet or medication, describe it at a general educational level only, and explicitly tell the
+  patient to confirm any specific change with their dietitian or doctor first.
+- Any numeric threshold or monitoring cue you give (e.g. "call the clinic if you gain 2kg in 2 days")
+  must be a well-established, widely-published self-monitoring practice, not an invented clinical
+  target — and must be framed as general guidance to confirm with their care team, not a prescription.
+- Never suggest a specific ingredient/food is safe or unsafe for this condition group without a
+  caveat that individual restrictions (e.g. potassium, phosphorus, sodium limits) vary by patient
+  and must be confirmed with their own dietitian.
+"""
+
+# Weekly EKA content is written for a condition group in general, not one patient's exact
+# personalization_level — this maps each group to the level used to sample the REAL exercise
+# catalog below (exercise_lookup.py), mirroring the live chat pipeline's risk-tier framing.
+_GROUP_LEVEL = {
+    "T2DM": "L1", "HTN": "L1", "Dyslipidaemia": "L1", "PCOS": "L1",
+    "CKD": "L2", "Cardiac": "L2",
+    "General": "L0",
+}
+
 
 def _generate_exercise(niche: dict, chunks: str) -> dict:
+    """Grounded in the REAL approved exercise-video catalog (exercise_lookup.py) —
+    same source of truth the live chat 'exercise' Component uses. The LLM only
+    writes short framing/why-it-helps copy about real catalog entries; it never
+    invents session structure (duration, sets, warmup/cooldown, stop signs) —
+    see taxonomy.COMPONENT_SCOPE["exercise"] for why that boundary exists.
+    """
     from llm import call_ollama_generate
-    prompt = f"""You are a clinical exercise physiologist creating cardiac and metabolic rehabilitation content for a Malaysian hospital.
+    from exercise_lookup import list_exercise_samples_for_level
+
+    level = _GROUP_LEVEL.get(niche["group"], "L1")
+    catalog = list_exercise_samples_for_level(level, per_type=2)
+    if not catalog:
+        return {"catalog_highlights": [], "note": "no catalog entries available for this level"}
+
+    catalog_text = "\n".join(
+        f"- {c['title']} ({c['type']}, {c['intensity_tier']} intensity, {c['body_focus']}, {c['video_duration']})"
+        for c in catalog
+    )
+
+    prompt = f"""You are a patient educator writing short framing copy for a Malaysian cardiac/metabolic programme.
 
 TOPIC: {niche["prompt_topic"]}
 CONDITION GROUP: {niche["group"]}
 WEEK: {niche["week_number"]}
 
-{_PERSONALIZATION_GUIDANCE}
+APPROVED EXERCISE CATALOG (you may ONLY reference these exact items — never invent, rename, or add exercises, durations, or intensities not listed here):
+{catalog_text}
 
-CLINICAL EVIDENCE:
-{chunks or "No specific guideline chunks available — use evidence-based clinical knowledge."}
+{_SAFETY_GUARDRAILS}
 
-TASK: Generate a structured exercise session plan. Return ONLY valid JSON — no prose, no markdown fences:
+TASK: Write general, non-prescriptive framing copy for this week's theme, tying it to the catalog above. Return ONLY valid JSON — no prose, no markdown fences, and the "title" field in each highlight must be copied verbatim from the catalog above:
 {{
-  "exercise_type": "aerobic | resistance | flexibility | balance | combined",
-  "duration_min": <integer>,
-  "frequency_per_week": <integer>,
-  "intensity": "very light | light | moderate | vigorous",
-  "warmup": ["step 1", "step 2", "step 3"],
-  "main_activity": ["step 1", "step 2", "step 3", "step 4"],
-  "cooldown": ["step 1", "step 2"],
-  "level_modifications": {{
-    "L0": "modification for general/well patients",
-    "L1": "modification for emerging risk",
-    "L2": "modification for established conditions",
-    "L3": "modification for high-risk/post-cardiac-event patients"
-  }},
-  "safety_stop_signs": ["sign 1", "sign 2", "sign 3"],
-  "equipment_needed": ["item 1", "item 2"],
-  "malaysian_context": "any Malaysia-specific notes (heat, shoes, local venues, etc.)"
+  "framing": "1-2 sentences introducing this week's theme and why gentle/appropriate movement matters for this condition group",
+  "catalog_highlights": [
+    {{"title": "<verbatim title from the catalog above>", "why_it_helps": "<=25-word general benefit, no invented specifics"}},
+    {{"title": "<verbatim title from the catalog above>", "why_it_helps": "<=25-word general benefit, no invented specifics"}}
+  ],
+  "general_safety_note": "one general reminder to stop and seek help for chest pain, severe breathlessness, or dizziness, and to check with their care team before starting anything new",
+  "malaysian_context": "short, optional note on climate/home-setting practicality"
 }}"""
-    return _call_and_parse(prompt, 1000)
+    result = _call_and_parse(prompt, 500)
+    if isinstance(result, dict) and not result.get("parse_error"):
+        # Re-attach the real catalog metadata (type/intensity/duration) the LLM was
+        # never asked to reproduce, keyed off the verbatim titles it echoed back.
+        by_title = {c["title"]: c for c in catalog}
+        highlights = result.get("catalog_highlights") or []
+        for h in highlights:
+            match = by_title.get(h.get("title"))
+            if match:
+                h.update({k: v for k, v in match.items() if k != "title"})
+        result["catalog_highlights"] = [h for h in highlights if h.get("title") in by_title]
+    return result
 
 
 def _generate_knowledge(niche: dict, chunks: str) -> dict:
@@ -596,7 +654,9 @@ WEEK: {niche["week_number"]}
 CLINICAL EVIDENCE:
 {chunks or "No specific guideline chunks available — use evidence-based clinical knowledge."}
 
-TASK: Generate 6 educational learning points for patients. Each point should be clear, jargon-free, actionable, and culturally relevant to Malaysia. Return ONLY valid JSON — no prose, no markdown fences:
+{_SAFETY_GUARDRAILS}
+
+TASK: Generate 6 educational learning points for patients. Each point should be clear, jargon-free, general (not a personalized prescription), and culturally relevant to Malaysia. Return ONLY valid JSON — no prose, no markdown fences:
 {{
   "topic_summary": "one sentence summarising the topic",
   "learning_points": [
@@ -620,6 +680,8 @@ def _generate_activity(niche: dict, chunks: str) -> dict:
 TOPIC: {niche["prompt_topic"]}
 CONDITION GROUP: {niche["group"]}
 WEEK: {niche["week_number"]}
+
+{_SAFETY_GUARDRAILS}
 
 TASK: Design a practical weekly behavioural activity. It must be simple enough to do daily, relevant to Malaysian patients, and directly support health outcomes. Return ONLY valid JSON — no prose, no markdown fences:
 {{

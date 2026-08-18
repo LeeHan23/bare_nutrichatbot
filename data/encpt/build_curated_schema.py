@@ -19,6 +19,7 @@ Cardiac priority adjustments vs general schema:
 """
 
 import json
+import os
 
 CURATED = [
     # ═══════════════════════════════════════════════════════════════════
@@ -514,7 +515,7 @@ def main():
         "fields": CURATED,
     }
 
-    with open("/mnt/ssd/bare_NutriChatbot/data/encpt/encpt_curated.json", "w") as f:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "encpt_curated.json"), "w") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
 
     print(f"Cardiac-focused curated schema (v2.0)")

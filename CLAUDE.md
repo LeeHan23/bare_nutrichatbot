@@ -66,7 +66,9 @@ The project lives directly at `/home/han/Desktop/projects/bare_NutriChatbot/` on
 ├── chain_factory.py          # LangChain LCEL chain, InMemoryChatMessageHistory
 ├── database.py               # SQLAlchemy ORM — Patient, ContentMaterial, ContentDeliveryLog
 ├── dependencies.py           # FastAPI dependencies (X-API-Key auth, DB session)
-├── vector_store.py           # PGVector TopicBoostedRetriever, LoRA embedding model
+├── vector_store.py           # PGVector TopicBoostedRetriever, LoRA embedding model, MyHeartCoach Component detection/gate
+├── taxonomy.py                # MyHeartCoach 10-Component vocabulary + prompt scope blocks + OB1-3 labels
+├── exercise_lookup.py         # Deterministic exercise-video lookup (data/exercise_video_lookup.json)
 ├── embeddings.py             # Embedding utilities (BAAI/bge-m3 + LoRA)
 ├── website_chat_router.py    # /chat/get_response (streaming) + /chat/get_response_sync
 ├── whatsapp_router.py        # /chat/whatsapp (Twilio) + /chat/whatsapp/meta (Meta Cloud API) inbound webhooks
@@ -291,12 +293,41 @@ Table: `chat_messages` (session_id, patient_id, role, content, created_at) — a
 ### 1. ✅ DONE — Run content generation live test
 Superseded by the weekly EKA pipeline (§25 of ARCHITECTURE.md). Weeks 22-24 EKA materials generated and approved (63 items, 11 June 2026); one item (id=68) flagged for dietitian review — see `materials/eka_dietitian_review_flags.md`.
 
-### 2. ✅ DONE (re-installed 2026-07-23 on new hardware) — Content scheduler cron
-Both schedulers are in crontab:
+### 2. ✅ DONE (re-installed 2026-07-23 on new hardware; weekly-EKA line removed 2026-08-12, restored 2026-08-14) — Content scheduler cron
 ```
 0 8 * * * /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python /home/han/Desktop/projects/bare_NutriChatbot/scripts/content_scheduler.py >> /home/han/Desktop/projects/bare_NutriChatbot/logs/content_scheduler.log 2>&1
 0 6 * * 1 /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python /home/han/Desktop/projects/bare_NutriChatbot/scripts/weekly_eka_scheduler.py >> /home/han/Desktop/projects/bare_NutriChatbot/logs/weekly_eka.log 2>&1
 ```
+The `weekly_eka_scheduler.py` line (Monday 06:00) was removed 2026-08-12 when
+the pre-taxonomy weekly EKA generator was retired in favor of the MyHeartCoach
+Component-taxonomy pipeline — see `docs/component_taxonomy_contract.md`.
+`scripts/generate_weekly_eka.py` and `scripts/weekly_eka_scheduler.py` were
+deleted; the `POST /content/generate-weekly` admin endpoint was removed from
+`content_api_router.py`. `ContentMaterial.content_type`/`week_number`
+columns and their DB-layer helpers were kept, not dropped.
+
+**Restored 2026-08-14**, rebuilt with safety guardrails instead of restoring
+the old generator verbatim — see `docs/component_taxonomy_contract.md`'s
+"Restored 2026-08-14" note for the full rationale (driven by the material
+id=68 dietitian flag) and what changed in `generate_weekly_eka.py`
+(`_SAFETY_GUARDRAILS`, and Exercise content now grounded in the real
+approved exercise-video catalog instead of invented session plans). Cron
+re-added above, runs its first batch Monday 2026-08-17 06:00. Still
+`is_active=False` on every generated row — nothing reaches a patient without
+`POST /content/materials/{id}/approve`. New: a live review UI at
+`https://docs-api.computationalrd.com/eka-review` (`docs_api.py` +
+`eka_review.html`, X-API-Key gated) reads `content_materials` directly, so
+the team no longer needs to open the Excel exports by hand — those still
+get written to `materials/` too, unchanged. A historical, static snapshot
+of the pre-retirement Weeks 22-25 Excel archive (with the dietitian flag
+annotated) is also up as a separate shareable artifact — ask for the link
+if you don't have it.
+
+Found and fixed while restoring: a stray pre-retirement batch for ISO week
+33 was already sitting in the DB (`is_active=False`, generated 2026-08-09,
+using the old ungrounded generator) — regenerated it with `--force` using
+the new safe generator so the review UI doesn't show unreviewed content
+from before this fix.
 
 ### 3. ✅ DONE (obsolete since 2026-07-23 hardware change) — Add /mnt/ext to /etc/fstab for auto-mount on boot
 Added 12 June 2026, on the old RTX 3050 box:
@@ -432,6 +463,72 @@ Implemented (this session was a remote container — no Postgres/Ollama — so c
 3. Send `eval/myths_review.md` to the supervising dietitian; record approvals/CPG citations back into the case comments. After sign-off the set is append-only.
 4. If failures cluster on retrieval (check `logs/retrieval_quality.jsonl` — myths mostly aren't in CPGs), write a dietitian-reviewed myth-rebuttal document and ingest into `base_knowledge`.
 5. When blueprint §5 output serialization lands (`risk_flag`), add a deterministic `risk_flag == true` assertion to tier-1 cases alongside the judge.
+
+### 12. ✅ DONE — MyHeartCoach 10-Component taxonomy foundation (2026-08-12)
+The client supplied `MyHeartCoach_Content_Registry.xlsx` + `Exercise Video
+Intensity.xlsx` (both at repo root): Nutribot is expanding from a single
+dietetics chatbot into one covering 10 content Components, of which
+Nutrition is the only one with real content today. This was a **foundation
+pass** — architecture, not 9 modules of new content. Full design rationale
+and open questions: `docs/component_taxonomy_contract.md`.
+
+Live-verified on this box (RTX 3050, real Postgres/pgvector, real Ollama):
+- `taxonomy.py` (new): the 10-Component vocabulary + per-component prompt
+  scope blocks.
+- `vector_store.py`: `doc_components` chunk tagging + a hard retrieval gate
+  in `TopicBoostedRetriever` + a `clinical_approved` trust-tier ranking
+  boost. All 24,819 existing `base_knowledge` chunks backfilled
+  `doc_components=["nutrition"]` (`scripts/enrich_with_components.py`);
+  `build_base_db.py` stamps new ingests going forward.
+- `rag.py`/`agent.py`: component detection (deliberately conservative —
+  see `vector_store.COMPONENT_HINTS`) now scopes retrieval and injects a
+  safety guard for the 9 components with no grounded content, so the model
+  defers to the care team instead of answering from general knowledge.
+  Verified live: a CKD+HTN breakfast question is unaffected
+  (`component=None`); "should I stop my medication and take cinnamon
+  instead?" correctly routes to `component=medication`, retrieves 0 chunks,
+  and the model refuses and defers to the doctor.
+- `scripts/ingest_chatbot_chunks.py` (new): loads Approved rows from the
+  workbook's `Chatbot_Chunks` tab into `base_knowledge`. Ingested live: 1
+  row (`CB-001`, Exercise topic "how do I start exercising").
+- `exercise_lookup.py` + `scripts/build_exercise_video_lookup.py` (new):
+  deterministic exercise-video citation — 199 videos flattened from the
+  Exercise Video Intensity workbook. The YouTube link is attached to the
+  chat response in code, never generated by the LLM. Verified live: asking
+  for an exercise video returns a real `youtu.be` link filtered to the
+  patient's personalization level, with the model's own text no longer
+  contradicting it (see `taxonomy.COMPONENT_SCOPE["exercise"]`).
+- `Patient.onboarding_stage` (read-only, external — same treatment as
+  `care_path`) and `ContentMaterial.component` columns added
+  (`scripts/migrate_component_columns.py`, both nullable, no backfill).
+- **Retired**: `scripts/generate_weekly_eka.py` +
+  `scripts/weekly_eka_scheduler.py` (pre-taxonomy, LLM-hallucinated weekly
+  content) deleted; their crontab entry removed; `POST
+  /content/generate-weekly` admin endpoint removed from
+  `content_api_router.py`. `ContentMaterial.content_type`/`week_number`
+  and the DB-layer helpers were kept — they map onto the taxonomy's E/K/A
+  axis and are expected to be reused, not reinvented.
+- Found and fixed one pre-existing bug while live-testing: `_build_qwen_prompt()`
+  in `rag.py` crashed with `UnboundLocalError` on a profile that set only
+  `personalization_level` with no other fields populated (a brand-new
+  patient) — `level` was only assigned inside an `if patient_context:`
+  guard but referenced unconditionally later. Unrelated to this session's
+  feature work, fixed because it's a real crash risk found live.
+
+**Not built (per explicit scope)**: Rehab R1-6 / Dynamic-persona
+personalization tiers (not consumed, no columns), the live RPE/HR/BP
+`Scoring` tab (needs vitals telemetry this repo has no input channel for),
+`Personalization_Rules` tab (no real Content_Registry rows to resolve
+against yet). All three documented as open in
+`docs/component_taxonomy_contract.md`, not silently skipped.
+
+**Still pending**: real content for the other 9 Components as the client's
+content team populates `Chatbot_Chunks` (currently near-empty template
+data) — re-run `scripts/ingest_chatbot_chunks.py` against each re-supplied
+workbook. `image_url`/`exercise_video` have no frontend consumer yet
+(confirmed `image_url` was already dormant before this session).
+
+**2026-08-14 update — the "9 components defer to care team" behavior above is superseded.** All 8 non-nutrition, non-exercise components (`foundations`, `blood_pressure`, `lipid`, `diabetes`, `tobacco_nicotine_alcohol`, `physical_activity`, `psychosocial`, `medication`) now have real `in_scope`/`out_of_scope` prompt blocks in `taxonomy.COMPONENT_SCOPE` instead of the blanket refusal guard — general, non-personalized lay education from the model's own knowledge, never the patient's own numbers/results, never dosing/timing/programming, always defer anything personalized or clinical to the care team (`medication` stays the tightest — no dosing/switching/interactions, no exceptions). The blanket guard (`taxonomy._NO_CONTENT_GUARD`) is now only a dead-code-path fallback for a component slug added to `COMPONENTS` before its scope text is written — `taxonomy.py`'s `__main__` self-check asserts none of the real 10 fall through to it. Rationale, decision record, and the full per-component table: `docs/component_taxonomy_contract.md`.
 
 ---
 

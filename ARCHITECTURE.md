@@ -431,19 +431,23 @@ Key design properties:
 |---|---|---|
 | Web framework | FastAPI | Latest via pip |
 | ASGI server | Uvicorn + Gunicorn | `uvicorn.workers.UvicornWorker` in production |
-| Language model (cloud) | OpenAI `gpt-4-turbo` | Configurable via `OPENAI_MODEL` |
-| Language model (local) | Ollama + custom LoRA model | Toggled via `USE_OLLAMA=true` |
+| Generation LLM | Qwen2.5:32b via Ollama | `OLLAMA_MODEL=qwen2.5:32b`, `keep_alive=-1` (permanently VRAM-resident), toggled via `USE_OLLAMA=true` |
+| Compression LLM | CLaRa-7B | Option B hybrid — `/compress` only, not final generation; runs on Mac Studio MPS, see §8 |
+| Language model (cloud, unused fallback) | OpenAI `gpt-4-turbo` | Configurable via `OPENAI_MODEL`; kept in `llm.py` as an optional emergency path, deliberately **not** wired into the active generate call (CLAUDE.md item 10 Part B) |
 | Embedding model | `BAAI/bge-m3` | 570M params, 1024-dim, multilingual, runs on CPU |
 | Embedding fine-tuning | PEFT + sentence-transformers 3.x | LoRA on bge-m3, RTX 3050 4GB |
-| LLM orchestration | LangChain 0.1.x LCEL | `langchain==0.1.20`, `langchain-core==0.1.52` |
-| Vector store | pgvector on PostgreSQL | `langchain-community` `PGVector` |
+| LLM orchestration | LangChain 0.1.x LCEL | `langchain==0.1.20`, `langchain-core==0.1.52` — legacy path only (`chain_factory.get_system_template()`, used by `finetune/`); the active RAG pipeline (`rag.py`) calls `llm.py`/Ollama directly, no LangChain chain |
+| Vector store | pgvector on PostgreSQL | `langchain-community` `PGVector`, Dockerized (`pgvector-nutribot`) |
 | Relational DB | PostgreSQL | SQLAlchemy ORM |
 | Document parsing | Unstructured.io ≥ 0.11 | Supports PDF, DOCX, OCR fallback |
 | OCR (Malay) | Tesseract + `tesseract-ocr-msa` | For scanned Bahasa Melayu PDFs |
 | Password hashing | werkzeug PBKDF2 | `generate_password_hash` / `check_password_hash` |
 | Session caching | Redis (optional) | In-memory dict fallback |
-| Evaluation | RAGAS | faithfulness, answer_relevancy, context_precision, context_recall |
-| Container | Docker | `python:3.11-slim` base |
+| Evaluation | RAGAS + deepeval (LLM-judge) | faithfulness/answer_relevancy/context_precision/context_recall + `judge_stance()`/`judge_myth_handling()` GEval judges, see §19 |
+| Public ingress | Cloudflare Tunnel | `cloudflared` systemd service, ingress rules in `/etc/cloudflared/config.yml`; also exposes CLaRa/Ollama tunnel hostnames directly from the Mac Studio |
+| Desktop-agent integration | MCP (Model Context Protocol) | `mcp_server.py`, `mcp>=1.0.0` |
+| Process management (RTX 3050) | systemd | `nutribot.service`, `docs_api.service`, `cloudflared.service` — not Docker for the app itself, only Postgres runs in a container |
+| Container (Postgres only) | Docker | `pgvector-nutribot` |
 
 ---
 
@@ -1055,18 +1059,27 @@ If the RAG answer contains `"i don't know"`, `"i am not sure"`, or `"i cannot an
 
 Post-processes LLM output for `[IMAGE: <query>]` markers, matches against `data/image_annotations.csv` by keyword intersection, and returns the best-matching image filename.
 
-### 8.7 Care Path & Objectives Framing (added 2026-07-30)
+### 8.7 Care Path & Objectives Framing (added 2026-07-30; patient-selectable UI added 2026-08-12)
 
-**File:** `rag.py` — `_build_care_path_block()`, wired into `_build_qwen_prompt()`, `get_rag_response()`, and `agent.py`'s tool-calling path.
+**File:** `rag.py` — `_CARE_PATH_LABELS`, `_build_care_path_block()`, wired into `_build_qwen_prompt()`, `get_rag_response()`, and `agent.py`'s tool-calling path.
 
-Reads `care_path` / `objective_ids` / `difficulty_ceiling` / `clinical_risk_tier` off the patient profile (sourced from an external care-path/rehab state machine and risk-scoring module owned outside this repo — placeholder contract in `docs/state_machine_contract.md`) and formats them into a prompt block that shifts dietary-advice framing:
+Reads `care_path` / `objective_ids` / `difficulty_ceiling` / `clinical_risk_tier` off the patient profile (sourced from an external care-path/rehab state machine and risk-scoring module owned outside this repo — placeholder contract in `docs/state_machine_contract.md`) and formats them into a prompt block that shifts dietary-advice framing. There are exactly 4 care paths, defined as follows:
 
-- `recover` (post-acute) → instructs the model to defer any change in restrictions to the patient's doctor/care team/cardiac rehab team.
-- `keep_well` / `reduce_risk` / `live_better` → prevention or sustainability framing, no clinician-deferral language.
+| Care path (`care_path` value) | Patient-facing label (`_CARE_PATH_LABELS`) | Intended population | Dietary framing objective | Clinician-deferral language | Activity/exercise framing |
+|---|---|---|---|---|---|
+| `keep_well` | "Keep me well — maintaining health, preventing decline" | No/low clinical risk, healthy baseline (e.g. patient 10, L0) | Prevention and healthy-habit sustainment — full-spectrum food guidance, no restriction framing | None | Full spectrum, including vigorous activity (matches L0 scope, `taxonomy.py`) |
+| `reduce_risk` | "Reduce my risk — prevention-focused (e.g. hypertension, diabetes, obesity, dyslipidaemia)" | Emerging/moderate risk factors, not yet an acute event (e.g. pre-hypertension, elevated BMI) | Risk-factor-targeted prevention — structured do/don't guidance around the named risk factors | None | Structured, safety-aware boundaries (≈ L1) |
+| `live_better` | "Live better with heart disease — stable chronic condition, structured ongoing support" | Established, stable chronic condition (e.g. CKD, long-standing HTN/T2DM) | Sustainable long-term management — ongoing structured support, not acute caution | None | Low-intensity, symptom-monitoring, strict stop conditions (≈ L2) |
+| `recover` | "Recover after a recent heart event or procedure — post-acute, clinician-governed" | Post-acute: recent cardiac event or procedure (e.g. post-CABG) | Clinician-governed recovery — any change in restrictions (resuming foods, adjusting portions, lifting a limit) must be confirmed with the doctor/care team/rehab team first | **Required** — the prompt block explicitly instructs the model to include one of those literal phrases, not just imply caution | Medical oversight only, emergency education (≈ L3) |
+
+Notes on how these are populated and consumed:
+
 - `clinical_risk_tier` is a **fallback only** — surfaced when `personalization_level` (L0–L3, dietitian-assigned) is not set.
-- `difficulty_ceiling` governs activity/exercise framing only, not dietary limits.
+- `difficulty_ceiling` (`easy` \| `intermediate` \| `hard`, from the external state machine) governs activity/exercise framing only, not dietary limits, and is independent of the table above.
+- `objective_ids` (1 primary + up to 2 secondary) are opaque IDs from the external state machine's own objective catalogue — Nutribot injects them into the prompt as "Current focus objectives" but does not need to know what each ID means, just that they exist.
+- **Selection today (interim, added 2026-08-12):** since the external state machine has no write path yet, patients self-select their care path via a sidebar picker in `patient_app.html`, backed by `GET /patient/care-path-options` (returns the 4 options above) and `POST /patient/{id}/care_path` (`app.py`, validated against `_CARE_PATH_LABELS`, persisted via `database.set_patient_care_path`). This is a stand-in for the eventual state-machine-driven write path, not a permanent design — see `docs/state_machine_contract.md` §"Still open".
 
-These fields are read-only from Nutribot's side (never extractor-writable, same protection tier as hospital-owned clinical fields). No real patient has them populated yet — `database.py` has the columns (`scripts/migrate_state_machine_fields.py`) and the profile dicts surface them, but the write path (direct DB write vs. an internal PATCH endpoint vs. webhook) isn't decided. `eval/test_rag.py` cases 35–38 cover the framing shift today via `profile_overrides` (simulated, not real patient data).
+These fields are read-only from Nutribot's side (never extractor-writable, same protection tier as hospital-owned clinical fields). `eval/test_rag.py` cases 35–38 cover the framing shift via `profile_overrides` (simulated, not real patient data).
 
 ---
 
@@ -1643,7 +1656,21 @@ A single chat request from a logged-in patient (patient_id provided):
 
 ---
 
-## 25. Content Drip Pipeline — Weekly EKA Content
+## 25. Content Drip Pipeline — Weekly EKA Content (RETIRED 2026-08-12)
+
+**`scripts/generate_weekly_eka.py` and `scripts/weekly_eka_scheduler.py` were
+deleted 2026-08-12**, their crontab entry removed, and the `POST
+/content/generate-weekly` admin endpoint removed from
+`content_api_router.py` — retired in favor of the MyHeartCoach
+Component-taxonomy pipeline (`docs/component_taxonomy_contract.md`), since
+this pipeline free-text hallucinated E/K/A content via the LLM rather than
+using clinically-approved source content. The `content_materials.content_type`/
+`week_number` columns and the DB-layer helpers below (`upsert_eka_material`,
+`cleanup_expired_eka_materials`, `get_materials_by_filters`,
+`get_weekly_feed_for_conditions`) were **kept** — they map directly onto the
+taxonomy's E/K/A Content Classification axis and are expected to be reused.
+Section below is kept as historical reference for that data model and API
+surface; §25.3/§25.4 describe deleted files.
 
 **Added June 2026.** Extends the original day-offset content drip (May 2026) with a second, parallel pipeline that delivers a rotating weekly programme of **Exercise (E)**, **Knowledge (K)**, and **Activity (A)** content, matched to each patient's condition group and personalization level (L0–L3).
 
