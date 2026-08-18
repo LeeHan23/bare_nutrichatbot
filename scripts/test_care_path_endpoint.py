@@ -7,12 +7,14 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 
 import app as app_module
 import database as db
 
-API_KEY = "nbk_live_96cfcc81cf0da0791279b2c4c391b09bfeb4b574a434c83c79c7f286d5ec8dd3"
+load_dotenv()
+API_KEY = os.environ["NUTRIBOT_API_KEY"]
 HEADERS = {"X-API-Key": API_KEY}
 
 client = TestClient(app_module.app)
