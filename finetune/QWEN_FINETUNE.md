@@ -4,6 +4,14 @@ Per the decision recorded in `docs/eval_and_roadmap.md` Part C: fine-tuning targ
 
 This file documents the recommended approach and starting configuration. Everything past "## Runbook" below is a concrete, copy-pasteable sequence to run on the Mac Studio itself — the rest of the doc (framework rationale, pipeline diagram) is background, not steps.
 
+## Attempt #1 result (2026-08-11) — DO NOT PROMOTE
+
+A first run of this exact pipeline already happened, on 2026-08-11 — undocumented until 2026-08-18 (see `docs/TRIPOD_LLM_Report.md` Item 6b for the full account, including a correction to an earlier wrong conclusion in that report about what these files were). Result, confirmed via `scripts/compare_eval_runs.py`: **DO NOT PROMOTE, 9 regressions, 0 improvements**, spread across nearly every category rather than concentrated in the targeted contraindication combos. `qwen2.5:32b` in production is unaffected — this never shipped.
+
+**Likely cause**: the training data was `data_focus_v2` (45 targeted examples) + `data_uniform_100` (100 generic examples) — background examples outnumber the targeted stance-correction examples ~2:1. The result was a systematic softening (more PERMIT-first framing) across the board, the opposite of the intended firmer RESTRICT calibration — consistent with the generic majority diluting the targeted minority signal rather than the model failing to learn at all.
+
+**For attempt #2**, the clearest lever to try first: rebalance the mix toward the focus-weighted examples — e.g. regenerate with `finetune/generate_training_data.py --focus-results ... --focus-weight` set higher relative to `--count`, so targeted examples aren't a minority of the training signal. The runbook below is otherwise unchanged and still applies.
+
 ## Runbook (ready to execute, 2026-08-18)
 
 Run this on the **Mac Studio** (M3 Ultra), not the RTX 3050 — `mlx-lm` needs Apple Silicon. Steps marked **(RTX 3050)** happen back on this repo's usual box instead.
