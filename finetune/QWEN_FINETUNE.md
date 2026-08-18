@@ -10,7 +10,19 @@ A first run of this exact pipeline already happened, on 2026-08-11 — undocumen
 
 **Likely cause**: the training data was `data_focus_v2` (45 targeted examples) + `data_uniform_100` (100 generic examples) — background examples outnumber the targeted stance-correction examples ~2:1. The result was a systematic softening (more PERMIT-first framing) across the board, the opposite of the intended firmer RESTRICT calibration — consistent with the generic majority diluting the targeted minority signal rather than the model failing to learn at all.
 
-**For attempt #2**, the clearest lever to try first: rebalance the mix toward the focus-weighted examples — e.g. regenerate with `finetune/generate_training_data.py --focus-results ... --focus-weight` set higher relative to `--count`, so targeted examples aren't a minority of the training signal. The runbook below is otherwise unchanged and still applies.
+## Attempt #2 data — ready (generated 2026-08-18)
+
+Regenerated with the exact same 3 target combos as attempt #1 (banana+CKD3, acar+HTN, instant/processed-food+Pre-HTN — the only variable changed is the ratio, to isolate cause and effect), same `--focus-weight 15`, but `--count` cut from 100 to 45 for a clean 50/50 focus/background split instead of attempt #1's ~31/69:
+
+```bash
+.venv/bin/python finetune/generate_training_data.py \
+  --focus-results <synthetic 3-combo results JSON, see git log for the exact one used> \
+  --focus-weight 15 --count 45 --output-dir finetune/data_focus_v3
+```
+
+Output: `finetune/data_focus_v3/` (81 train + 9 val, ShareGPT format, 45 of 90 focus-tagged — verified 50/50), reshaped into `finetune/data_mlx_v2/` (`train.jsonl`+`valid.jsonl`, `messages` format) — both committed. Spot-checked one banana+CKD3 example: the assistant correctly says "strictly limit or avoid bananas," so the generation quality is sound.
+
+**To run attempt #2** on the Mac Studio, repeat the Runbook below exactly, with two substitutions: `--data ~/nutribot-finetune/finetune/data_mlx_v2` (not `data_mlx`) and `--adapter-path .../qwen25-32b-lora-v2` (not `-v1`, so attempt #1's adapter isn't overwritten) — everything else, including `--iters 200`/`--num-layers 16`, is unchanged from attempt #1 so the rebalanced ratio is the only variable. Re-run the fast-path sanity check (step 3) against all 3 targeted cases, not just banana+CKD3, before merging.
 
 ## Runbook (ready to execute, 2026-08-18)
 
