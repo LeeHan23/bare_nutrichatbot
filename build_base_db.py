@@ -41,10 +41,32 @@ PGVECTOR_URL = os.environ.get(
 )
 
 # filename -> MyHeartCoach Component slug (see taxonomy.py). Anything not
-# listed here defaults to "nutrition" — the entire corpus today is
-# nutrition-guideline PDFs. Add an entry when ingesting a new document set
-# for a different component.
-DOC_COMPONENT_OVERRIDES = {}
+# listed here defaults to "nutrition". Add an entry when ingesting a new
+# document set for a different component. 2026-09-07: client document drop,
+# 21 new PDFs across the 11 module folders (drive-download-20260907...).
+DOC_COMPONENT_OVERRIDES = {
+    "Norton 2010.pdf": "exercise",
+    "WHO-Guideline for the pharmacological treatment of hypertension in adults.pdf": "medication",
+    "CPG Management of Percutaneous Coronory Intervention (PCI).pdf": "foundations",
+    "CPG Management of Diabetic Foot  (Second Edition).pdf": "diabetes",
+    "LE8_How_to_Manage_Weight.pdf": "weight",
+    "LE8_How_To_Manage_Blood_Pressure.pdf": "blood_pressure",
+    "KKM-The National Strategic Plan For Mental Health 2020-2025.pdf": "psychosocial",
+    "Kesan_Awal_Elak_Penderitaan_Kemurungan.pdf": "psychosocial",
+    "Panduan_Menangani_Stress.pdf": "psychosocial",
+    "Depression_Takes_Away_Your_Happiness.pdf": "psychosocial",
+    "Tangani_Stress_dengan_urutan_leher_dan_bahu.pdf": "psychosocial",
+    "Jangan_Biarkan_Kemurungan_Merampas_Kebahagian_Anda.pdf": "psychosocial",
+    "Pokok_Kesihatan.pdf": "psychosocial",
+    "Kemurungan_Apa_yang_anda_perlu_tahu.pdf": "psychosocial",
+    "Punca_Stress.pdf": "psychosocial",
+    "Tanda-tanda_masalah_Kesihatan_Mental.pdf": "psychosocial",
+    "Hapuskan_Stigma.pdf": "psychosocial",
+    "Tanda-tanda_penyakit_mental.pdf": "psychosocial",
+    "Buku MDG 2020 - Senaman.pdf": "physical_activity",
+    "29_Pos_MerokokAdalahHaram_Web.pdf": "tobacco_nicotine_alcohol",
+    # "American Heart Association-2021 Dietary Guidance...pdf" omitted: defaults to "nutrition".
+}
 
 
 def _connection_string() -> str:
@@ -139,6 +161,30 @@ def get_files_to_process():
     return files, tracker
 
 
+def _chunks_to_docs(chunks, filename: str):
+    """Build clean Documents from chunks, dropping junk. Returns (docs, skipped_count)."""
+    docs = []
+    skipped = 0
+    for chunk in chunks:
+        content = str(chunk).replace("\x00", "").strip()
+        if not content:
+            continue
+        if is_junk_chunk(content):
+            skipped += 1
+            continue
+
+        title = filename
+        if hasattr(chunk, "metadata") and hasattr(chunk.metadata, "title"):
+            title = chunk.metadata.title or filename
+
+        component = DOC_COMPONENT_OVERRIDES.get(filename, "nutrition")
+        docs.append(Document(
+            page_content=content,
+            metadata={"source": filename, "title": title, "doc_components": [component]},
+        ))
+    return docs, skipped
+
+
 def process_single_file(filepath: str) -> List[Document]:
     """Partition and chunk a single file. Runs in a subprocess."""
     # Silence loggers in subprocess too
@@ -161,26 +207,19 @@ def process_single_file(filepath: str) -> List[Document]:
 
         elements = filter_elements(elements)
         chunks = chunk_by_title(elements, max_characters=1024, combine_text_under_n_chars=200)
+        docs, skipped = _chunks_to_docs(chunks, filename)
 
-        docs = []
-        skipped = 0
-        for chunk in chunks:
-            content = str(chunk).replace("\x00", "").strip()
-            if not content:
-                continue
-            if is_junk_chunk(content):
-                skipped += 1
-                continue
-
-            title = filename
-            if hasattr(chunk, "metadata") and hasattr(chunk.metadata, "title"):
-                title = chunk.metadata.title or filename
-
-            component = DOC_COMPONENT_OVERRIDES.get(filename, "nutrition")
-            docs.append(Document(
-                page_content=content,
-                metadata={"source": filename, "title": title, "doc_components": [component]},
-            ))
+        # "fast" strategy can mangle table-heavy/non-standard-font PDFs into
+        # scrambled per-character text that produces chunks but no usable
+        # content — every chunk gets junk-filtered even though extraction
+        # "succeeded". Retry with hi_res (layout-aware, OCR-capable) in that
+        # case rather than silently keeping zero chunks for the file.
+        if not docs and chunks:
+            print(f"  [RETRY hi_res - all chunks junk] {filename}", flush=True)
+            elements = partition(filename=filepath, strategy="hi_res", languages=["eng", "msa"])
+            elements = filter_elements(elements)
+            chunks = chunk_by_title(elements, max_characters=1024, combine_text_under_n_chars=200)
+            docs, skipped = _chunks_to_docs(chunks, filename)
 
         elapsed = time.time() - file_start
         kept = len(docs)

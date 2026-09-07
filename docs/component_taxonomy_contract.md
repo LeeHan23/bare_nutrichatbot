@@ -7,7 +7,13 @@ grounded content today. Source: `MyHeartCoach_Content_Registry.xlsx` (Taxonomy,
 Content_Registry, Chatbot_Chunks tabs) and `Exercise Video Intensity.xlsx`,
 both supplied by the client and kept at the repo root.
 
-Same repo, same bot (explicit decision, not 10 separate services) — see
+**2026-09-07 update:** a client document drop (`drive-download-20260907...`,
+11 folders — the original 10 Components plus a new **Weight management**
+folder with no prior taxonomy slug) added real ingested content for every
+component except `medication` (still thin — one document). See "Exercise
+(and nutrition) are grounded" below for the full before/after.
+
+Same repo, same bot (explicit decision, not 11 separate services) — see
 `taxonomy.py` for the machine-readable vocabulary everything below builds on.
 
 ## Why this exists
@@ -39,12 +45,19 @@ developer) doesn't have to re-derive it from the workbook or guess.
   The old blanket "no grounded content yet, defer" guard
   (`taxonomy._NO_CONTENT_GUARD`) is now only a fallback for a component slug
   added to `COMPONENTS` before its scope text is written — see
-  `taxonomy.py`'s `__main__` self-check, which asserts none of the 10 real
-  components fall through to it.
+  `taxonomy.py`'s `__main__` self-check, which asserts none of the current
+  11 real components fall through to it (10 as of this 2026-08-14 note;
+  `weight` was added 2026-09-07, see "All 11 components are grounded" below).
 - `scripts/enrich_with_components.py` — backfilled all 24,819 existing
   `base_knowledge` chunks with `doc_components: ["nutrition"]` (they're
   100% nutrition-sourced today). `build_base_db.py` stamps new ingests the
   same way going forward (`DOC_COMPONENT_OVERRIDES` dict for anything else).
+  **2026-09-07**: gained an `--additive` flag (dedup-appends a component
+  onto a chunk's existing `doc_components` array instead of only touching
+  untagged rows) — used to retag ~35 already-ingested documents that turned
+  out to also be Blood Pressure / Lipid / Diabetes / Weight / Psychosocial /
+  Tobacco / Foundations / Exercise source material (they keep their
+  original `nutrition` tag too, not replaced).
 - `scripts/ingest_chatbot_chunks.py` — loads `Status == "Approved"` rows from
   the workbook's `Chatbot_Chunks` tab into `base_knowledge`, tagged
   `trust_tier: "clinical_approved"`. Idempotent by `Chunk ID` — safe to
@@ -105,20 +118,39 @@ developer) doesn't have to re-derive it from the workbook or guess.
     opening the weekly Excel exports to review a batch. Read-only; approval
     still goes through the existing admin endpoint.
 
-## Exercise (and nutrition) are grounded; the other 8 are general-education
+## All 11 components are grounded; medication stays thin
 
-`nutrition` and `exercise` are the only two components backed by real
-retrieved content — `nutrition` from `base_knowledge` chunks, `exercise` from
-the video library (199 real, client-approved YouTube videos filtered by
-personalization level). `taxonomy.COMPONENT_SCOPE["exercise"]` reflects that
-narrowly — the model may confirm a video is being shown, never describe/
-invent one itself, and still may not prescribe a programme or judge medical
-safety beyond what the library covers.
+**Superseded 2026-09-07** (was "Exercise (and nutrition) are grounded; the
+other 8 are general-education", written 2026-08-12/14). The client's
+2026-09-07 document drop (11 folders — the 10 original Components plus a
+new **Weight management** folder) added real ingested `base_knowledge`
+content, tagged via `doc_components`, for `foundations` (relabeled
+`"Cardiac diseases management"`), `blood_pressure`, `lipid`, `diabetes`,
+`weight` (new 11th slug), `tobacco_nicotine_alcohol`, `physical_activity`,
+and `psychosocial` — closing the gap the 2026-08-14 decision below was
+working around. Their `COMPONENT_SCOPE["<component>"]["in_scope"]` text was
+rewritten accordingly (out_of_scope safety boundaries were left untouched).
+21 genuinely new PDFs were ingested (41 of the 62 supplied were duplicates,
+already in `base_knowledge` under the same or a different filename — 35
+exact-filename matches, 6 confirmed same-content-different-filename via
+MD5/text comparison) and ~35 already-ingested documents were additively
+retagged with their real component (see `scripts/enrich_with_components.py`
+`--additive`, above) alongside their existing `nutrition` tag.
 
-The other 8 components have zero ingested clinical documents, so their
-`COMPONENT_SCOPE` entries (added 2026-08-14) intentionally stay at the
-"general lay education, always defer specifics to the care team" altitude
-rather than letting the model answer as if it had grounded clinical content.
+`exercise` is unchanged — still additionally grounded in the video library
+(199 real, client-approved YouTube videos filtered by personalization
+level), on top of the `base_knowledge` chunks it also received in this
+drop. `taxonomy.COMPONENT_SCOPE["exercise"]` still reflects the video-catalog
+constraint narrowly — the model may confirm a video is being shown, never
+describe/invent one itself, and still may not prescribe a programme or
+judge medical safety beyond what the library covers.
+
+`medication` is the one component that stays thin — a single document (the
+WHO Guideline for the pharmacological treatment of hypertension in adults).
+Its `COMPONENT_SCOPE` in_scope text now references that it's grounded, but
+its out_of_scope boundary is **unchanged** and remains the tightest of the
+group (no dosing/switching/interactions, no exceptions) — grounding does
+not loosen this, given it's the highest-risk topic to get wrong.
 
 ## Component detection is deliberately conservative
 
@@ -158,9 +190,12 @@ component prove costly in eval.
    matching, but no `Content_Registry` rows exist yet with real
    (non-template) Content IDs for it to resolve against. Not designed.
 4. **Content_Registry label drift.** Sample rows use labels not in the
-   Taxonomy tab's canonical 10 (`"Sleep & Recovery"`, `"Foundations"` vs
-   `"Foundations - Heart Diseases"`, `"Monitoring & Check-ins"`,
-   `"Physical Activity & Exercise"`). `scripts/ingest_chatbot_chunks.py`
+   Taxonomy tab's canonical set (`"Sleep & Recovery"`, `"Foundations"` vs
+   `"Cardiac diseases management"` (label renamed 2026-09-07 from
+   `"Foundations - Heart Diseases"` to match the source folder title
+   verbatim), `"Monitoring & Check-ins"`, `"Physical Activity & Exercise"`).
+   The rename widens this drift, not narrows it — flagging for the client's
+   content team, not resolving here. `scripts/ingest_chatbot_chunks.py`
    logs a warning and leaves the resulting chunk untagged (safe default:
    always eligible, never wrongly excluded) rather than fuzzy-guessing the
    mapping. Confirmed template noise as of this workbook version; revisit

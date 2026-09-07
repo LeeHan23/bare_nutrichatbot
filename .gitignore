@@ -59,6 +59,8 @@ data/*.db
 
 # Source documents to ingest (large PDFs, not for version control)
 documents_to_ingest/
+drive-download-20260907T051219Z-1-001/
+data/staging_20260907_new_docs/
 
 # Local model weights
 models/*
@@ -79,13 +81,6 @@ eval/results/*_SUMMARY.md
 
 # Evaluation & fine-tuning scripts (not needed for deployment)
 evaluate_rag.py
-eval_ragas.py
-test_bot_accuracy.py
-test_bot_culture.py
-generate_training_data.py
-generate_embedding_training_data.py
-export_pairs_csv.py
-finetune_embeddings.py
 colab_finetune.ipynb
 
 # Audit / inventory docs (internal use only)

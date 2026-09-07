@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "based_on": "Manual curation by Lee Yean Han, May 2026, with cardiac dietitian input",
+  "version": "2.0",
+  "based_on": "Manual curation by Lee Yean Han, May 2026, with cardiac dietitian input; v2.0: +108 documents merged from LLM-drafted metadata (scripts/draft_keyword_metadata.py), spot-checked 2026-08-25",
   "languages": [
     "en",
     "ms"
@@ -793,23 +793,6 @@
       ],
       "language": "en"
     },
-    "CPG Management of Obesity 230518.pdf": {
-      "keywords": [
-        "anti-obesity drugs",
-        "orlistat",
-        "weight loss",
-        "obesity management",
-        "bariatric"
-      ],
-      "topic_summary": "Malaysian CPG for management of obesity — lifestyle, pharmacological and surgical management",
-      "primary_topics": [
-        "obesity",
-        "weight management",
-        "BMI",
-        "CPG Malaysia"
-      ],
-      "language": "en"
-    },
     "Louise Burke, Vicki Deakin-Clinical Sports Nutrition-McGraw-Hill (2009).pdf": {
       "keywords": [
         "sports nutrition",
@@ -1052,6 +1035,2041 @@
         "smoking cessation",
         "tobacco",
         "WHO guidelines"
+      ],
+      "language": "en"
+    },
+    "ACCF_AHA - Management of Heart Failure 2013.pdf": {
+      "keywords": [
+        "heart failure",
+        "HF management",
+        "diabetes mellitus",
+        "metabolic syndrome",
+        "BNP-guided therapy"
+      ],
+      "topic_summary": "The document discusses the management of heart failure, including the role of biomarker-guided therapy and the impact of diabetes and metabolic syndrome on HF.",
+      "primary_topics": [
+        "HF management",
+        "diabetes",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "ACC_AHA - Primary Prevention of Cardiovascular Disease 2019.pdf": {
+      "keywords": [
+        "ASCVD risk",
+        "sedentary behavior",
+        "DASH diet",
+        "tobacco use disorder",
+        "cardiovascular risk assessment"
+      ],
+      "topic_summary": "The document covers strategies for reducing ASCVD risk, including physical activity and dietary recommendations like the DASH diet, as well as assessing cardiovascular risk and managing tobacco use.",
+      "primary_topics": [
+        "ASCVD prevention",
+        "DASH diet",
+        "tobacco use disorder",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "ACC_AHA_HFSA - Focused Update for Management of Heart Failure 2017.pdf": {
+      "keywords": [
+        "ivabradine",
+        "heart failure",
+        "HFrEF",
+        "BNP testing",
+        "STOP-HF"
+      ],
+      "topic_summary": "The document discusses therapeutic agents and management strategies for heart failure, including ivabradine and BNP-based screening.",
+      "primary_topics": [
+        "HF management",
+        "cardiovascular health",
+        "hormonal health"
+      ],
+      "language": "en"
+    },
+    "ACG Clinical Guideline_Nutrition Therapy in the Adult.pdf": {
+      "keywords": [
+        "nutrition therapy",
+        "ICU patients",
+        "EN delivery",
+        "feeding protocols",
+        "percutaneous gastrostomy tube"
+      ],
+      "topic_summary": "The document covers nutrition therapy strategies, including feeding protocols and management of percutaneous gastrostomy tubes in ICU patients.",
+      "primary_topics": [
+        "nutrition",
+        "cardiovascular health",
+        "end-of-life care"
+      ],
+      "language": "en"
+    },
+    "ADA - DM (2021).pdf": {
+      "keywords": [
+        "American Diabetes Association",
+        "isCGM",
+        "type 1 diabetes",
+        "type 2 diabetes",
+        "glycemic targets",
+        "A1C"
+      ],
+      "topic_summary": "The document covers glycemic targets and standards of medical care in diabetes, including the use and effectiveness of isCGM for individuals with type 1 and type 2 diabetes.",
+      "primary_topics": [
+        "diabetes management",
+        "blood sugar",
+        "glycemic targets"
+      ],
+      "language": "en"
+    },
+    "AHAACC - Lifestyle Management to Reduce Cardiovascular Risk 2014.pdf": {
+      "keywords": [
+        "cardiovascular risk",
+        "physical activity",
+        "sodium intake",
+        "dietary patterns",
+        "blood pressure",
+        "DASH diet",
+        "nutrition"
+      ],
+      "topic_summary": "The document discusses lifestyle management strategies, including physical activity and dietary modifications, to reduce cardiovascular risk.",
+      "primary_topics": [
+        "CVD prevention",
+        "healthy eating",
+        "physical activity",
+        "sodium reduction"
+      ],
+      "language": "en"
+    },
+    "AHA_ACC_TOS Guideline - Management of Overweight and Obesity in Adults 2013.pdf": {
+      "keywords": [
+        "obesity management",
+        "weight loss",
+        "diabetes outcomes",
+        "systematic review",
+        "behavioral treatment",
+        "dietary guidance"
+      ],
+      "topic_summary": "The document covers evidence-based approaches to managing obesity in adults, including dietary interventions and behavioral treatments, with a focus on improving health outcomes.",
+      "primary_topics": [
+        "obesity",
+        "weight management",
+        "diabetes management"
+      ],
+      "language": "en"
+    },
+    "AND - CKD (2013).pdf": {
+      "keywords": [
+        "CKD",
+        "RDN",
+        "MNT",
+        "nutrition therapy",
+        "renal replacement therapy",
+        "drug-nutrient interactions"
+      ],
+      "topic_summary": "The document provides guidelines for medical nutrition therapy (MNT) by registered dietitian nutritionists (RDNs) for adults with chronic kidney disease (CKD), including monitoring and potential drug-nutrient interactions.",
+      "primary_topics": [
+        "CKD",
+        "renal nutrition",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "AND EAL - Adult Weight Management 2014.pdf": {
+      "keywords": [
+        "weight management",
+        "Internet support",
+        "behavioral strategy",
+        "meal replacements",
+        "lifestyle intervention"
+      ],
+      "topic_summary": "The document discusses the effectiveness of various strategies for weight management in adults, including internet-based support and behavioral interventions.",
+      "primary_topics": [
+        "weight management",
+        "diet",
+        "obesity"
+      ],
+      "language": "en"
+    },
+    "AND EAL - Heart Failure 2008.pdf": {
+      "keywords": [
+        "glycemic control",
+        "MNT",
+        "L-Arginine",
+        "Carnitine",
+        "Coenzyme Q10"
+      ],
+      "topic_summary": "The document discusses the evaluation of glycemic control in cardiac patients and the potential side effects of certain supplements.",
+      "primary_topics": [
+        "diabetes management",
+        "HF management"
+      ],
+      "language": "en"
+    },
+    "AND EAL - Hypertension 2015.pdf": {
+      "keywords": [
+        "DASH diet",
+        "blood pressure",
+        "hypertension management",
+        "dietary modifications",
+        "SBP and DBP"
+      ],
+      "topic_summary": "The document discusses the effects of dietary modifications, particularly the DASH diet, on blood pressure control in hypertensive patients.",
+      "primary_topics": [
+        "DASH diet",
+        "hypertension management",
+        "blood pressure"
+      ],
+      "language": "en"
+    },
+    "AND EAL - Lipid Metabolism Disorders (CVD) 2011.pdf": {
+      "keywords": [
+        "vitamin E",
+        "lipid metabolism disorders",
+        "cardiovascular disease prevention",
+        "serum lipids",
+        "meta-analysis"
+      ],
+      "topic_summary": "The document covers studies related to vitamin E supplementation and its effects on cardiovascular outcomes, including myocardial infarction, stroke, and serum lipid levels.",
+      "primary_topics": [
+        "CVD prevention",
+        "lipid management",
+        "vitamin E"
+      ],
+      "language": "en"
+    },
+    "AND EAL - Unintended Weight Loss in Older Adults 2009.pdf": {
+      "keywords": [
+        "unintended weight loss",
+        "nutrition diagnosis",
+        "older adults",
+        "BMI",
+        "mortality",
+        "malnutrition"
+      ],
+      "topic_summary": "The document provides guidelines for diagnosing and managing unintended weight loss in older adults, including monitoring body weights and evaluating nutritional status.",
+      "primary_topics": [
+        "nutrition",
+        "weight management",
+        "elderly health"
+      ],
+      "language": "en"
+    },
+    "AND Evidence-Based Practice Guideline - Management of Heart Failure in Adults 2018.pdf": {
+      "keywords": [
+        "heart failure",
+        "nutrition intervention",
+        "sodium intake",
+        "fluid intake",
+        "renal function"
+      ],
+      "topic_summary": "The document provides evidence-based nutrition guidelines for managing heart failure in adults, focusing on individualized sodium and fluid intake recommendations.",
+      "primary_topics": [
+        "HF management",
+        "diet"
+      ],
+      "language": "en"
+    },
+    "AND Position Paper - Interventions for Treatment of Overweight and Obesity in Adults 2016.pdf": {
+      "keywords": [
+        "obesity treatment",
+        "weight loss",
+        "behavioral counseling",
+        "RDNs",
+        "meal replacements"
+      ],
+      "topic_summary": "The document discusses interventions for treating overweight and obesity in adults, including behavioral counseling and meal replacements.",
+      "primary_topics": [
+        "obesity",
+        "weight management",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "Adult Renal Failure.pdf": {
+      "keywords": [
+        "renal failure",
+        "parenteral nutrition",
+        "protein-energy wasting",
+        "hemodialysis patients",
+        "chronic kidney disease"
+      ],
+      "topic_summary": "The document discusses nutritional management, particularly parenteral nutrition and protein-energy wasting in patients with renal failure undergoing hemodialysis.",
+      "primary_topics": [
+        "CKD",
+        "renal nutrition",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "Amino acids.pdf": {
+      "keywords": [
+        "tyrosine",
+        "semi-essential amino acid",
+        "preterm infants",
+        "parenteral nutrition",
+        "plasma levels",
+        "N-acetyl tyrosine"
+      ],
+      "topic_summary": "The document discusses the role of tyrosine as a semi-essential amino acid in neonatal nutrition and its supplementation in preterm infants.",
+      "primary_topics": [
+        "nutrition",
+        "cardiovascular health",
+        "healthy eating"
+      ],
+      "language": "en"
+    },
+    "Anthropometric and body composition measurement, Technical Error of Measurement, Biochemical measurement, 24-hr dietary recall, Food record, FFQ, International Physical Activity Questionnaire (IPAQ), Time and Motion, Total Daily Energy Expenditure.pdf": {
+      "keywords": [
+        "Technical Error of Measurement",
+        "Biochemical measurement",
+        "24-hr dietary recall",
+        "Food record",
+        "FFQ",
+        "International Physical Activity Questionnaire (IPAQ)",
+        "Total Daily Energy Expenditure"
+      ],
+      "topic_summary": "The document covers various methods for assessing anthropometric and body composition measurements, biochemical tests, dietary assessments, physical activity questionnaires, and energy expenditure in clinical nutrition.",
+      "primary_topics": [
+        "cardiovascular health",
+        "diet",
+        "physical activity",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "Anthropometry equations.docx": {
+      "keywords": [
+        "lean body weight",
+        "actual body weight",
+        "ideal body weight",
+        "anthropometry equations",
+        "body weight estimation"
+      ],
+      "topic_summary": "The document provides various anthropometric equations for estimating lean and actual body weights in adults, including gender-specific formulas.",
+      "primary_topics": [
+        "nutrition",
+        "weight management",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "Biochemical data (Chemical Pathology Reference Range 2017).pdf": {
+      "keywords": [
+        "reference range",
+        "electrochemiluminescence immunoassay",
+        "glucose tolerance test",
+        "OGTT",
+        "microalbuminuria",
+        "macroalbuminuria",
+        "hexokinase"
+      ],
+      "topic_summary": "The document provides reference ranges for various biochemical tests including glucose levels, albuminuria measurements, and other general chemistry parameters.",
+      "primary_topics": [
+        "blood sugar",
+        "diabetes management",
+        "CKD",
+        "lipid disorder"
+      ],
+      "language": "en"
+    },
+    "Blood sugar profile.pdf": {
+      "keywords": [
+        "blood sugar",
+        "diabetes management",
+        "anti-diabetic agents",
+        "bariatric surgery",
+        "metformin",
+        "GLP-1 RA",
+        "SGLT2i"
+      ],
+      "topic_summary": "The document covers various anti-diabetic treatments, including pharmacotherapy and surgical options, for managing blood sugar in diabetic patients.",
+      "primary_topics": [
+        "diabetes management",
+        "blood sugar",
+        "treatment regime"
+      ],
+      "language": "en"
+    },
+    "CMAJ - Obesity in Adults 2020.pdf": {
+      "keywords": [
+        "bariatric surgery",
+        "comprehensive care plan",
+        "primary care providers",
+        "weight management",
+        "nutrition",
+        "obesity"
+      ],
+      "topic_summary": "The document discusses comprehensive care plans for bariatric surgical patients and weight management strategies, emphasizing the role of primary care providers.",
+      "primary_topics": [
+        "nutrition",
+        "obesity",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "CPG - Diabetic Nephropathy.pdf": {
+      "keywords": [
+        "diabetic nephropathy",
+        "insulin dose reduction",
+        "metformin avoidance",
+        "renal failure",
+        "hypertension management",
+        "blood pressure control",
+        "glycaemia association"
+      ],
+      "topic_summary": "This document provides guidelines on the prevention, screening, and management of diabetic nephropathy in patients with diabetes.",
+      "primary_topics": [
+        "diabetes management",
+        "kidney disease management",
+        "hypertension management",
+        "T2DM"
+      ],
+      "language": "en"
+    },
+    "CPG MOH - CKD 2018.docx": {
+      "keywords": [
+        "CKD",
+        "eGFR",
+        "hypertension",
+        "renal artery stenosis",
+        "statin treatment",
+        "antiplatelet agents",
+        "aspirin"
+      ],
+      "topic_summary": "The document covers management and referral criteria for chronic kidney disease (CKD), including the use of statins and antiplatelet agents.",
+      "primary_topics": [
+        "CKD",
+        "hypertension management",
+        "cardiovascular health",
+        "renal nutrition"
+      ],
+      "language": "en"
+    },
+    "CPG MOH - Obesity 2004.pdf": {
+      "keywords": [
+        "behaviour therapy",
+        "weight loss",
+        "lifestyle changes",
+        "self-monitoring",
+        "portion control",
+        "obesity"
+      ],
+      "topic_summary": "The document discusses behaviour therapy strategies for weight loss and maintenance, including lifestyle modifications and self-monitoring techniques.",
+      "primary_topics": [
+        "weight management",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "CPG MOH - Primary & Secondary Prevention of CVD 2017.pdf": {
+      "keywords": [
+        "cardiovascular disease",
+        "CVD prevention",
+        "dietary salt reduction",
+        "obesity",
+        "DASH diet",
+        "heart failure",
+        "hypertension management"
+      ],
+      "topic_summary": "The document discusses various aspects of cardiovascular disease prevention, including dietary recommendations and the impact of obesity.",
+      "primary_topics": [
+        "CVD prevention",
+        "DASH diet",
+        "hypertension management",
+        "obesity"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Ischaemic Stroke 2020 (Quick Reference).pdf": {
+      "keywords": [
+        "Aspirin",
+        "UFH",
+        "LMWH",
+        "stroke prevention",
+        "polypharmacy",
+        "EMD"
+      ],
+      "topic_summary": "The document covers guidelines for managing ischaemic stroke, including anticoagulant and antiplatelet therapy during pregnancy, primary and secondary prevention measures, and emergency response protocols.",
+      "primary_topics": [
+        "CVD prevention",
+        "hypertension management",
+        "cardiovascular health",
+        "diet"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Multiple Sclerosis 2015.pdf": {
+      "keywords": [
+        "multiple sclerosis",
+        "RRMS",
+        "IFNβ",
+        "GA",
+        "active MS",
+        "MRI"
+      ],
+      "topic_summary": "The document discusses guidelines for diagnosing and treating multiple sclerosis, including criteria for initiating treatment with IFNβ.",
+      "primary_topics": [
+        "dyslipidaemia",
+        "cardiovascular health",
+        "hormonal health"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Obesity 2023 (2nd Edition).pdf": {
+      "keywords": [
+        "obesity",
+        "IGB therapy",
+        "BMI ≥30 kg/m2",
+        "pharmacotherapy",
+        "weight management"
+      ],
+      "topic_summary": "The document covers the management of obesity including pharmacotherapy, dietary interventions, and risk factors associated with intragastric balloon (IGB) therapy.",
+      "primary_topics": [
+        "obesity",
+        "diet",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Obesity 2023 (Quick Reference).pdf": {
+      "keywords": [
+        "obesity management",
+        "BMI-for-age chart",
+        "weight loss goals",
+        "multicomponent interventions",
+        "bariatric surgery",
+        "medical nutrition therapy"
+      ],
+      "topic_summary": "The document covers obesity prevention and management strategies, including dietary recommendations, physical activity, psychological therapy, and bariatric surgery for individuals with morbid obesity.",
+      "primary_topics": [
+        "obesity",
+        "weight management",
+        "diet",
+        "exercise prescription",
+        "psychological health"
+      ],
+      "language": "en"
+    },
+    "Carbohydrate Counting.pdf": {
+      "keywords": [
+        "carbohydrate counting",
+        "Malaysian food",
+        "CHO exchanges",
+        "nutrition information",
+        "food label reading",
+        "T2DM"
+      ],
+      "topic_summary": "The document provides guidance on carbohydrate counting and estimation in Malaysian foods, particularly for individuals with Type 2 Diabetes Mellitus (T2DM).",
+      "primary_topics": [
+        "diabetes management",
+        "nutrition",
+        "T2DM"
+      ],
+      "language": "en"
+    },
+    "Carbohydrates.pdf": {
+      "keywords": [
+        "glucose control",
+        "hypoglycemia",
+        "neonatal hyperglycaemia",
+        "insulin therapy",
+        "total parenteral nutrition"
+      ],
+      "topic_summary": "The document discusses glucose regulation and management in neonates, including the use of insulin therapy and total parenteral nutrition.",
+      "primary_topics": [
+        "blood sugar",
+        "diabetes management"
+      ],
+      "language": "en"
+    },
+    "Cardiology and Pneumology.pdf": {
+      "keywords": [
+        "CHF",
+        "cardiac cachexia",
+        "nutritional state",
+        "weight loss",
+        "COPD",
+        "parenteral nutrition"
+      ],
+      "topic_summary": "The document discusses the influence of parenteral nutrition and nutritional status on disease progression, survival, and morbidity in patients with chronic heart failure (CHF) and COPD.",
+      "primary_topics": [
+        "HF management",
+        "nutrition",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "Cederholm.pdf": {
+      "keywords": [
+        "malnutrition",
+        "GLIM consensus",
+        "muscle mass",
+        "grip strength",
+        "etiology-based diagnosis"
+      ],
+      "topic_summary": "The document discusses global standards for diagnosing malnutrition using GLIM criteria, focusing on muscle assessment and etiological classification.",
+      "primary_topics": [
+        "nutrition",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "Central Venous Catheters.pdf": {
+      "keywords": [
+        "central venous catheters",
+        "PICCs",
+        "chlorhexidine gluconate",
+        "CRBSI",
+        "ultrasound-guided placement"
+      ],
+      "topic_summary": "The document discusses the management and complications of central venous catheters, including proper antiseptic use, catheter flushing procedures, and the benefits of ultrasound-guided placements.",
+      "primary_topics": [
+        "cardiovascular health",
+        "infection prevention"
+      ],
+      "language": "en"
+    },
+    "Critically Ill Obese.pdf": {
+      "keywords": [
+        "nutritional components",
+        "immune system",
+        "obese patients",
+        "critical illness",
+        "malnutrition",
+        "sarcopenic obesity"
+      ],
+      "topic_summary": "The document discusses nutritional considerations and challenges in managing critically ill obese patients, including immune support and the identification of malnutrition.",
+      "primary_topics": [
+        "nutrition",
+        "obesity",
+        "malnutrition"
+      ],
+      "language": "en"
+    },
+    "Diabetes and its Effect on Bone and Fracture Healing.pdf": {
+      "keywords": [
+        "AGEs",
+        "osteoblastic cells",
+        "fracture healing",
+        "glycation",
+        "bone matrix",
+        "microdamage"
+      ],
+      "topic_summary": "The document discusses how advanced glycation end-products (AGEs) and high glucose levels affect bone microstructure, mineralization, and fracture healing in osteoblastic cells.",
+      "primary_topics": [
+        "diabetes management",
+        "osteoblastic differentiation",
+        "fracture repair"
+      ],
+      "language": "en"
+    },
+    "EAL CKD Electrolytes 2020.pdf": {
+      "keywords": [
+        "CKD",
+        "calcium intake",
+        "potassium intake",
+        "net acid production",
+        "bicarbonate supplementation",
+        "phosphorus restriction",
+        "sodium intake"
+      ],
+      "topic_summary": "The document provides dietary and nutritional recommendations for managing electrolyte balance, acid-base status, and mineral intake in adults with chronic kidney disease (CKD).",
+      "primary_topics": [
+        "renal nutrition",
+        "diet",
+        "kidney disease management",
+        "electrolytes"
+      ],
+      "language": "en"
+    },
+    "EAL CKD Macronutrients 2020.pdf": {
+      "keywords": [
+        "oral protein-energy supplementation",
+        "CKD posttransplantation",
+        "nutritional supplements",
+        "LC n-3 PUFA",
+        "AV graft patency",
+        "kidney allograft survival"
+      ],
+      "topic_summary": "The document covers nutritional recommendations and interventions for adults with CKD, including oral and enteral nutrition supplementation, dietary protein intake guidelines, and the use of LC n-3 PUFAs.",
+      "primary_topics": [
+        "CKD",
+        "nutrition",
+        "renal nutrition"
+      ],
+      "language": "en"
+    },
+    "EAL Gestational Diabetes Mellitus 2016.pdf": {
+      "keywords": [
+        "gestational diabetes mellitus",
+        "GDM",
+        "carbohydrate prescription",
+        "macronutrient requirements",
+        "dietary reference intakes",
+        "DRI"
+      ],
+      "topic_summary": "The document covers nutritional recommendations and dietary management for women with gestational diabetes mellitus, including macronutrient requirements and carbohydrate prescription.",
+      "primary_topics": [
+        "diabetes management",
+        "nutrition",
+        "healthy eating"
+      ],
+      "language": "en"
+    },
+    "EAL Type 1 and 2 Diabetes Mellitus 2015.pdf": {
+      "keywords": [
+        "glucose monitoring",
+        "medical nutrition therapy (MNT)",
+        "carbohydrate management strategies",
+        "diabetes management",
+        "registered dietitian nutritionist"
+      ],
+      "topic_summary": "The document covers various aspects of diabetes management, including glucose monitoring and medical nutrition therapy for both type 1 and type 2 diabetes.",
+      "primary_topics": [
+        "diabetes management",
+        "nutrition",
+        "medical nutrition therapy (MNT)"
+      ],
+      "language": "en"
+    },
+    "ENCardioPulm.pdf": {
+      "keywords": [
+        "weight loss",
+        "COPD",
+        "cardiac cachexia",
+        "CHF",
+        "nutrition",
+        "BMI"
+      ],
+      "topic_summary": "The document discusses the impact of weight change and nutritional status in patients with COPD and chronic heart failure.",
+      "primary_topics": [
+        "heart failure",
+        "nutrition",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "ENGeneral.pdf": {
+      "keywords": [
+        "low carbohydrate-high MUFA",
+        "glycaemic control",
+        "lipid profile",
+        "clinical outcome",
+        "fiber intake"
+      ],
+      "topic_summary": "The document discusses the benefits of low carbohydrate-high monounsaturated fat (MUFA) formulae over high carbohydrate-low fat formulae in terms of glycaemic and lipid profiles, clinical outcomes, and fiber intake recommendations.",
+      "primary_topics": [
+        "blood sugar",
+        "lipid management",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "ENKidney.pdf": {
+      "keywords": [
+        "ARF patients",
+        "disease-specific formulae",
+        "electrolyte derangements",
+        "CRF patients",
+        "protein intakes",
+        "renal nutrition"
+      ],
+      "topic_summary": "The document discusses the nutritional requirements and specific formula needs for ARF (Acute Renal Failure) patients, including the use of disease-specific formulae.",
+      "primary_topics": [
+        "renal nutrition",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "ESPEN (2021)-Hospitalised patients with Acute and Chronic kidney disease.pdf": {
+      "keywords": [
+        "acute kidney injury",
+        "chronic kidney disease",
+        "protein catabolic rate",
+        "malnutrition",
+        "nutrient prescription"
+      ],
+      "topic_summary": "The document discusses nutritional considerations for patients with acute and chronic kidney diseases, including protein metabolism and malnutrition.",
+      "primary_topics": [
+        "CKD",
+        "renal nutrition"
+      ],
+      "language": "en"
+    },
+    "Estimation of basal metabolic rate for Chinese ethnicity.pdf": {
+      "keywords": [
+        "basal metabolic rate",
+        "Chinese ethnicity",
+        "BMR prediction equation",
+        "BMI range",
+        "cross-validation"
+      ],
+      "topic_summary": "The document discusses a new BMR prediction equation specifically for Chinese individuals that shows improved accuracy across various BMI ranges compared to existing equations.",
+      "primary_topics": [
+        "nutrition",
+        "BMI",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "FG Management of Type 2 Diabetes Mellitus (5th Edition).pdf": {
+      "keywords": [
+        "gliclazide",
+        "glimepiride",
+        "hypoglycaemia",
+        "A1c level",
+        "OGTT",
+        "Type 2 Diabetes Mellitus"
+      ],
+      "topic_summary": "The document discusses the management of Type 2 Diabetes Mellitus, including preferred second-generation sulfonylureas (SUs), their side effects, and diagnostic criteria based on A1c levels.",
+      "primary_topics": [
+        "diabetes management",
+        "glucose",
+        "T2DM"
+      ],
+      "language": "en"
+    },
+    "FG Management of Type 2 Diabetes Mellitus (6th Edition).pdf": {
+      "keywords": [
+        "T2DM",
+        "Pioglitazone",
+        "Orlistat",
+        "BMI",
+        "hypertension management",
+        "anti-VEGF therapy",
+        "diabetic retinopathy"
+      ],
+      "topic_summary": "The document covers the management of Type 2 Diabetes Mellitus, including treatment with Pioglitazone and Orlistat, considerations for obesity management, hypertension control, and anti-VEGF therapy for diabetic retinopathy.",
+      "primary_topics": [
+        "T2DM",
+        "hypertension management",
+        "diabetes management"
+      ],
+      "language": "en"
+    },
+    "Food exchange List ( Msia).pdf": {
+      "keywords": [
+        "fruit exchange",
+        "carbohydrate content",
+        "calories",
+        "starchy vegetables",
+        "lean meat",
+        "protein"
+      ],
+      "topic_summary": "The document provides a food exchange list detailing carbohydrate, protein, and fat contents for various fruits, starchy vegetables, lean meats, fish, and fats.",
+      "primary_topics": [
+        "cardiovascular health",
+        "diet",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "Ford A et al. 2014.pdf": {
+      "keywords": [
+        "prucalopride",
+        "5-HT 4 agonists",
+        "constipation",
+        "adverse events",
+        "serotonin receptor",
+        "cardiovascular events"
+      ],
+      "topic_summary": "The document discusses the efficacy and safety of 5-HT 4 agonists, particularly prucalopride, in treating constipation with a focus on reported adverse events.",
+      "primary_topics": [
+        "cardiovascular health",
+        "diet",
+        "adverse events"
+      ],
+      "language": "en"
+    },
+    "GDM_MNT and Lifestyle Interventions 2007.pdf": {
+      "keywords": [
+        "gestational diabetes mellitus",
+        "medical nutrition therapy",
+        "BMI",
+        "weight gain recommendations",
+        "obese women",
+        "infant birth weight"
+      ],
+      "topic_summary": "The document discusses medical nutrition therapy and its impact on gestational diabetes outcomes, focusing on maternal weight gain and calorie intake recommendations based on prepregnancy BMI.",
+      "primary_topics": [
+        "diabetes management",
+        "nutrition",
+        "BMI",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "Glycemic Targets_Standars of Medical Care in Diabetes 2020.pdf": {
+      "keywords": [
+        "glycemic control",
+        "intensive therapy",
+        "diabetic complications",
+        "hemoglobin A1c",
+        "ACCORD study"
+      ],
+      "topic_summary": "The document discusses the impact of glycemic control and intensive therapy on preventing diabetic complications, focusing on studies like ACCORD.",
+      "primary_topics": [
+        "blood sugar",
+        "diabetes management",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "HPB-MOH Clinical Practice Guidelines - Obesity 2016.pdf": {
+      "keywords": [
+        "weight loss",
+        "compounds with questionable results",
+        "body fat measurement",
+        "waist circumference",
+        "pharmacotherapy for weight loss",
+        "strength activities"
+      ],
+      "topic_summary": "The document covers compounds that have questionable efficacy in weight loss, methods of measuring body fat and waist circumference, considerations for pharmacotherapy in adolescents, and the importance of strength activities.",
+      "primary_topics": [
+        "weight management",
+        "obesity",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "IDF-DaR Diabetes and Ramadan Practical Guidelines 2021.pdf": {
+      "keywords": [
+        "prandial insulin",
+        "Ramadan",
+        "insulin dose adjustment",
+        "T1DM",
+        "hypoglycaemia",
+        "blood glucose"
+      ],
+      "topic_summary": "The document provides practical guidelines for managing diabetes, particularly prandial insulin dosing and meal planning, during the fasting month of Ramadan.",
+      "primary_topics": [
+        "diabetes management",
+        "nutrition",
+        "glucose"
+      ],
+      "language": "en"
+    },
+    "Intensive Care Obese.pdf": {
+      "keywords": [
+        "obesity",
+        "BMI",
+        "ventilation",
+        "ICU care",
+        "drug dosage"
+      ],
+      "topic_summary": "The document discusses specific challenges and considerations in managing obese patients in intensive care units, including issues related to ventilation, drug dosing, and resource utilization.",
+      "primary_topics": [
+        "obesity",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "KDIGO - AKI (2012).pdf": {
+      "keywords": [
+        "AKI",
+        "fluid management",
+        "renal nutrition",
+        "CKD",
+        "intensive glucose control"
+      ],
+      "topic_summary": "The document discusses research recommendations and clinical guidelines for managing Acute Kidney Injury (AKI), including fluid management strategies, the risks of intensive glucose control in critically ill patients, and the need for better assessment methods.",
+      "primary_topics": [
+        "renal nutrition",
+        "CKD",
+        "hypoglycemia"
+      ],
+      "language": "en"
+    },
+    "KDIGO - CKD (2012).pdf": {
+      "keywords": [
+        "sodium intake",
+        "CKD",
+        "proteinuria",
+        "renal function",
+        "chronic kidney disease"
+      ],
+      "topic_summary": "The document discusses recommended daily sodium intake for children and its impact on renal health, particularly in patients with chronic kidney disease.",
+      "primary_topics": [
+        "CKD",
+        "renal nutrition",
+        "sodium reduction"
+      ],
+      "language": "en"
+    },
+    "KDIGO - Diabetes in CKD (2020).pdf": {
+      "keywords": [
+        "SGLT2i therapy",
+        "CKD management",
+        "kidney transplant recipients",
+        "T2DM",
+        "dialysis population",
+        "DPP-4 inhibitor"
+      ],
+      "topic_summary": "The document discusses recommendations and considerations for diabetes management in patients with chronic kidney disease, including the use of SGLT2 inhibitors and DPP-4 inhibitors.",
+      "primary_topics": [
+        "CKD",
+        "diabetes management",
+        "T2DM"
+      ],
+      "language": "en"
+    },
+    "KDOQI - CKD (2020).pdf": {
+      "keywords": [
+        "CKD",
+        "BMI",
+        "malnutrition inflammation score",
+        "kidney transplant recipients",
+        "MNT interventions",
+        "body weight"
+      ],
+      "topic_summary": "The document discusses various nutritional and health factors related to chronic kidney disease (CKD), including body mass index (BMI) and malnutrition inflammation scores in post-transplant patients.",
+      "primary_topics": [
+        "CKD",
+        "BMI",
+        "renal nutrition"
+      ],
+      "language": "en"
+    },
+    "Lifestyle Weight-Loss Intervention Outcomes 1.pdf": {
+      "keywords": [
+        "weight-loss intervention",
+        "type 2 diabetes",
+        "total cholesterol",
+        "Mediterranean-style diet",
+        "Look AHEAD trial",
+        "diabetes management"
+      ],
+      "topic_summary": "The document discusses outcomes of weight-loss interventions in overweight and obese adults with type 2 diabetes, including effects on total cholesterol and the impact of duration of diabetes.",
+      "primary_topics": [
+        "weight management",
+        "T2DM",
+        "cholesterol management"
+      ],
+      "language": "en"
+    },
+    "MDA - MNT Guidelines for Hypertension 2005.pdf": {
+      "keywords": [
+        "hypertension management",
+        "Medical Nutrition Therapy",
+        "blood pressure",
+        "DASH diet",
+        "nutrition guidelines"
+      ],
+      "topic_summary": "The document provides nutrition guidelines for managing hypertension, including dietary recommendations and follow-up assessments.",
+      "primary_topics": [
+        "hypertension management",
+        "healthy eating",
+        "diet"
+      ],
+      "language": "en"
+    },
+    "MEMS MOH - Practical Guide to Inpatient Glycemic Care 2020.pdf": {
+      "keywords": [
+        "glycemic care",
+        "inpatient nutrition",
+        "IV insulin",
+        "hypoglycaemia",
+        "fluid replacement",
+        "insulin resistance"
+      ],
+      "topic_summary": "The document covers practical guidelines for managing glycemic control and fluid management in hospitalized cardiac patients.",
+      "primary_topics": [
+        "diabetes management",
+        "cardiac rehabilitation",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "MOH CPG Singapore - Stroke and TIA 2009.pdf": {
+      "keywords": [
+        "stroke",
+        "transient ischaemic attack",
+        "hypertension management",
+        "rehabilitation",
+        "blood pressure reduction"
+      ],
+      "topic_summary": "The document covers medical assessment, rehabilitation, and hypertension management for stroke and transient ischemic attack patients.",
+      "primary_topics": [
+        "cardiovascular health",
+        "hypertension management",
+        "stroke rehabilitation"
+      ],
+      "language": "en"
+    },
+    "Maier 2015 Rate of Pregnancy Weight Gain.pdf": {
+      "keywords": [
+        "gestational weight gain",
+        "IOM recommendations",
+        "obesity-related complications",
+        "antenatal BMI",
+        "macrosomia"
+      ],
+      "topic_summary": "The document discusses gestational weight gain and its correlation to obesity-related pregnancy complications, emphasizing the importance of adherence to IOM guidelines.",
+      "primary_topics": [
+        "BMI",
+        "obesity",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "Majeed M et al. 2015.pdf": {
+      "keywords": [
+        "probiotics",
+        "lipid profile",
+        "glycemic control",
+        "insulin action",
+        "oxidative stress",
+        "inflammatory markers",
+        "type 2 diabetes"
+      ],
+      "topic_summary": "The document discusses the effects of probiotics on various health parameters including lipid profile, glycemic control, insulin action, oxidative stress, and inflammatory markers in patients with type 2 diabetes.",
+      "primary_topics": [
+        "blood sugar",
+        "diabetes management",
+        "lipid management"
+      ],
+      "language": "en"
+    },
+    "Malaysian Allergy Prevention.pdf": {
+      "keywords": [
+        "allergy prevention",
+        "atopic dermatitis",
+        "prebiotic oligosaccharides",
+        "sublingual immunotherapy",
+        "asthma",
+        "house dust mite"
+      ],
+      "topic_summary": "The document covers various studies and strategies related to the prevention and management of allergies, particularly in children.",
+      "primary_topics": [
+        "allergy prevention",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "Management of Diabetes in Pregnancy_Standards of Medical Care in Diabetes 2020.pdf": {
+      "keywords": [
+        "gestational diabetes",
+        "metformin",
+        "insulin",
+        "macrosomia",
+        "birth complications",
+        "type 2 diabetes"
+      ],
+      "topic_summary": "The document covers the management and risks associated with gestational diabetes, including treatment options such as metformin and insulin.",
+      "primary_topics": [
+        "diabetes management",
+        "gestational diabetes",
+        "blood sugar"
+      ],
+      "language": "en"
+    },
+    "Managing Diabetes on Basal Bolus Regime (multiple injection).pdf": {
+      "keywords": [
+        "basal bolus regime",
+        "rapid acting insulin",
+        "carbohydrate intake",
+        "exercise and blood glucose",
+        "diabetes management"
+      ],
+      "topic_summary": "The document covers managing diabetes with basal bolus insulin therapy, including mealtime dosing and the impact of physical activity on blood sugar levels.",
+      "primary_topics": [
+        "diabetes management",
+        "blood sugar",
+        "physical activity"
+      ],
+      "language": "en"
+    },
+    "Manual of Clinical Nutrition (2013).pdf": {
+      "keywords": [
+        "physical activity",
+        "weight loss",
+        "cardiovascular health",
+        "DASH diet",
+        "sodium intake",
+        "healthy eating"
+      ],
+      "topic_summary": "The document covers recommendations for physical activity, weight management, and healthy dietary patterns to promote cardiovascular health.",
+      "primary_topics": [
+        "CVD prevention",
+        "diet",
+        "physical activity",
+        "hypertension management"
+      ],
+      "language": "en"
+    },
+    "NCP Mind Map - Adult Weight Management.pdf": {
+      "keywords": [
+        "BMI",
+        "waist circumference",
+        "older adults",
+        "nutrition assessment",
+        "weight management"
+      ],
+      "topic_summary": "The document covers nutritional considerations and assessments for weight management in older adults, including the limitations of BMI as a measure.",
+      "primary_topics": [
+        "BMI",
+        "healthy eating",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "NCP Mind Map - Hypertension.pdf": {
+      "keywords": [
+        "hypertension management",
+        "DASH diet",
+        "sodium reduction",
+        "blood pressure",
+        "nutrition counseling"
+      ],
+      "topic_summary": "The document covers nutritional strategies for managing hypertension, including dietary modifications and sodium intake reduction.",
+      "primary_topics": [
+        "hypertension management",
+        "healthy eating",
+        "sodium reduction"
+      ],
+      "language": "en"
+    },
+    "NCPT Nutrition Assessment and Monitoring and Evaluation Term Sheet.pdf": {
+      "keywords": [
+        "nutrition assessment",
+        "protein needs",
+        "food intake",
+        "abdominal pain",
+        "social history",
+        "eating environment"
+      ],
+      "topic_summary": "The document covers nutrition assessment methods, including protein and fluid intake estimation, physical exam findings, diet history, and social factors influencing nutrition.",
+      "primary_topics": [
+        "cardiovascular health",
+        "nutrition",
+        "diet",
+        "healthy eating"
+      ],
+      "language": "en"
+    },
+    "NCPT Nutrition Diagnosis Term Sheet.pdf": {
+      "keywords": [
+        "fluid intake",
+        "bioactive substances",
+        "energy balance",
+        "protein intake",
+        "food safety",
+        "nutrition access"
+      ],
+      "topic_summary": "The document covers various nutrition-related issues and intakes, including fluid, bioactive substance, energy, and protein intake, as well as food safety and accessibility.",
+      "primary_topics": [
+        "cardiovascular health",
+        "diet",
+        "healthy eating",
+        "nutrient intake management"
+      ],
+      "language": "en"
+    },
+    "NCPT Nutrition Intervention Term Sheet.pdf": {
+      "keywords": [
+        "nutrition related medication management",
+        "ANDUID",
+        "population settings",
+        "collaboration and referral",
+        "electronic health records"
+      ],
+      "topic_summary": "The document covers nutrition-related interventions including medication management, population-based settings, and collaboration with other professionals.",
+      "primary_topics": [
+        "nutrition",
+        "healthy lifestyle",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "NEJM - CKD (2017).pdf": {
+      "keywords": [
+        "chronic kidney disease",
+        "nutritional therapy",
+        "protein-energy wasting",
+        "electrolyte imbalances",
+        "dialysis therapy",
+        "dietary interventions"
+      ],
+      "topic_summary": "The document discusses nutritional status and dietary adjustments in patients with chronic kidney disease, including the management of uremia and other complications.",
+      "primary_topics": [
+        "CKD",
+        "nutrition",
+        "renal nutrition"
+      ],
+      "language": "en"
+    },
+    "Nutrition Therapy for Adults With Diabetes or Prediabetes- A Consensus Report.pdf": {
+      "keywords": [
+        "nutrition therapy",
+        "diabetes management",
+        "prediabetes",
+        "omega-3 fatty acids",
+        "alcohol consumption",
+        "blood sugar",
+        "weight management"
+      ],
+      "topic_summary": "The document covers nutrition therapy recommendations for adults with diabetes or prediabetes, including topics such as alcohol consumption, blood sugar control, and weight management.",
+      "primary_topics": [
+        "diabetes management",
+        "healthy eating",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "NutritionAssessmentandNutritionMonitoringandEvaluationTerminologySheet (2020).pdf": {
+      "keywords": [
+        "nutrition assessment",
+        "anthropometric measurements",
+        "BMI",
+        "weight change intent",
+        "body mass"
+      ],
+      "topic_summary": "The document covers nutrition assessment, monitoring, and evaluation terminology including anthropometric measurements and client-centered measures.",
+      "primary_topics": [
+        "nutrition",
+        "BMI",
+        "healthy eating"
+      ],
+      "language": "en"
+    },
+    "NutritionDiagnosisTerminologySheet (2020).pdf": {
+      "keywords": [
+        "nutritional findings",
+        "knowledge deficit",
+        "diet change",
+        "protein intake",
+        "fluid intake",
+        "bioactive substances"
+      ],
+      "topic_summary": "The document covers nutritional problems and issues related to knowledge, attitudes, physical environment, access to food, and safety for cardiac patients.",
+      "primary_topics": [
+        "nutrition",
+        "cardiovascular health",
+        "healthy eating",
+        "diet"
+      ],
+      "language": "en"
+    },
+    "Nutritional Recommendations for Individuals with Diabetes - Endotext - NCBI Bookshelf.pdf": {
+      "keywords": [
+        "type 2 diabetes",
+        "exercise prescription",
+        "insulin absorption",
+        "blood glucose monitoring",
+        "dietary recommendations"
+      ],
+      "topic_summary": "The document covers nutritional and exercise guidelines for managing type 2 diabetes, including considerations for medication adjustments and blood glucose management.",
+      "primary_topics": [
+        "diabetes management",
+        "exercise prescription",
+        "glucose"
+      ],
+      "language": "en"
+    },
+    "Oxford Handbook of Nutrition and Dietetics_3rd (2020).pdf": {
+      "keywords": [
+        "IDD",
+        "cretinism",
+        "vegetarian diet",
+        "nutrition-related non-communicable diseases",
+        "mental health"
+      ],
+      "topic_summary": "The document covers issues related to iodine deficiency disorders, benefits and considerations of vegetarian diets, and aspects of mental health.",
+      "primary_topics": [
+        "diet",
+        "healthy eating",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "POS-Diet Individu Umum.pdf": {
+      "keywords": [
+        "nutrition care process",
+        "dietitian consultation",
+        "patient assessment",
+        "quality assurance",
+        "clinical nutrition",
+        "dietetic service"
+      ],
+      "topic_summary": "The document covers the coordination and implementation of dietary management services, including patient assessment, documentation procedures, and quality assurance measures in a healthcare setting.",
+      "primary_topics": [
+        "cardiovascular health",
+        "nutrition",
+        "healthy eating",
+        "diet"
+      ],
+      "language": "ms"
+    },
+    "POS-Diet Konsultasi Individu DM.pdf": {
+      "keywords": [
+        "diet consultation",
+        "biochemical data",
+        "renal profile",
+        "hypertension management",
+        "diabetes management",
+        "nutrition-focused physical findings"
+      ],
+      "topic_summary": "The document covers diet consultations for individual patients, including biochemical and clinical data, dietary interventions, and coordination of care.",
+      "primary_topics": [
+        "diabetes management",
+        "hypertension management",
+        "diet",
+        "nutrition"
+      ],
+      "language": "ms"
+    },
+    "POS-Diet Pemakanan Berkumpulan.pdf": {
+      "keywords": [
+        "group nutrition education",
+        "patient satisfaction",
+        "pre-test and post-test comparison",
+        "dietary prescription",
+        "meal planning",
+        "food labels",
+        "carbohydrates intake",
+        "blood sugar control",
+        "healthy eating"
+      ],
+      "topic_summary": "The document discusses the methods and effectiveness of group nutrition education for patients, including preparation, delivery techniques, and patient satisfaction.",
+      "primary_topics": [
+        "nutrition",
+        "diabetes management",
+        "diet",
+        "cardiovascular health"
+      ],
+      "language": "ms"
+    },
+    "POS-Diet Penurunan Berat Badan.pdf": {
+      "keywords": [
+        "weight loss",
+        "diet behavior change",
+        "self-monitoring",
+        "portion control",
+        "stress management",
+        "BMI"
+      ],
+      "topic_summary": "The document provides guidance for helping patients with weight loss through behavioral changes, self-monitoring, and portion control, while addressing psychological aspects such as stress.",
+      "primary_topics": [
+        "weight management",
+        "diet",
+        "psychological health"
+      ],
+      "language": "ms"
+    },
+    "POS-Konsultasi Diet Individu Hipertensi.pdf": {
+      "keywords": [
+        "hypertension management",
+        "nutrition assessment",
+        "blood pressure",
+        "dietitian",
+        "clinical nutrition",
+        "health record"
+      ],
+      "topic_summary": "The document covers the dietary consultation and nutritional assessment for hypertensive patients, including data collection methods and intervention planning.",
+      "primary_topics": [
+        "hypertension management",
+        "nutrition",
+        "cardiovascular health",
+        "blood pressure"
+      ],
+      "language": "ms"
+    },
+    "Patient Information leaflet Management of Type 2 Diabetes Mellitus.pdf": {
+      "keywords": [
+        "diabetes management",
+        "Type 2 Diabetes Mellitus",
+        "complications screening",
+        "medication adherence",
+        "balanced diet",
+        "physical activity"
+      ],
+      "topic_summary": "The document provides guidance for managing Type 2 Diabetes Mellitus, including regular medical check-ups, medication use, and lifestyle adjustments.",
+      "primary_topics": [
+        "diabetes management",
+        "T2DM",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "QR Management of Chronic Kidney Disease in Adults (Second Edition 2018).pdf": {
+      "keywords": [
+        "chronic kidney disease",
+        "CKD management",
+        "renal function",
+        "proteinuria",
+        "pregnancy",
+        "screening"
+      ],
+      "topic_summary": "The document covers key recommendations for managing chronic kidney disease in adults, including screening and monitoring protocols.",
+      "primary_topics": [
+        "CKD",
+        "kidney disease management"
+      ],
+      "language": "en"
+    },
+    "Quick Review_T2DM 6th 2020.pdf": {
+      "keywords": [
+        "T2DM",
+        "HbA1c",
+        "lifestyle modification",
+        "basal insulin",
+        "hyperglycaemia",
+        "diabetes management"
+      ],
+      "topic_summary": "The document provides guidelines and recommendations for managing Type 2 Diabetes Mellitus, including lifestyle modifications and therapeutic interventions.",
+      "primary_topics": [
+        "T2DM",
+        "diabetes management",
+        "blood sugar"
+      ],
+      "language": "en"
+    },
+    "RNI Malaysia 2017.docx": {
+      "keywords": [
+        "energy requirements",
+        "children and adolescents",
+        "FAO/WHO/UNU",
+        "recommended nutrient intakes",
+        "TEE",
+        "doubly-labelled water"
+      ],
+      "topic_summary": "The document discusses energy requirements and recommended nutrient intakes for children and adolescents based on studies and methodologies from FAO/WHO/UNU.",
+      "primary_topics": [
+        "nutrition",
+        "healthy eating",
+        "growth"
+      ],
+      "language": "en"
+    },
+    "Renal Nutrition Guidelines_ Bridging the Practice Gap.pdf": {
+      "keywords": [
+        "CKD",
+        "hyperkalemia",
+        "potassium intake",
+        "renal nutrition",
+        "protein type",
+        "sodium intake"
+      ],
+      "topic_summary": "The document covers dietary recommendations for patients with chronic kidney disease (CKD) stages 3-5 and post-transplant, focusing on potassium and sodium intake.",
+      "primary_topics": [
+        "CKD",
+        "potassium restriction",
+        "renal nutrition",
+        "sodium reduction"
+      ],
+      "language": "en"
+    },
+    "SGA_MOH.pdf": {
+      "keywords": [
+        "malnutrition",
+        "muscle wasting",
+        "edema",
+        "subcutaneous fat loss",
+        "Kawasan pemeriksaan penentuan",
+        "Malpemakanan"
+      ],
+      "topic_summary": "The document covers the assessment and identification of severe malnutrition in patients, including physical signs like muscle wasting and edema.",
+      "primary_topics": [
+        "nutrition",
+        "malnutrition",
+        "cardiovascular health"
+      ],
+      "language": "ms"
+    },
+    "Schultz-Impaired leptin gene expression and release in cultured preadipocytes isolated from individuals born w low birth weight_2014.pdf": {
+      "keywords": [
+        "leptin gene expression",
+        "preadipocytes",
+        "low birth weight",
+        "LBW",
+        "DNA methylation",
+        "adipocyte differentiation"
+      ],
+      "topic_summary": "The document discusses impaired leptin gene expression and release in preadipocytes isolated from individuals with low birth weight, linking it to potential metabolic dysfunction.",
+      "primary_topics": [
+        "diabetes management",
+        "insulin resistance",
+        "metabolic disease"
+      ],
+      "language": "en"
+    },
+    "Suzie Ferrie energy requirement.pdf": {
+      "keywords": [
+        "energy requirement",
+        "resting energy expenditure",
+        "activity factor",
+        "stress factor",
+        "hospitalised patients"
+      ],
+      "topic_summary": "The document discusses adjustments to resting energy expenditure equations for hospitalized cardiac patients, considering activity and stress factors.",
+      "primary_topics": [
+        "cardiovascular health",
+        "nutrition",
+        "heart failure management"
+      ],
+      "language": "en"
+    },
+    "Suzie Ferrie protein requirement.pdf": {
+      "keywords": [
+        "protein requirements",
+        "clinical nutrition",
+        "RCT",
+        "hospitalised adults",
+        "nitrogen balance",
+        "randomized clinical trials"
+      ],
+      "topic_summary": "The document reviews evidence supporting protein requirements in hospitalized adults through a systematic review of randomized controlled trials.",
+      "primary_topics": [
+        "nutrition",
+        "cardiovascular health",
+        "diet"
+      ],
+      "language": "en"
+    },
+    "T2DM NCP mind map.pdf": {
+      "keywords": [
+        "T2DM",
+        "nutrition assessment",
+        "energy needs",
+        "macronutrient needs",
+        "diabetes management"
+      ],
+      "topic_summary": "The document covers nutrition assessment and macronutrient needs for patients with type 2 diabetes.",
+      "primary_topics": [
+        "T2DM",
+        "nutrition",
+        "diabetes management"
+      ],
+      "language": "en"
+    },
+    "Tuck C et al. 2017.pdf": {
+      "keywords": [
+        "FODMAP diet",
+        "food challenges",
+        "anxiety",
+        "re-challenge phase",
+        "microbiota",
+        "nutrition"
+      ],
+      "topic_summary": "The document discusses strategies for re-introducing FODMAPs into a patient's diet after following a low-FODMAP diet, considering the impact on anxiety and microbiota.",
+      "primary_topics": [
+        "diet",
+        "anxiety",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "UpToDate - Obesity in Adults_Dietary Therapy 2020.pdf": {
+      "keywords": [
+        "obesity",
+        "dietary therapy",
+        "weight loss",
+        "BMI",
+        "cardiometabolic risk"
+      ],
+      "topic_summary": "The document covers dietary approaches and risk assessments for managing obesity in adults, including considerations for weight loss diets and cardiometabolic risks.",
+      "primary_topics": [
+        "CVD prevention",
+        "obesity",
+        "diet",
+        "healthy eating"
+      ],
+      "language": "en"
+    },
+    "WHO - Physical Activity and Sedentary Behaviour.pdf": {
+      "keywords": [
+        "vigorous-intensity physical activity",
+        "sedentary behaviour",
+        "cardiovascular disease",
+        "physical function",
+        "chronic conditions"
+      ],
+      "topic_summary": "The document discusses the recommendations for physical activity and sedentary behavior, particularly focusing on its impact on cardiovascular health and its relevance to individuals with chronic conditions.",
+      "primary_topics": [
+        "CVD prevention",
+        "exercise prescription",
+        "cardiovascular health"
+      ],
+      "language": "en"
+    },
+    "Waist circumference and waist-hip ratio and body fat cut-off point.docx": {
+      "keywords": [
+        "waist circumference",
+        "waist-hip ratio",
+        "body fat cut-off points",
+        "cardiovascular health",
+        "healthy lifestyle"
+      ],
+      "topic_summary": "The document provides cut-off points for waist circumference, waist-hip ratio, and body fat percentages for men and women to assess cardiovascular risk.",
+      "primary_topics": [
+        "cardiovascular health",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "Weight Gain During Pregnancy- Reexamining the Guidelines.pdf": {
+      "keywords": [
+        "weight gain",
+        "pregnancy guidelines",
+        "birth weight",
+        "BMI",
+        "pregravid BMI",
+        "infant outcomes"
+      ],
+      "topic_summary": "The document examines the relationship between maternal weight gain during pregnancy and infant birth weight, considering various factors such as pre-pregnancy BMI.",
+      "primary_topics": [
+        "weight management",
+        "nutrition",
+        "obesity"
+      ],
+      "language": "en"
+    },
+    "[Franz 2015] Weight Loss Interventions & Outcomes - T2DM.pdf": {
+      "keywords": [
+        "weight loss interventions",
+        "type 2 diabetes",
+        "A1C levels",
+        "metabolic outcomes",
+        "nutrition therapy",
+        "lifestyle weight-loss intervention",
+        "randomized clinical trials"
+      ],
+      "topic_summary": "The document reviews and analyzes the effects of lifestyle weight-loss interventions on metabolic outcomes in overweight or obese adults with type 2 diabetes.",
+      "primary_topics": [
+        "diabetes management",
+        "weight management",
+        "T2DM",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "[Franz 2017] AND Systematic Review MNT Effectiveness_T1_T2DM.pdf": {
+      "keywords": [
+        "MNT effectiveness",
+        "cardioprotective eating",
+        "lipid profiles",
+        "blood pressure",
+        "HbA1c levels",
+        "Diabetes Control and Complications Trial"
+      ],
+      "topic_summary": "The document reviews the effectiveness of medical nutrition therapy (MNT) on various health outcomes in patients with diabetes, including lipid profiles, blood pressure, and HbA1c levels.",
+      "primary_topics": [
+        "diabetes management",
+        "lipid management",
+        "blood pressure",
+        "HbA1c"
+      ],
+      "language": "en"
+    },
+    "FG Management of Chronic Kidney Disease in Adults.pdf": {
+      "keywords": [
+        "chronic kidney disease",
+        "CKD management",
+        "renal nutrition",
+        "hypoglycaemic agents",
+        "iron treatment"
+      ],
+      "topic_summary": "The document covers the management of chronic kidney disease in adults, including nutritional considerations and treatment adjustments.",
+      "primary_topics": [
+        "CKD",
+        "renal nutrition",
+        "diabetes management"
+      ],
+      "language": "en"
+    },
+    "NCP sheet.pdf": {
+      "keywords": [
+        "lipid profile",
+        "renal profile",
+        "nutrition care process",
+        "dietitian referral",
+        "cholesterol management",
+        "renal nutrition"
+      ],
+      "topic_summary": "The document covers lipid and renal profiles, dietitian referrals, and the role of nutrition in managing cardiac patient's cholesterol and kidney health.",
+      "primary_topics": [
+        "lipid management",
+        "renal nutrition",
+        "nutrition care process"
+      ],
+      "language": "en"
+    },
+    "Advanced Medical Nutrition Therapy 1st Edition 2019.pdf": {
+      "keywords": [
+        "nutrition therapy",
+        "weight loss",
+        "dietary patterns",
+        "cardiac patients",
+        "refeeding syndrome",
+        "protein intake"
+      ],
+      "topic_summary": "The document covers various aspects of clinical nutrition, including dietary patterns for weight loss and specific nutritional considerations for cardiac patients.",
+      "primary_topics": [
+        "CVD prevention",
+        "nutrition",
+        "weight management",
+        "heart-healthy diet"
+      ],
+      "language": "en"
+    },
+    "Heart Disease in Pregnancy.pdf": {
+      "keywords": [
+        "rheumatic heart disease",
+        "endocarditis",
+        "mitral valve",
+        "elective lower segment caesarean section (LSCS)",
+        "haemodynamic decompensation",
+        "postpartum haemorrhage"
+      ],
+      "topic_summary": "The document discusses various aspects of heart disease in pregnancy, including risk factors, common pathogens in endocarditis, and preferred modes of delivery.",
+      "primary_topics": [
+        "cardiovascular health",
+        "pregnancy complications",
+        "hormonal health"
+      ],
+      "language": "en"
+    },
+    "MNT_hyperlipedemia.pdf": {
+      "keywords": [
+        "ATP III",
+        "TLC diet",
+        "therapeutic lifestyle change",
+        "hyperlipidemia",
+        "metabolic syndrome",
+        "PALM OIL",
+        "cholesterol management"
+      ],
+      "topic_summary": "The document discusses dietary recommendations and modifications, such as the TLC diet, for managing hyperlipidemia and metabolic syndrome with a focus on fat intake and cholesterol levels.",
+      "primary_topics": [
+        "cholesterol management",
+        "diet",
+        "dyslipidaemia"
+      ],
+      "language": "en"
+    },
+    "29_Pos_MerokokAdalahHaram_Web.pdf": {
+      "keywords": [
+        "merokok adalah haram",
+        "smoking cessation",
+        "hukum rokok",
+        "tobacco use disorder",
+        "nas Al-Quran"
+      ],
+      "topic_summary": "The document discusses the religious prohibition of smoking based on Islamic teachings.",
+      "primary_topics": [
+        "berhenti merokok",
+        "tobacco use disorder"
+      ],
+      "language": "ms"
+    },
+    "American Heart Association-2021 Dietary Guidance to Improve Cardiovascular Health.pdf": {
+      "keywords": [
+        "cardiovascular health",
+        "processed meats",
+        "healthy dietary patterns",
+        "saturated fat",
+        "trans fat",
+        "added sugar",
+        "salt"
+      ],
+      "topic_summary": "The document provides dietary guidance from the American Heart Association aimed at improving cardiovascular health through healthy eating habits.",
+      "primary_topics": [
+        "CVD prevention",
+        "heart-healthy diet",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "Buku MDG 2020 - Senaman.pdf": {
+      "keywords": [
+        "strengthening exercises",
+        "weight gain",
+        "appetite stimulation",
+        "body composition assessment",
+        "negative body image",
+        "dieting"
+      ],
+      "topic_summary": "The document discusses physical activity, its impact on appetite and weight management, as well as the importance of body composition assessment in achieving ideal body image.",
+      "primary_topics": [
+        "physical activity",
+        "weight management",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Diabetic Foot  (Second Edition).pdf": {
+      "keywords": [
+        "diabetic foot",
+        "screening",
+        "vascular assessment",
+        "peripheral neuropathy",
+        "ABI"
+      ],
+      "topic_summary": "The document covers the management of diabetic foot, including screening methods and vascular assessments.",
+      "primary_topics": [
+        "diabetes management",
+        "vascular assessment"
+      ],
+      "language": "en"
+    },
+    "KKM-The National Strategic Plan For Mental Health 2020-2025.pdf": {
+      "keywords": [
+        "mental health",
+        "suicide prevention",
+        "disaster psychology",
+        "non-communicable diseases",
+        "public health",
+        "Mental Health promotion"
+      ],
+      "topic_summary": "The document covers strategic planning for mental health in Malaysia, focusing on suicide prevention, psychological issues post-disasters, and promoting mental well-being.",
+      "primary_topics": [
+        "mental health",
+        "suicide prevention"
+      ],
+      "language": "en"
+    },
+    "Kemurungan_Apa_yang_anda_perlu_tahu.pdf": {
+      "keywords": [
+        "depression",
+        "kemurungan",
+        "symptoms",
+        "tanda-tanda",
+        "causes",
+        "punca",
+        "risk factors",
+        "faktor risiko",
+        "treatment",
+        "rawatan"
+      ],
+      "topic_summary": "The document covers the symptoms, causes, risk factors, and treatment of depression.",
+      "primary_topics": [
+        "depression",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "Kesan_Awal_Elak_Penderitaan_Kemurungan.pdf": {
+      "keywords": [
+        "kemurungan",
+        "gangguan tidur",
+        "sedih",
+        "hilang minat",
+        "mudah marah"
+      ],
+      "topic_summary": "The document discusses symptoms and signs of depression, including sleep disorders, loss of interest, irritability, and sadness.",
+      "primary_topics": [
+        "depression",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "LE8_How_To_Manage_Blood_Pressure.pdf": {
+      "keywords": [
+        "blood pressure",
+        "hypertension management",
+        "DASH diet",
+        "exercise prescription",
+        "weight management"
+      ],
+      "topic_summary": "The document covers how to manage blood pressure through lifestyle changes, including exercise, weight management, and dietary adjustments.",
+      "primary_topics": [
+        "blood pressure",
+        "hypertension management",
+        "healthy eating",
+        "exercise"
+      ],
+      "language": "en"
+    },
+    "LE8_How_to_Manage_Weight.pdf": {
+      "keywords": [
+        "weight management",
+        "BMI",
+        "calories",
+        "protein breakfast",
+        "fiber intake"
+      ],
+      "topic_summary": "The document provides tips and strategies for maintaining a healthy weight, including dietary advice and understanding calorie intake.",
+      "primary_topics": [
+        "BMI",
+        "healthy eating",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "Norton 2010.pdf": {
+      "keywords": [
+        "moderate physical activity",
+        "physical activity guidelines",
+        "health benefits",
+        "accelerometer counts",
+        "daily energy expenditure"
+      ],
+      "topic_summary": "The document discusses the role of moderate physical activity in health promotion and its impact on daily energy expenditure, based on accelerometer data.",
+      "primary_topics": [
+        "cardiovascular health",
+        "exercise prescription",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "Panduan_Menangani_Stress.pdf": {
+      "keywords": [
+        "stress management",
+        "mental health",
+        "exercise",
+        "relaxation techniques",
+        "stres",
+        "kesihatan mental"
+      ],
+      "topic_summary": "The document covers various methods for managing stress and improving mental health through activities, relaxation techniques, and exercise.",
+      "primary_topics": [
+        "mental health",
+        "stress"
+      ],
+      "language": "ms"
+    },
+    "Tanda-tanda_penyakit_mental.pdf": {
+      "keywords": [
+        "mental health",
+        "treatment",
+        "daily life",
+        "support",
+        "stigma"
+      ],
+      "topic_summary": "The document discusses mental health conditions, their treatment, and the importance of societal support.",
+      "primary_topics": [
+        "anxiety",
+        "depression",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "Tangani_Stress_dengan_urutan_leher_dan_bahu.pdf": {
+      "keywords": [
+        "menangani stres",
+        "urutan leher dan bahu",
+        "kawalan penyakit",
+        "kesihatan mental",
+        "stres"
+      ],
+      "topic_summary": "Dokumen ini membahas teknik-teknik untuk mengurangkan stres dengan fokus pada urutan leher dan bahu.",
+      "primary_topics": [
+        "stress",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "WHO-Guideline for the pharmacological treatment of hypertension in adults.pdf": {
+      "keywords": [
+        "hypertension management",
+        "nonphysician professionals",
+        "pharmacological treatment",
+        "long-acting dihydropyridine CCBs",
+        "fixed-dose combination"
+      ],
+      "topic_summary": "The document provides WHO guidelines on the pharmacological treatment of hypertension in adults, including recommendations for follow-up care and the involvement of nonphysician healthcare providers.",
+      "primary_topics": [
+        "hypertension management",
+        "pharmacological treatment"
       ],
       "language": "en"
     }
