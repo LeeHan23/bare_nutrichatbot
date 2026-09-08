@@ -9,19 +9,25 @@ Runs every Monday at 06:00 via cron:
     0 6 * * 1 /home/han/Desktop/projects/bare_NutriChatbot/.venv/bin/python /home/han/Desktop/projects/bare_NutriChatbot/scripts/weekly_eka_scheduler.py >> /home/han/Desktop/projects/bare_NutriChatbot/logs/weekly_eka.log 2>&1
 
 What it does each Monday:
-  1. Deletes expired EKA materials (expires_at < now, set to created_at + 14 days)
-     → materials generated 2 weeks ago are removed on this run
+  1. Archives, then deletes expired EKA materials (expires_at < now, set to
+     created_at + database.EKA_EXPIRY_DAYS — 30 days as of 2026-09-08, was
+     56 days/8 weeks before that, 14 before that). Every affected week's
+     full state (content + approval status + reviewer notes) is written to
+     materials/eka_week{N}_reviewed.xlsx via
+     generate_weekly_eka.export_reviewed_excel() BEFORE its rows are
+     deleted — see database.cleanup_expired_eka_materials() — so a week
+     rolling off is archived, never silently lost.
   2. Checks if content for THIS week already exists (idempotent — won't regenerate unless --force)
-  3. Generates all 21 E/K/A items (7 groups × 3 types, 4-week topic rotation)
+  3. Generates all E/K/A items across every group (4-week topic rotation)
   4. Saves to DB (is_active=False pending admin review — nothing here reaches a patient
      until a human calls POST /content/materials/{id}/approve)
   5. Exports Excel to materials/ for the design team, and is browsable at
      https://docs-api.computationalrd.com/eka-review (X-API-Key gated)
 
-Expiry lifecycle example:
-  Mon week 22: cleanup (nothing old) → generate week 22 (expires_at = +14 days = end of week 23)
-  Mon week 23: cleanup (nothing old yet) → generate week 23
-  Mon week 24: cleanup DELETES week 22 (expires_at passed) → generate week 24
+Expiry lifecycle example (EKA_EXPIRY_DAYS=30):
+  Mon week 22: cleanup (nothing old) → generate week 22 (expires_at = +30 days, ~week 26)
+  Mon week 23-25: cleanup (nothing old yet) → generate that week
+  Mon week 26: cleanup archives + DELETES week 22 (expires_at passed) → generate week 26
 
 Usage:
     python scripts/weekly_eka_scheduler.py
@@ -95,7 +101,8 @@ def run(dry_run: bool = False, force: bool = False, iso_week: int = None, client
     )
 
     if not dry_run:
-        print(f"\nScheduler done. Materials saved to DB (is_active=False, expires in 14 days).")
+        import database as db_module
+        print(f"\nScheduler done. Materials saved to DB (is_active=False, expires in {db_module.EKA_EXPIRY_DAYS} days).")
         print(f"Approve via: POST /content/materials/{{id}}/approve  (X-Admin-Password required)")
 
 

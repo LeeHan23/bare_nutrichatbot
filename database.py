@@ -363,6 +363,9 @@ class ContentMaterial(Base):
     file_path = Column(String, nullable=True)  # polished file (dev team uploads)
     file_type = Column(String, nullable=True)  # pdf / word / image
     is_active = Column(Boolean, default=False)  # True once dev team approves
+    review_notes = Column(
+        JSON, default=list
+    )  # [{reviewer, text, created_at}] — reviewer comments left on /eka-review
     created_at = Column(DateTime, nullable=False)
     expires_at = Column(
         DateTime, nullable=True, index=True
@@ -672,7 +675,13 @@ def get_delivery_log(
 
 
 EKA_EXPIRY_DAYS = (
-    14  # EKA materials expire 14 days after creation (deleted on 3rd-week Monday run)
+    30  # EKA materials expire 30 days after creation. Was 56 days (8 weeks,
+    # set 2026-08-28), before that 14 days — changed to 30 on 2026-09-08.
+    # Deletion is no longer a pure loss: cleanup_expired_eka_materials()
+    # below always archives a week's full state (content + approval status
+    # + reviewer notes) to materials/eka_week{N}_reviewed.xlsx before
+    # deleting its rows, after a real incident where a week generated under
+    # the old policy was deleted with no export ever written for it.
 )
 
 
@@ -731,7 +740,14 @@ def upsert_eka_material(
 
 def cleanup_expired_eka_materials(db_session) -> int:
     """
-    Delete EKA materials whose expires_at has passed.
+    Archive-then-delete EKA materials whose expires_at has passed: every
+    affected week is exported to materials/eka_week{N}_reviewed.xlsx
+    (full content + approval status + reviewer notes) BEFORE its rows are
+    deleted, so an expiring batch is always archived, never silently lost —
+    added 2026-09-08 after a week generated under an earlier, shorter
+    expiry policy was deleted with no export ever having been written for
+    it (nobody had reviewed anything in it yet, so the docs_api live-sync
+    path had never fired for that week).
     Called at the start of each weekly scheduler run.
     Returns the number of rows deleted.
     """
@@ -747,10 +763,17 @@ def cleanup_expired_eka_materials(db_session) -> int:
         .all()
     )
     count = len(expired)
+    if not count:
+        return 0
+
+    weeks = sorted({mat.week_number for mat in expired if mat.week_number is not None})
+    from scripts.generate_weekly_eka import export_reviewed_excel
+    for week_number in weeks:
+        export_reviewed_excel(db_session, week_number)
+
     for mat in expired:
         db_session.delete(mat)
-    if count:
-        db_session.commit()
+    db_session.commit()
     return count
 
 

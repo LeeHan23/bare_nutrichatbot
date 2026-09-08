@@ -47,7 +47,7 @@ def ask(request: AskRequest) -> dict:
         digest = "Clinical context from guidelines:\n\n" + "\n\n---\n\n".join(doc_texts)
 
     prompt = (
-        "You are NutriBot, a clinical nutrition assistant for Malaysian cardiac patients.\n"
+        "You are a clinical document assistant for Malaysian cardiac patient care materials.\n"
         f"\n## Clinical Evidence Digest\n{digest}\n"
         "\n## Instructions\nAnswer using only the evidence above. Be concise and practical.\n"
         f"\n## Question\n{request.question}\n\n## Answer"
@@ -118,11 +118,11 @@ def eka_review_data(
         session.close()
 
 
-def _log_review_action(action: str, material_id: int, reviewer: Optional[str]) -> None:
+def _log_review_action(action: str, material_id: int, reviewer: Optional[str], kind: str = "material") -> None:
     from datetime import datetime
 
     os.makedirs(os.path.dirname(_REVIEW_LOG_PATH), exist_ok=True)
-    line = f"{datetime.utcnow().isoformat()}Z\t{action}\tmaterial_id={material_id}\treviewer={reviewer or 'unknown'}\n"
+    line = f"{datetime.utcnow().isoformat()}Z\t{action}\t{kind}_id={material_id}\treviewer={reviewer or 'unknown'}\n"
     with open(_REVIEW_LOG_PATH, "a", encoding="utf-8") as f:
         f.write(line)
 
@@ -140,6 +140,23 @@ class ReviewActionRequest(BaseModel):
     reviewer: Optional[str] = None
 
 
+def _sync_reviewed_excel(session, week_number: Optional[int]) -> None:
+    """Refresh materials/eka_week{week}_reviewed.xlsx from current DB state
+    (live approval status + reviewer notes) whenever a material in that week
+    changes. Thin wrapper around scripts.generate_weekly_eka.export_reviewed_excel
+    — that function is the shared implementation (also called by
+    database.py's cleanup_expired_eka_materials right before a week's rows
+    are deleted, so an expiring batch is always archived first). No-op for
+    materials with no week_number (legacy day_offset content, not part of
+    the weekly EKA review flow).
+    """
+    if week_number is None:
+        return
+    from scripts.generate_weekly_eka import export_reviewed_excel
+
+    export_reviewed_excel(session, week_number)
+
+
 @app.post("/eka-review/materials/{material_id}/approve", dependencies=[Depends(verify_api_key)])
 def eka_review_approve(material_id: int, request: ReviewActionRequest):
     import database as db
@@ -152,6 +169,7 @@ def eka_review_approve(material_id: int, request: ReviewActionRequest):
         session.commit()
         session.refresh(mat)
         _log_review_action("approve", material_id, request.reviewer)
+        _sync_reviewed_excel(session, mat.week_number)
         return _serialize_material(mat)
     finally:
         session.close()
@@ -169,6 +187,7 @@ def eka_review_unapprove(material_id: int, request: ReviewActionRequest):
         session.commit()
         session.refresh(mat)
         _log_review_action("unapprove", material_id, request.reviewer)
+        _sync_reviewed_excel(session, mat.week_number)
         return _serialize_material(mat)
     finally:
         session.close()
@@ -194,6 +213,133 @@ def eka_review_edit_content(material_id: int, request: ContentEditRequest):
         session.commit()
         session.refresh(mat)
         _log_review_action("edit", material_id, request.reviewer)
+        _sync_reviewed_excel(session, mat.week_number)
         return _serialize_material(mat)
     finally:
         session.close()
+
+
+class NoteRequest(BaseModel):
+    text: str
+    reviewer: Optional[str] = None
+
+
+@app.post("/eka-review/materials/{material_id}/notes", dependencies=[Depends(verify_api_key)])
+def eka_review_add_note(material_id: int, request: NoteRequest):
+    import database as db
+    from content_api_router import _serialize_material
+    from datetime import datetime
+
+    text = (request.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Note text is required")
+
+    session: Session = db.SessionLocal()
+    try:
+        mat = _get_material_or_404(session, material_id)
+        notes = list(mat.review_notes or [])
+        notes.append({
+            "reviewer": request.reviewer or "unknown",
+            "text": text,
+            "created_at": datetime.utcnow().isoformat() + "Z",
+        })
+        mat.review_notes = notes
+        session.commit()
+        session.refresh(mat)
+        _log_review_action("note", material_id, request.reviewer)
+        _sync_reviewed_excel(session, mat.week_number)
+        return _serialize_material(mat)
+    finally:
+        session.close()
+
+
+# ---------------------------------------------------------------------------
+# Exercise Catalog review — added 2026-08-28, a second tab on the same
+# /eka-review page. Reviews/edits data/exercise_video_lookup.json (199
+# entries, the same catalog rag.py cites for the "exercise" Component and
+# scripts/generate_weekly_eka.py samples from — see exercise_lookup.py).
+#
+# Unlike content_materials (which starts is_active=False until approved),
+# every existing entry here was migrated to approved=true
+# (scripts/migrate_exercise_catalog_fields.py) — this catalog was already
+# live, patient-facing content before this review UI existed, so shipping
+# the approval gate defaulting everything to "pending" would have silently
+# emptied the exercise Component for every patient until someone clicked
+# Approve All. "Approve All" below is a bulk convenience for existing/future
+# unapproved entries, not a blocker on day one.
+# ---------------------------------------------------------------------------
+
+
+@app.get("/eka-review/exercise-catalog", dependencies=[Depends(verify_api_key)])
+def eka_review_exercise_catalog():
+    import exercise_lookup as el
+
+    return {"entries": el.list_all()}
+
+
+def _get_exercise_entry_or_404(entry_id: int) -> dict:
+    import exercise_lookup as el
+
+    entry = el.get_by_id(entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Exercise catalog entry not found")
+    return entry
+
+
+@app.post("/eka-review/exercise-catalog/{entry_id}/approve", dependencies=[Depends(verify_api_key)])
+def eka_review_exercise_approve(entry_id: int, request: ReviewActionRequest):
+    import exercise_lookup as el
+
+    _get_exercise_entry_or_404(entry_id)
+    updated = el.set_approved(entry_id, True)
+    _log_review_action("approve", entry_id, request.reviewer, kind="exercise_catalog")
+    return updated
+
+
+@app.post("/eka-review/exercise-catalog/{entry_id}/unapprove", dependencies=[Depends(verify_api_key)])
+def eka_review_exercise_unapprove(entry_id: int, request: ReviewActionRequest):
+    import exercise_lookup as el
+
+    _get_exercise_entry_or_404(entry_id)
+    updated = el.set_approved(entry_id, False)
+    _log_review_action("unapprove", entry_id, request.reviewer, kind="exercise_catalog")
+    return updated
+
+
+@app.post("/eka-review/exercise-catalog/approve-all", dependencies=[Depends(verify_api_key)])
+def eka_review_exercise_approve_all(request: ReviewActionRequest):
+    import exercise_lookup as el
+
+    count = el.approve_all()
+    _log_review_action("approve_all", count, request.reviewer, kind="exercise_catalog")
+    return {"approved_count": count, "entries": el.list_all()}
+
+
+class ExerciseCatalogEditRequest(BaseModel):
+    fields: dict
+    reviewer: Optional[str] = None
+
+
+@app.post("/eka-review/exercise-catalog/{entry_id}", dependencies=[Depends(verify_api_key)])
+def eka_review_exercise_edit(entry_id: int, request: ExerciseCatalogEditRequest):
+    import exercise_lookup as el
+
+    _get_exercise_entry_or_404(entry_id)
+    updated = el.update_entry(entry_id, request.fields)
+    _log_review_action("edit", entry_id, request.reviewer, kind="exercise_catalog")
+    return updated
+
+
+@app.post("/eka-review/exercise-catalog", dependencies=[Depends(verify_api_key)])
+def eka_review_exercise_create(request: ExerciseCatalogEditRequest):
+    """Add a brand-new catalog entry — same request shape as the edit
+    endpoint above (fields + reviewer), just with no entry_id (one gets
+    assigned). Defaults to approved=False, see exercise_lookup.create_entry().
+    """
+    import exercise_lookup as el
+
+    if not str(request.fields.get("exercise_title") or "").strip():
+        raise HTTPException(status_code=400, detail="exercise_title is required")
+    entry = el.create_entry(request.fields)
+    _log_review_action("create", entry["id"], request.reviewer, kind="exercise_catalog")
+    return entry

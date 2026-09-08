@@ -446,7 +446,7 @@ Key design properties:
 | Evaluation | RAGAS + deepeval (LLM-judge) | faithfulness/answer_relevancy/context_precision/context_recall + `judge_stance()`/`judge_myth_handling()` GEval judges, see §19 |
 | Public ingress | Cloudflare Tunnel | `cloudflared` systemd service, ingress rules in `/etc/cloudflared/config.yml`; also exposes CLaRa/Ollama tunnel hostnames directly from the Mac Studio |
 | Desktop-agent integration | MCP (Model Context Protocol) | `mcp_server.py`, `mcp>=1.0.0` |
-| Process management (RTX 3050) | systemd | `nutribot.service`, `docs_api.service`, `cloudflared.service` — not Docker for the app itself, only Postgres runs in a container |
+| Process management (Han Server) | systemd | `nutribot.service`, `docs_api.service`, `cloudflared.service` — not Docker for the app itself, only Postgres runs in a container |
 | Container (Postgres only) | Docker | `pgvector-nutribot` |
 
 ---
@@ -1714,11 +1714,11 @@ content_delivery_log
 | Function | Description |
 |---|---|
 | `upsert_eka_material(db, condition_group, condition_tags, content_type, week_number, topic, title, raw_content, force=False)` | Idempotent insert keyed on `(condition_group, content_type, week_number, topic)`; `force=True` overwrites |
-| `cleanup_expired_eka_materials(db)` | Deletes EKA rows where `expires_at < now`; returns count deleted |
+| `cleanup_expired_eka_materials(db)` | Archives each affected week to `materials/eka_week{N}_reviewed.xlsx` (content + approval status + reviewer notes, via `generate_weekly_eka.export_reviewed_excel()`), then deletes EKA rows where `expires_at < now`; returns count deleted |
 | `get_materials_by_filters(db, content_type=, week_number=, condition_group=, is_active=, include_expired=False, ...)` | General-purpose filtered query, excludes expired EKA rows by default |
 | `get_weekly_feed_for_conditions(db, condition_groups, week_number, content_type=None, is_active=True)` | Returns this week's E/K/A materials for the given condition groups |
 
-`EKA_EXPIRY_DAYS = 14` — chosen so that each Monday's scheduler run cleans up content from two weeks prior, keeping at most ~2 weeks of EKA materials live at once.
+`EKA_EXPIRY_DAYS = 30` (as of 2026-09-08; was 56, before that 14) — each Monday's scheduler run cleans up content older than 30 days. Deletion is no longer a pure loss: `cleanup_expired_eka_materials()` always archives a week's full state to Excel first (added after a real incident where a week generated under an earlier policy was deleted with no export ever written for it).
 
 ### 25.3 Weekly Generation (`generate_weekly_eka.py`)
 

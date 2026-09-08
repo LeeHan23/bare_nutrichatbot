@@ -74,6 +74,8 @@
 
   .chip { font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); cursor: pointer; }
   .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .chip-sub { font-size: 11.5px; padding: 5px 10px 5px 9px; border-style: dashed; }
+  .chip-sub::before { content: "↳ "; opacity: .6; }
 
   .search { flex: 1 1 220px; min-width: 180px; position: relative; }
   .search input { width: 100%; font-family: var(--sans); font-size: 13.5px; padding: 8px 12px 8px 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
@@ -82,6 +84,7 @@
 
   .toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); cursor: pointer; user-select: none; padding: 6px 4px; }
   .toggle input { accent-color: var(--accent); width: 14px; height: 14px; }
+  .month-nav-label { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--text); min-width: 140px; text-align: center; }
 
   button.iconbtn { font-family: var(--sans); font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); cursor: pointer; }
   button.iconbtn:hover { border-color: var(--accent); color: var(--text); }
@@ -149,6 +152,15 @@
   .abtn:disabled { opacity: .5; cursor: default; }
   .card-msg { font-size: 12px; color: var(--text-dim); }
   .card-msg.err { color: var(--danger); }
+  .notes-section { padding-top: 10px; border-top: 1px solid var(--border); margin-top: 2px; }
+  .notes-title { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .notes-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .note { background: var(--surface-2); border-radius: 7px; padding: 7px 10px; }
+  .note-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 2px; }
+  .note-text { font-size: 13px; white-space: pre-wrap; }
+  .note-add-row { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+  .note-input { flex: 1 1 220px; font-family: var(--sans); font-size: 13px; padding: 6px 9px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text); resize: vertical; }
+  .note-input:focus { outline: none; border-color: var(--accent); }
 
   .edit-input, .edit-textarea { width: 100%; font-family: var(--sans); font-size: 13.5px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; resize: vertical; }
   .edit-input:focus-visible, .edit-textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -189,39 +201,74 @@
   <header class="page">
     <div class="eyebrow">MyHeartCoach — Weekly Content Pipeline</div>
     <h1>EKA Content Review</h1>
-    <p class="lede">This week's Exercise / Knowledge / Activity drafts, generated every Monday 06:00 and shown here live from the database — nothing is delivered to a patient until a human approves it.</p>
-    <div class="callout">
+    <p class="lede" id="pageLede">This week's Exercise / Knowledge / Activity drafts, generated every Monday 06:00 and shown here live from the database — nothing is delivered to a patient until a human approves it.</p>
+    <div class="callout" id="pageCallout">
       <span class="dot"></span>
-      <div>Approve, unapprove, or edit any item right here — anyone with the page link and the API key can. Nothing reaches a patient until an item is approved. There's no per-person login behind this key, so each action is logged with whatever name is entered below (not verified) for a lightweight audit trail. Items expire and are removed automatically 14 days after generation.</div>
+      <div>Approve, unapprove, or edit any item right here — anyone with the page link and the API key can. Nothing reaches a patient until an item is approved. There's no per-person login behind this key, so each action is logged with whatever name is entered below (not verified) for a lightweight audit trail. Items are removed from this page automatically 30 days after generation — but always archived first (content, approval status, and every note) to an Excel file under materials/, so nothing is lost when a week rolls off.</div>
+    </div>
+    <div class="seg" id="pageTabs">
+      <button id="pageTabEka" aria-pressed="true">Weekly EKA</button>
+      <button id="pageTabExercise" aria-pressed="false">Exercise Catalog</button>
     </div>
   </header>
 
-  <div class="filterbar">
-    <div class="row scrollrow" id="weekTabs"></div>
-    <div class="row">
-      <div class="seg" id="categorySeg"></div>
-      <div class="row scrollrow" id="groupChips" style="flex:1 1 auto;"></div>
-      <div class="search">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" placeholder="Search title, topic, group…" autocomplete="off" />
+  <div id="weeklyEkaView">
+    <div class="filterbar">
+      <div class="row scrollrow" id="weekTabs"></div>
+      <div class="row">
+        <div class="seg" id="categorySeg"></div>
+        <div class="row scrollrow" id="groupChips" style="flex:1 1 auto;"></div>
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="Search title, topic, group…" autocomplete="off" />
+        </div>
+        <label class="toggle"><input type="checkbox" id="includeExpired" checked /> Include expired</label>
+        <button class="iconbtn" id="refreshBtn">↻ Refresh</button>
       </div>
-      <label class="toggle"><input type="checkbox" id="includeExpired" /> Include expired</label>
-      <button class="iconbtn" id="refreshBtn">↻ Refresh</button>
-    </div>
-    <div class="row">
-      <div class="reviewer">
-        <label for="reviewerName">Reviewing as</label>
-        <input type="text" id="reviewerName" placeholder="your name" autocomplete="off" />
+      <div class="row">
+        <div class="reviewer">
+          <label for="reviewerName">Reviewing as</label>
+          <input type="text" id="reviewerName" placeholder="your name" autocomplete="off" />
+        </div>
       </div>
+      <div class="row" id="monthNav"></div>
     </div>
+
+    <div class="summary" id="summary"></div>
+
+    <main class="grid" id="grid"><div class="loading-state">Loading…</div></main>
   </div>
 
-  <div class="summary" id="summary"></div>
+  <div id="exerciseCatalogView" style="display:none;">
+    <div class="filterbar">
+      <div class="row scrollrow" id="exTypeChips"></div>
+      <div class="row">
+        <div class="seg" id="exStatusSeg"></div>
+        <div class="search" style="flex:1 1 220px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="exSearchInput" placeholder="Search title, body focus, level…" autocomplete="off" />
+        </div>
+        <button class="abtn primary" id="approveAllBtn">✓ Approve All</button>
+        <button class="abtn" id="addExerciseBtn">+ Add Exercise</button>
+        <button class="iconbtn" id="exRefreshBtn">↻ Refresh</button>
+      </div>
+      <div class="row">
+        <div class="reviewer">
+          <label for="exReviewerName">Reviewing as</label>
+          <input type="text" id="exReviewerName" placeholder="your name" autocomplete="off" />
+        </div>
+        <div class="card-msg" id="approveAllMsg"></div>
+      </div>
+    </div>
 
-  <main class="grid" id="grid"><div class="loading-state">Loading…</div></main>
+    <div class="summary" id="exSummary"></div>
+
+    <main class="grid" id="exGrid"><div class="loading-state">Loading…</div></main>
+  </div>
 
   <footer>
     <span>eka-review · source: content_materials (live) · generated by scripts/generate_weekly_eka.py</span>
+    <span>exercise catalog · source: data/exercise_video_lookup.json (live) · edits apply to the live bot without a restart</span>
     <span>Historical Weeks 22-25 archive (pre-taxonomy generator): see the team's shared EKA Content Review artifact link.</span>
   </footer>
 </div>
@@ -229,14 +276,95 @@
 <script>
 (function () {
   "use strict";
-  var GROUP_ORDER = ["T2DM", "HTN", "CKD", "Cardiac", "PCOS", "Dyslipidaemia", "General"];
+  // 2026-09-07: 6 new groups added alongside the original 7; PCOS moved to
+  // the end of the display order per client request (not removed).
+  var GROUP_ORDER = [
+    "T2DM", "HTN", "CKD", "Cardiac", "Dyslipidaemia", "General",
+    "Mental Health", "Stress Management", "Sleep",
+    "Atrial Fibrillation", "Heart Failure", "CVD Risk Management",
+    "PCOS",
+  ];
+
+  // Sub-tags: hidden as their own top-level chip, revealed as nested chips
+  // once their parent is selected (client request — Cardiac-related groups
+  // should surface only after clicking Cardiac).
+  var SUB_TAGS = { "Cardiac": ["Atrial Fibrillation", "Heart Failure", "CVD Risk Management"] };
+  var SUB_TAG_CHILDREN = new Set();
+  Object.keys(SUB_TAGS).forEach(function (p) { SUB_TAGS[p].forEach(function (c) { SUB_TAG_CHILDREN.add(c); }); });
   var CATEGORIES = ["Exercise", "Knowledge", "Activity"];
   var CAT_COLORS = { Exercise: "var(--cat-exercise)", Knowledge: "var(--cat-knowledge)", Activity: "var(--cat-activity)" };
   var KEY_STORAGE = "eka_review_api_key";
   var REVIEWER_STORAGE = "eka_review_reviewer_name";
 
-  var state = { week: null, category: "All", groups: new Set(), query: "", includeExpired: false };
+  // ISO week 35, 2026 (Mon 24/8-Sun 30/8) is relabeled "Week 1" on this page
+  // — the underlying week_number stored in the DB stays the real ISO week
+  // (rotation/scheduling logic depends on it), this offset only affects
+  // what's displayed here. ponytail: assumes all weeks fall in the same
+  // year as their own created_at — fine for this pipeline's lifetime, would
+  // need real year-aware ISO math if it's still running past a year boundary.
+  var DISPLAY_WEEK_OFFSET = 34;
+  var WEEK_TAB_WINDOW = 4;
+
+  // includeExpired defaults true here (unlike a patient-facing view) — this
+  // page exists to look back over past batches, so a material's delivery
+  // expiry shouldn't hide it from review by default.
+  var state = { week: null, weekWindowStart: null, category: "All", groups: new Set(), query: "", includeExpired: true };
   var ALL_ITEMS = [];
+
+  function displayWeekNumber(isoWeek) { return isoWeek - DISPLAY_WEEK_OFFSET; }
+
+  function isoWeekMonday(year, week) {
+    var jan4 = new Date(Date.UTC(year, 0, 4));
+    var jan4Day = (jan4.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+    var week1Monday = new Date(jan4.getTime() - jan4Day * 86400000);
+    return new Date(week1Monday.getTime() + (week - 1) * 7 * 86400000);
+  }
+
+  function fmtDM(d) { return d.getUTCDate() + "/" + (d.getUTCMonth() + 1); }
+
+  function weekDateRangeLabel(isoWeek, sampleCreatedAt) {
+    var year = sampleCreatedAt ? new Date(sampleCreatedAt).getUTCFullYear() : new Date().getUTCFullYear();
+    var monday = isoWeekMonday(year, isoWeek);
+    var sunday = new Date(monday.getTime() + 6 * 86400000);
+    return fmtDM(monday) + " - " + fmtDM(sunday);
+  }
+
+  // "YYYY-MM" of the week's Monday — used to group weeks by calendar month
+  // for the month prev/next navigator. String-sortable/comparable as-is.
+  function weekMonthKey(isoWeek, sampleCreatedAt) {
+    var year = sampleCreatedAt ? new Date(sampleCreatedAt).getUTCFullYear() : new Date().getUTCFullYear();
+    var monday = isoWeekMonday(year, isoWeek);
+    return monday.getUTCFullYear() + "-" + String(monday.getUTCMonth() + 1).padStart(2, "0");
+  }
+
+  function monthLabel(monthKey) {
+    var parts = monthKey.split("-");
+    var d = new Date(Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1));
+    return d.toLocaleString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
+  }
+
+  // The visible 4-week window often spans 2 calendar months (e.g. weeks
+  // whose Mondays fall in August and September) — show a range instead of
+  // just the first week's month, which would misleadingly look wrong once
+  // a later, different-month week is also visible/selected in the strip.
+  function monthRangeLabel(monthKeys) {
+    var unique = [];
+    monthKeys.forEach(function (k) { if (unique.indexOf(k) === -1) unique.push(k); });
+    if (unique.length <= 1) return monthLabel(unique[0]);
+    var first = unique[0], last = unique[unique.length - 1];
+    if (first.split("-")[0] === last.split("-")[0]) {
+      // same year — drop the year from the first label: "August – September 2026"
+      return monthLabel(first).split(" ")[0] + " – " + monthLabel(last);
+    }
+    return monthLabel(first) + " – " + monthLabel(last);
+  }
+
+  // The stored title (e.g. "Week 35 — ...") bakes in the raw ISO week from
+  // generation time — swap just the leading number for display, same as the
+  // tab labels, without touching the stored title itself.
+  function displayTitle(item) {
+    return item.title.replace(/^Week\s+-?\d+\b/, "Week " + displayWeekNumber(item.week_number));
+  }
 
   function el(tag, attrs, children) {
     var e = document.createElement(tag);
@@ -351,25 +479,102 @@
     render();
   });
 
+  function weekSampleCreatedAt(w) {
+    var itemsInWeek = ALL_ITEMS.filter(function (m) { return m.week_number === w; });
+    return itemsInWeek.length ? itemsInWeek[0].created_at : null;
+  }
+
+  // Prev/Next month buttons that jump the week-tab window to the first week
+  // of an earlier/later calendar month — lets reviewers browse back through
+  // months of past batches instead of only stepping one week at a time.
+  function buildMonthNav(weeks) {
+    var wrap = document.getElementById("monthNav");
+    wrap.innerHTML = "";
+    if (weeks.length === 0) return;
+
+    var monthKeys = weeks.map(function (w) { return weekMonthKey(w, weekSampleCreatedAt(w)); });
+    var currentKey = monthKeys[state.weekWindowStart];
+
+    var prevIdx = -1;
+    for (var i = state.weekWindowStart - 1; i >= 0; i--) {
+      if (monthKeys[i] !== currentKey) { prevIdx = i; break; }
+    }
+    // land on the FIRST week of that earlier month, not just the one before
+    if (prevIdx >= 0) {
+      var prevKey = monthKeys[prevIdx];
+      while (prevIdx > 0 && monthKeys[prevIdx - 1] === prevKey) prevIdx--;
+    }
+
+    var nextIdx = -1;
+    for (var j = state.weekWindowStart + 1; j < monthKeys.length; j++) {
+      if (monthKeys[j] !== currentKey) { nextIdx = j; break; }
+    }
+
+    // When there are fewer total weeks than WEEK_TAB_WINDOW, every window
+    // position clamps back to the same maxStart — disable a jump that
+    // would land on the position we're already at instead of leaving a
+    // dead-looking enabled button.
+    var maxStart = Math.max(0, weeks.length - WEEK_TAB_WINDOW);
+    var clampedNext = nextIdx >= 0 ? Math.min(nextIdx, maxStart) : -1;
+    if (clampedNext === state.weekWindowStart) nextIdx = -1;
+
+    var prevBtn = el("button", { class: "iconbtn", type: "button", title: "Previous month", text: "‹‹" });
+    prevBtn.disabled = prevIdx < 0;
+    prevBtn.addEventListener("click", function () { state.weekWindowStart = prevIdx; buildWeekTabs(); });
+
+    var windowKeys = monthKeys.slice(state.weekWindowStart, state.weekWindowStart + WEEK_TAB_WINDOW);
+    var label = el("span", { class: "month-nav-label", text: monthRangeLabel(windowKeys) });
+
+    var nextBtn = el("button", { class: "iconbtn", type: "button", title: "Next month", text: "››" });
+    nextBtn.disabled = nextIdx < 0;
+    nextBtn.addEventListener("click", function () { state.weekWindowStart = nextIdx; buildWeekTabs(); });
+
+    wrap.appendChild(prevBtn);
+    wrap.appendChild(label);
+    wrap.appendChild(nextBtn);
+  }
+
   function buildWeekTabs() {
     var wrap = document.getElementById("weekTabs");
     wrap.innerHTML = "";
-    var weeks = Array.from(new Set(ALL_ITEMS.map(function (m) { return m.week_number; }))).sort(function (a, b) { return b - a; });
+    var weeks = Array.from(new Set(ALL_ITEMS.map(function (m) { return m.week_number; })))
+      .filter(function (w) { return displayWeekNumber(w) >= 1; }) // pre-relabel weeks (0, -1, ...) stay out of the tab strip
+      .sort(function (a, b) { return a - b; });
     if (weeks.length === 0) {
       wrap.appendChild(el("span", { style: "font-family:var(--mono);font-size:12.5px;color:var(--text-dim);padding:7px 0;", text: "No content in the database yet" }));
+      document.getElementById("monthNav").innerHTML = "";
       return;
     }
-    weeks.forEach(function (w) {
-      var count = ALL_ITEMS.filter(function (m) { return m.week_number === w; }).length;
-      var t = el("button", { class: "tab", "aria-pressed": String(w === state.week), text: "Week " + w + " · " + count });
+
+    var maxStart = Math.max(0, weeks.length - WEEK_TAB_WINDOW);
+    if (state.weekWindowStart == null) state.weekWindowStart = maxStart; // land on the most recent 4 weeks
+    state.weekWindowStart = Math.min(Math.max(0, state.weekWindowStart), maxStart);
+
+    buildMonthNav(weeks);
+
+    var prevBtn = el("button", { class: "iconbtn", type: "button", title: "Earlier weeks", text: "‹" });
+    prevBtn.disabled = state.weekWindowStart <= 0;
+    prevBtn.addEventListener("click", function () { state.weekWindowStart -= 1; buildWeekTabs(); });
+    wrap.appendChild(prevBtn);
+
+    weeks.slice(state.weekWindowStart, state.weekWindowStart + WEEK_TAB_WINDOW).forEach(function (w) {
+      var itemsInWeek = ALL_ITEMS.filter(function (m) { return m.week_number === w; });
+      var sampleCreatedAt = itemsInWeek.length ? itemsInWeek[0].created_at : null;
+      var label = "Week " + displayWeekNumber(w) + " (" + weekDateRangeLabel(w, sampleCreatedAt) + ") · " + itemsInWeek.length;
+      var t = el("button", { class: "tab", "aria-pressed": String(w === state.week), text: label });
       t.addEventListener("click", function () {
         state.week = w;
-        Array.prototype.forEach.call(wrap.children, function (c) { c.setAttribute("aria-pressed", "false"); });
+        Array.prototype.forEach.call(wrap.querySelectorAll(".tab"), function (c) { c.setAttribute("aria-pressed", "false"); });
         t.setAttribute("aria-pressed", "true");
         render();
       });
       wrap.appendChild(t);
     });
+
+    var nextBtn = el("button", { class: "iconbtn", type: "button", title: "Later weeks", text: "›" });
+    nextBtn.disabled = state.weekWindowStart >= maxStart;
+    nextBtn.addEventListener("click", function () { state.weekWindowStart += 1; buildWeekTabs(); });
+    wrap.appendChild(nextBtn);
   }
 
   function buildCategorySeg() {
@@ -391,14 +596,39 @@
     wrap.innerHTML = "";
     state.groups = new Set();
     var present = new Set(ALL_ITEMS.map(function (m) { return m.condition_group; }));
-    GROUP_ORDER.filter(function (g) { return present.has(g); }).forEach(function (g) {
-      var c = el("button", { class: "chip", "aria-pressed": "false", text: g });
+    var subChipEls = {}; // child group name -> its chip element (for show/hide)
+
+    function setSubTagsVisible(parent, visible) {
+      (SUB_TAGS[parent] || []).forEach(function (child) {
+        var chip = subChipEls[child];
+        if (!chip) return;
+        chip.hidden = !visible;
+        if (!visible && state.groups.has(child)) {
+          state.groups.delete(child);
+          chip.setAttribute("aria-pressed", "false");
+        }
+      });
+    }
+
+    function makeChip(g, isSub) {
+      var c = el("button", { class: isSub ? "chip chip-sub" : "chip", "aria-pressed": "false", text: g });
       c.addEventListener("click", function () {
         if (state.groups.has(g)) { state.groups.delete(g); c.setAttribute("aria-pressed", "false"); }
         else { state.groups.add(g); c.setAttribute("aria-pressed", "true"); }
+        if (SUB_TAGS[g]) setSubTagsVisible(g, state.groups.has(g));
         render();
       });
-      wrap.appendChild(c);
+      return c;
+    }
+
+    GROUP_ORDER.filter(function (g) { return present.has(g) && !SUB_TAG_CHILDREN.has(g); }).forEach(function (g) {
+      wrap.appendChild(makeChip(g, false));
+      (SUB_TAGS[g] || []).filter(function (child) { return present.has(child); }).forEach(function (child) {
+        var subChip = makeChip(child, true);
+        subChip.hidden = true;
+        subChipEls[child] = subChip;
+        wrap.appendChild(subChip);
+      });
     });
   }
 
@@ -441,6 +671,13 @@
   }
 
   function renderValue(value) {
+    if (typeof value === "string" && /^https?:\/\/(www\.)?youtu\.?be/.test(value)) {
+      var a = document.createElement("a");
+      a.href = value; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.className = "field-value";
+      a.textContent = value;
+      return a;
+    }
     if (Array.isArray(value)) {
       if (isLearningPointList(value)) return renderLearningPoints(value);
       if (isCatalogHighlightList(value)) return renderCatalogHighlights(value);
@@ -562,7 +799,10 @@
     };
   }
 
-  var SHORT_SCALAR_KEYS = new Set(["exercise_type", "duration_min", "frequency_per_week", "intensity", "task_name", "tracking_method", "weekly_goal"]);
+  var SHORT_SCALAR_KEYS = new Set([
+    "exercise_type", "duration_min", "frequency_per_week", "intensity", "task_name", "tracking_method", "weekly_goal",
+    "type", "intensity_tier", "min_loop", "max_loop", "total_duration", "allowed_level", "video_duration",
+  ]);
 
   function renderCardBody(fields) {
     var body = el("div", { class: "card-body" });
@@ -589,6 +829,50 @@
     return el("span", { class: "tag status-pending", text: "pending review" });
   }
 
+  function formatTimestamp(iso) {
+    if (!iso) return "";
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return iso; }
+  }
+
+  function renderNotes(item, card) {
+    var notes = item.review_notes || [];
+    var wrap = el("div", { class: "notes-section" });
+    wrap.appendChild(el("div", { class: "notes-title", text: "Notes (" + notes.length + ")" }));
+
+    if (notes.length) {
+      var list = el("div", { class: "notes-list" });
+      notes.forEach(function (n) {
+        list.appendChild(el("div", { class: "note" }, [
+          el("div", { class: "note-meta", text: (n.reviewer || "unknown") + " · " + formatTimestamp(n.created_at) }),
+          el("div", { class: "note-text", text: n.text }),
+        ]));
+      });
+      wrap.appendChild(list);
+    }
+
+    var textarea = el("textarea", { class: "note-input", placeholder: "Add a note…", rows: "2" });
+    var addBtn = el("button", { class: "abtn", text: "Add Note" });
+    var noteMsg = el("div", { class: "card-msg" });
+    addBtn.addEventListener("click", function () {
+      var text = textarea.value.trim();
+      if (!text) return;
+      addBtn.disabled = true;
+      noteMsg.textContent = "Saving…"; noteMsg.classList.remove("err");
+      apiPost("/eka-review/materials/" + item.id + "/notes", { text: text, reviewer: getReviewer() })
+        .then(function (updated) { refreshCardAndSummary(card, updated); })
+        .catch(function (e) {
+          if (e.message === "unauthorized") return;
+          addBtn.disabled = false;
+          noteMsg.textContent = "Failed: " + e.message; noteMsg.classList.add("err");
+        });
+    });
+    wrap.appendChild(el("div", { class: "note-add-row" }, [textarea, addBtn, noteMsg]));
+    return wrap;
+  }
+
   function buildCard(item) {
     var category = item.content_type_label;
     var card = el("div", { class: "card" });
@@ -600,11 +884,11 @@
       statusTag(item),
     ]);
 
-    var titleEl = el("h3", { text: item.title });
+    var titleEl = el("h3", { text: displayTitle(item) });
     var head = el("div", { class: "card-head" }, [
       tags,
       titleEl,
-      el("div", { class: "topic-slug", text: "week " + item.week_number + " · " + item.topic }),
+      el("div", { class: "topic-slug", text: "week " + displayWeekNumber(item.week_number) + " · " + item.topic }),
     ]);
 
     var bodyEl = renderCardBody(item.content);
@@ -615,9 +899,12 @@
     var editBtn = el("button", { class: "abtn", text: "Edit" });
     var actions = el("div", { class: "card-actions" }, [item.is_active ? unapproveBtn : approveBtn, editBtn, msg]);
 
+    var notesEl = renderNotes(item, card);
+
     card.appendChild(head);
     card.appendChild(bodyEl);
     card.appendChild(actions);
+    card.appendChild(notesEl);
 
     function setBusy(busy, text) {
       approveBtn.disabled = busy; unapproveBtn.disabled = busy; editBtn.disabled = busy;
@@ -718,6 +1005,335 @@
     }
     items.forEach(function (item) { grid.appendChild(buildCard(item)); });
   }
+
+  // ==================== Exercise Catalog tab ====================
+  var EX_TYPE_ORDER = ["Warm Up/Aerobic", "Cardio/Aerobic", "Strength/Resistance", "Cooling Down/Stretching", "Cooling Down"];
+  var EX_STATUS_OPTIONS = ["All", "Approved", "Pending"];
+  var exState = { status: "All", types: new Set(), query: "" };
+  var ALL_EXERCISE_ITEMS = [];
+  var exLoaded = false;
+
+  var exReviewerInput = document.getElementById("exReviewerName");
+  exReviewerInput.value = localStorage.getItem(REVIEWER_STORAGE) || "";
+  exReviewerInput.addEventListener("input", function (e) { localStorage.setItem(REVIEWER_STORAGE, e.target.value); });
+  function getExReviewer() { return exReviewerInput.value.trim() || null; }
+
+  function updateExerciseItemInPlace(updated) {
+    for (var i = 0; i < ALL_EXERCISE_ITEMS.length; i++) {
+      if (ALL_EXERCISE_ITEMS[i].id === updated.id) { ALL_EXERCISE_ITEMS[i] = updated; return; }
+    }
+  }
+
+  function refreshExerciseCardAndSummary(oldCardEl, updatedItem) {
+    updateExerciseItemInPlace(updatedItem);
+    var newCard = buildExerciseCard(updatedItem);
+    oldCardEl.replaceWith(newCard);
+    renderExSummary(ALL_EXERCISE_ITEMS, ALL_EXERCISE_ITEMS.filter(matchesExFilters).length);
+  }
+
+  function loadExerciseCatalog() {
+    var key = getKey();
+    if (!key) { showGate(); return; }
+    document.getElementById("exGrid").innerHTML = '<div class="loading-state">Loading…</div>';
+    fetch("/eka-review/exercise-catalog", { headers: { "X-API-Key": key } })
+      .then(function (res) {
+        if (res.status === 401) { localStorage.removeItem(KEY_STORAGE); showGate("Invalid key — try again."); throw new Error("unauthorized"); }
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        hideGate();
+        exLoaded = true;
+        ALL_EXERCISE_ITEMS = data.entries || [];
+        buildExTypeChips();
+        buildExStatusSeg();
+        renderExercise();
+      })
+      .catch(function (e) {
+        if (e.message === "unauthorized") return;
+        var g = document.getElementById("exGrid");
+        g.innerHTML = "";
+        g.appendChild(el("div", { class: "error-state" }, [
+          el("div", { class: "big", text: "Couldn't load exercise catalog" }),
+          el("div", { text: String(e.message || e) }),
+        ]));
+      });
+  }
+
+  document.getElementById("exRefreshBtn").addEventListener("click", loadExerciseCatalog);
+  document.getElementById("exSearchInput").addEventListener("input", function (e) {
+    exState.query = e.target.value.trim().toLowerCase();
+    renderExercise();
+  });
+
+  document.getElementById("approveAllBtn").addEventListener("click", function () {
+    var btn = document.getElementById("approveAllBtn");
+    var msg = document.getElementById("approveAllMsg");
+    btn.disabled = true;
+    msg.classList.remove("err");
+    msg.textContent = "Approving all…";
+    apiPost("/eka-review/exercise-catalog/approve-all", { reviewer: getExReviewer() })
+      .then(function (data) {
+        ALL_EXERCISE_ITEMS = data.entries || [];
+        btn.disabled = false;
+        msg.textContent = data.approved_count + " entr" + (data.approved_count === 1 ? "y" : "ies") + " approved.";
+        renderExercise();
+      })
+      .catch(function (e) {
+        if (e.message === "unauthorized") return;
+        btn.disabled = false;
+        msg.textContent = "Failed: " + e.message;
+        msg.classList.add("err");
+      });
+  });
+
+  function buildExTypeChips() {
+    var wrap = document.getElementById("exTypeChips");
+    wrap.innerHTML = "";
+    exState.types = new Set();
+    var present = new Set(ALL_EXERCISE_ITEMS.map(function (m) { return m.type; }).filter(Boolean));
+    var ordered = EX_TYPE_ORDER.filter(function (t) { return present.has(t); })
+      .concat(Array.from(present).filter(function (t) { return EX_TYPE_ORDER.indexOf(t) === -1; }).sort());
+    ordered.forEach(function (t) {
+      var c = el("button", { class: "chip", "aria-pressed": "false", text: t });
+      c.addEventListener("click", function () {
+        if (exState.types.has(t)) { exState.types.delete(t); c.setAttribute("aria-pressed", "false"); }
+        else { exState.types.add(t); c.setAttribute("aria-pressed", "true"); }
+        renderExercise();
+      });
+      wrap.appendChild(c);
+    });
+  }
+
+  function buildExStatusSeg() {
+    var wrap = document.getElementById("exStatusSeg");
+    wrap.innerHTML = "";
+    EX_STATUS_OPTIONS.forEach(function (s) {
+      var b = el("button", { "aria-pressed": String(s === exState.status), text: s });
+      b.addEventListener("click", function () {
+        exState.status = s;
+        Array.prototype.forEach.call(wrap.children, function (c) { c.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+        renderExercise();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  function matchesExFilters(item) {
+    if (exState.status === "Approved" && !item.approved) return false;
+    if (exState.status === "Pending" && item.approved) return false;
+    if (exState.types.size > 0 && !exState.types.has(item.type)) return false;
+    if (exState.query) {
+      var hay = [item.exercise_title, item.body_focus, item.allowed_level, item.suitable_for, item.intensity_tier].join(" ").toLowerCase();
+      if (hay.indexOf(exState.query) === -1) return false;
+    }
+    return true;
+  }
+
+  function renderExSummary(items, shown) {
+    var s = document.getElementById("exSummary");
+    s.innerHTML = "";
+    s.appendChild(el("span", { class: "count", text: shown + " of " + items.length + " entries shown" }));
+    var approved = items.filter(function (it) { return it.approved; }).length;
+    s.appendChild(el("span", { class: "stat", text: approved + " approved" }));
+    s.appendChild(el("span", { class: "stat", text: (items.length - approved) + " pending" }));
+  }
+
+  function exerciseFieldsFor(item) {
+    // Everything editable except id/exercise_title (used as the card title)
+    // and approved (handled by the approve/unapprove buttons, not the editor).
+    return {
+      type: item.type, intensity_tier: item.intensity_tier, allowed_level: item.allowed_level,
+      min_loop: item.min_loop, max_loop: item.max_loop, total_duration: item.total_duration,
+      video_duration: item.video_duration, body_focus: item.body_focus,
+      explanation: item.explanation, suitable_for: item.suitable_for, youtube_link: item.youtube_link,
+    };
+  }
+
+  function buildExerciseCard(item) {
+    var card = el("div", { class: "card" });
+    card.style.setProperty("--cat-border", "var(--cat-exercise)");
+
+    var tags = el("div", { class: "card-tags" }, [
+      el("span", { class: "tag group", text: item.type || "Exercise" }),
+      item.approved
+        ? el("span", { class: "tag status-approved", text: "✓ approved" })
+        : el("span", { class: "tag status-pending", text: "pending review" }),
+    ]);
+
+    var titleEl = el("h3", { text: item.exercise_title });
+    var head = el("div", { class: "card-head" }, [
+      tags,
+      titleEl,
+      el("div", { class: "topic-slug", text: "#" + item.id + " · " + (item.allowed_level || "") }),
+    ]);
+
+    var bodyEl = renderCardBody(exerciseFieldsFor(item));
+    var msg = el("div", { class: "card-msg" });
+
+    var approveBtn = el("button", { class: "abtn primary", text: "✓ Approve" });
+    var unapproveBtn = el("button", { class: "abtn danger-outline", text: "Unapprove" });
+    var editBtn = el("button", { class: "abtn", text: "Edit" });
+    var actions = el("div", { class: "card-actions" }, [item.approved ? unapproveBtn : approveBtn, editBtn, msg]);
+
+    card.appendChild(head);
+    card.appendChild(bodyEl);
+    card.appendChild(actions);
+
+    function setBusy(busy, text) {
+      approveBtn.disabled = busy; unapproveBtn.disabled = busy; editBtn.disabled = busy;
+      msg.classList.remove("err");
+      msg.textContent = text || "";
+    }
+
+    approveBtn.addEventListener("click", function () {
+      setBusy(true, "Approving…");
+      apiPost("/eka-review/exercise-catalog/" + item.id + "/approve", { reviewer: getExReviewer() })
+        .then(function (updated) { refreshExerciseCardAndSummary(card, updated); })
+        .catch(function (e) { if (e.message !== "unauthorized") { setBusy(false, "Failed: " + e.message); msg.classList.add("err"); } });
+    });
+    unapproveBtn.addEventListener("click", function () {
+      setBusy(true, "Unapproving…");
+      apiPost("/eka-review/exercise-catalog/" + item.id + "/unapprove", { reviewer: getExReviewer() })
+        .then(function (updated) { refreshExerciseCardAndSummary(card, updated); })
+        .catch(function (e) { if (e.message !== "unauthorized") { setBusy(false, "Failed: " + e.message); msg.classList.add("err"); } });
+    });
+
+    editBtn.addEventListener("click", function () {
+      var titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.className = "edit-title";
+      titleInput.value = item.exercise_title;
+      titleEl.replaceWith(titleInput);
+
+      var form = buildEditForm(exerciseFieldsFor(item));
+      bodyEl.replaceWith(form.el);
+
+      var saveBtn = el("button", { class: "abtn primary", text: "Save" });
+      var cancelBtn = el("button", { class: "abtn", text: "Cancel" });
+      var editMsg = el("div", { class: "card-msg" });
+      var newActions = el("div", { class: "card-actions" }, [saveBtn, cancelBtn, editMsg]);
+      actions.replaceWith(newActions);
+
+      cancelBtn.addEventListener("click", function () {
+        var freshCard = buildExerciseCard(item);
+        card.replaceWith(freshCard);
+      });
+      saveBtn.addEventListener("click", function () {
+        saveBtn.disabled = true; cancelBtn.disabled = true;
+        editMsg.textContent = "Saving…"; editMsg.classList.remove("err");
+        var fields = form.collect();
+        fields.exercise_title = titleInput.value.trim() || item.exercise_title;
+        apiPost("/eka-review/exercise-catalog/" + item.id, { fields: fields, reviewer: getExReviewer() })
+          .then(function (updated) { refreshExerciseCardAndSummary(card, updated); })
+          .catch(function (e) {
+            if (e.message === "unauthorized") return;
+            saveBtn.disabled = false; cancelBtn.disabled = false;
+            editMsg.textContent = "Failed: " + e.message; editMsg.classList.add("err");
+          });
+      });
+    });
+
+    return card;
+  }
+
+  // ---------- Add a new exercise ----------
+  function buildNewExerciseCard() {
+    var blank = { type: "", intensity_tier: "", allowed_level: "", min_loop: "", max_loop: "",
+      total_duration: "", video_duration: "", body_focus: "", explanation: "", suitable_for: "", youtube_link: "" };
+
+    var card = el("div", { class: "card" });
+    card.style.setProperty("--cat-border", "var(--cat-exercise)");
+
+    var tags = el("div", { class: "card-tags" }, [el("span", { class: "tag status-pending", text: "new — unsaved" })]);
+    var titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.className = "edit-title";
+    titleInput.placeholder = "Exercise title";
+    var head = el("div", { class: "card-head" }, [tags, titleInput]);
+
+    var form = buildEditForm(blank);
+
+    var saveBtn = el("button", { class: "abtn primary", text: "Save" });
+    var cancelBtn = el("button", { class: "abtn", text: "Cancel" });
+    var msg = el("div", { class: "card-msg" });
+    var actions = el("div", { class: "card-actions" }, [saveBtn, cancelBtn, msg]);
+
+    card.appendChild(head);
+    card.appendChild(form.el);
+    card.appendChild(actions);
+
+    cancelBtn.addEventListener("click", function () { card.remove(); });
+    saveBtn.addEventListener("click", function () {
+      var title = titleInput.value.trim();
+      if (!title) { msg.textContent = "Title is required."; msg.classList.add("err"); return; }
+      saveBtn.disabled = true; cancelBtn.disabled = true;
+      msg.textContent = "Saving…"; msg.classList.remove("err");
+      var fields = form.collect();
+      fields.exercise_title = title;
+      apiPost("/eka-review/exercise-catalog", { fields: fields, reviewer: getExReviewer() })
+        .then(function (created) {
+          ALL_EXERCISE_ITEMS.unshift(created);
+          card.remove();
+          renderExercise();
+        })
+        .catch(function (e) {
+          if (e.message === "unauthorized") return;
+          saveBtn.disabled = false; cancelBtn.disabled = false;
+          msg.textContent = "Failed: " + e.message; msg.classList.add("err");
+        });
+    });
+
+    return card;
+  }
+
+  document.getElementById("addExerciseBtn").addEventListener("click", function () {
+    var grid = document.getElementById("exGrid");
+    var empty = grid.querySelector(".empty-state");
+    if (empty) empty.remove();
+    grid.insertBefore(buildNewExerciseCard(), grid.firstChild);
+  });
+
+  function renderExercise() {
+    var grid = document.getElementById("exGrid");
+    grid.innerHTML = "";
+    var items = ALL_EXERCISE_ITEMS.filter(matchesExFilters);
+    renderExSummary(ALL_EXERCISE_ITEMS, items.length);
+
+    if (items.length === 0) {
+      grid.appendChild(el("div", { class: "empty-state" }, [
+        el("div", { class: "big", text: "No entries match these filters" }),
+        el("div", { text: "Try clearing the search, type, or status filters." }),
+      ]));
+      return;
+    }
+    items.forEach(function (item) { grid.appendChild(buildExerciseCard(item)); });
+  }
+
+  // ---------- Page-level tabs ----------
+  var EKA_LEDE = document.getElementById("pageLede").innerHTML;
+  var EKA_CALLOUT = document.getElementById("pageCallout").querySelector("div").innerHTML;
+  var EX_LEDE = "The approved exercise-video catalog (data/exercise_video_lookup.json) — this is the only source of exercise specifics the bot may cite, and the only place a YouTube link comes from when a patient asks to see a video.";
+  var EX_CALLOUT = "Approve, unapprove, or edit any entry here — including its YouTube link. Every entry migrated in as already-approved (it was live content before this tab existed), so nothing changes for patients unless you unapprove something. Edits apply to the live bot without a restart.";
+
+  document.getElementById("pageTabEka").addEventListener("click", function () {
+    document.getElementById("pageTabEka").setAttribute("aria-pressed", "true");
+    document.getElementById("pageTabExercise").setAttribute("aria-pressed", "false");
+    document.getElementById("weeklyEkaView").style.display = "";
+    document.getElementById("exerciseCatalogView").style.display = "none";
+    document.getElementById("pageLede").innerHTML = EKA_LEDE;
+    document.getElementById("pageCallout").querySelector("div").innerHTML = EKA_CALLOUT;
+  });
+  document.getElementById("pageTabExercise").addEventListener("click", function () {
+    document.getElementById("pageTabEka").setAttribute("aria-pressed", "false");
+    document.getElementById("pageTabExercise").setAttribute("aria-pressed", "true");
+    document.getElementById("weeklyEkaView").style.display = "none";
+    document.getElementById("exerciseCatalogView").style.display = "";
+    document.getElementById("pageLede").innerHTML = EX_LEDE;
+    document.getElementById("pageCallout").querySelector("div").innerHTML = EX_CALLOUT;
+    if (!exLoaded) loadExerciseCatalog();
+  });
 
   buildCategorySeg();
   var saved = getKey();

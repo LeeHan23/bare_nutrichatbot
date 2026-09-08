@@ -52,6 +52,7 @@ def _serialize_material(mat) -> dict:
         "title":            mat.title,
         "is_active":        mat.is_active,
         "content":          mat.raw_tips,
+        "review_notes":     mat.review_notes or [],
         "created_at":       mat.created_at.isoformat() if mat.created_at else None,
         "expires_at":       expires_at,
         "is_expired":       is_expired,
@@ -66,7 +67,7 @@ def _serialize_material(mat) -> dict:
 def list_materials(
     content_type:    Optional[str] = Query(None, description="E | K | A"),
     week_number:     Optional[int] = Query(None, description="ISO week number"),
-    condition_group: Optional[str] = Query(None, description="T2DM | HTN | CKD | Cardiac | PCOS | Dyslipidaemia | General"),
+    condition_group: Optional[str] = Query(None, description="T2DM | HTN | CKD | Cardiac | Dyslipidaemia | General | Mental Health | Stress Management | Sleep | Atrial Fibrillation | Heart Failure | CVD Risk Management | PCOS"),
     is_active:       Optional[bool] = Query(None, description="Filter by approval status"),
     include_expired: bool = Query(False, description="Include materials past their 14-day expiry (default: false)"),
     limit:           int  = Query(100, ge=1, le=500),

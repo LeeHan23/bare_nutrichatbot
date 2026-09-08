@@ -356,6 +356,13 @@ CONDITION_MAP = {
     "PCOS":         ["pcos", "polycystic ovary", "insulin resistance"],
     "Dyslipidaemia":["dyslipidaemia", "hypercholesterol", "lipid"],
     "General":      [],  # fallback — matches patients with no conditions
+    # 2026-09-07 additions — added alongside the original 7, not replacing them
+    "Mental Health":       ["depression", "anxiety", "mental health"],
+    "Stress Management":   ["chronic stress"],
+    "Sleep":                ["insomnia", "sleep apnea", "sleep apnoea", "sleep disorder"],
+    "Atrial Fibrillation": ["atrial fibrillation", "afib"],
+    "Heart Failure":        ["heart failure"],
+    "CVD Risk Management": ["cardiovascular risk"],
 }
 
 SCHEDULE_DAYS = [3, 5, 7, 14, 21, 30]

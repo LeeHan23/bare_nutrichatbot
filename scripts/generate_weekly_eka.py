@@ -492,6 +492,416 @@ _TEMPLATES = {
              "setting realistic next-month goals"),
         ],
     },
+    # 2026-09-07 addition: 6 new groups added alongside the original 7 (client
+    # request, added not replaced — PCOS/T2DM/HTN/CKD/Cardiac/Dyslipidaemia/
+    # General unchanged). Developer-drafted like every other group here —
+    # PROVISIONAL until reviewed; nothing reaches a patient without
+    # POST /content/materials/{id}/approve (same is_active=False gate as
+    # everything else). Add matching CONDITION_MAP keywords in
+    # scripts/generate_content.py if real patient condition data should
+    # auto-match to these.
+    "Mental Health": {
+        "condition_tags": ["Depression", "Anxiety"],
+        "E": [
+            (1, "movement_mood",
+             "Week {w} — Movement for Mood",
+             "exercise depression anxiety mood endorphins physical activity benefit",
+             "a gentle 20-min walking or light-cardio routine and the evidence for exercise's "
+             "antidepressant effect via endorphins and BDNF"),
+            (2, "outdoor_activity",
+             "Week {w} — Outdoor Activity and Sunlight",
+             "outdoor exercise sunlight vitamin D mood circadian rhythm",
+             "why outdoor movement (vs indoor) adds a mood benefit through light exposure and "
+             "circadian regulation, with a simple outdoor walking plan"),
+            (3, "gentle_strength",
+             "Week {w} — Gentle Strength for Resilience",
+             "resistance training mental health self-efficacy mood anxiety",
+             "a beginner bodyweight strength routine and evidence linking resistance training to "
+             "reduced anxiety and improved self-efficacy"),
+            (4, "breath_movement",
+             "Week {w} — Breath-Led Movement",
+             "yoga tai chi breathing exercise parasympathetic anxiety relaxation",
+             "slow, breath-led movement (yoga/tai chi style) to activate the parasympathetic "
+             "nervous system and reduce anxiety symptoms"),
+        ],
+        "K": [
+            (1, "understanding_mental_health",
+             "Week {w} — Understanding Depression and Anxiety",
+             "depression anxiety symptoms diagnosis cardiac patients prevalence",
+             "what depression and anxiety are, how common they are after a cardiac diagnosis, "
+             "and why they matter for heart health"),
+            (2, "heart_mind_link",
+             "Week {w} — The Heart-Mind Connection",
+             "depression cardiovascular disease bidirectional risk inflammation",
+             "the well-established bidirectional link between depression/anxiety and cardiovascular "
+             "disease — inflammation, behaviour, and shared risk"),
+            (3, "when_to_seek_help",
+             "Week {w} — When and How to Seek Help",
+             "mental health help seeking therapy counselling Malaysia resources",
+             "recognising when symptoms need professional support, and how to access "
+             "counselling/psychiatric care in Malaysia (public and private pathways)"),
+            (4, "myths_stigma",
+             "Week {w} — Myths and Stigma Around Mental Health",
+             "mental health stigma myths Malaysia misconceptions",
+             "addressing common myths and stigma around mental health treatment in a Malaysian "
+             "context, and why seeking help is a sign of strength not weakness"),
+        ],
+        "A": [
+            (1, "mood_tracker",
+             "Week {w} — Daily Mood Tracker",
+             "mood tracking daily log mental health pattern",
+             "a simple daily 1-5 mood rating log to notice patterns and triggers over a week"),
+            (2, "gratitude_journal",
+             "Week {w} — Gratitude and Reflection Journal",
+             "gratitude journaling mental health wellbeing practice",
+             "a short daily gratitude/reflection journaling habit and the evidence for its effect on mood"),
+            (3, "social_connection_log",
+             "Week {w} — Social Connection Check-In",
+             "social connection isolation support mental health tracking",
+             "tracking meaningful social contact each day and noticing the link between "
+             "connection and mood"),
+            (4, "monthly_mental_health_review",
+             "Week {w} — Monthly Mental Health Review",
+             "mental health review mood trend symptoms professional support",
+             "a 4-week review of mood trends and symptoms, with guidance on when to bring this "
+             "to a doctor or counsellor"),
+        ],
+    },
+    "Stress Management": {
+        "condition_tags": ["Chronic Stress"],
+        "E": [
+            (1, "walking_destress",
+             "Week {w} — Walking to De-Stress",
+             "walking exercise stress reduction cortisol light activity",
+             "a simple daily walking habit and how light aerobic movement lowers cortisol "
+             "and stress hormones"),
+            (2, "progressive_relaxation",
+             "Week {w} — Progressive Muscle Relaxation",
+             "progressive muscle relaxation stress technique physical tension",
+             "a guided progressive muscle relaxation routine to physically release stress-held tension"),
+            (3, "stretch_break",
+             "Week {w} — Desk and Stretch Breaks",
+             "desk stretching sedentary stress break workplace",
+             "short stretch breaks through the day to interrupt sedentary stress build-up, "
+             "especially for office workers"),
+            (4, "active_stress_release",
+             "Week {w} — Active Stress Release",
+             "physical activity stress release exercise intensity mood",
+             "moderate-intensity activity (cycling, swimming, brisk walking) as an active "
+             "stress-release outlet, and matching intensity to how stressed you feel"),
+        ],
+        "K": [
+            (1, "understanding_stress_response",
+             "Week {w} — Understanding the Stress Response",
+             "stress response cortisol fight flight physiology",
+             "the physiology of the stress response (cortisol, fight-or-flight) and why "
+             "chronic activation is harmful"),
+            (2, "stress_heart_link",
+             "Week {w} — Stress and Heart Disease",
+             "chronic stress cardiovascular disease blood pressure inflammation risk",
+             "how chronic stress raises blood pressure, promotes inflammation, and is an "
+             "independent cardiovascular risk factor"),
+            (3, "breathing_techniques",
+             "Week {w} — Breathing Techniques for Stress",
+             "diaphragmatic breathing box breathing stress technique evidence",
+             "evidence-based breathing techniques (diaphragmatic, box breathing) and how to "
+             "practise them"),
+            (4, "time_boundaries",
+             "Week {w} — Time Management and Boundaries",
+             "time management boundaries workload stress prevention",
+             "practical time-management and boundary-setting strategies to reduce chronic "
+             "workload stress"),
+        ],
+        "A": [
+            (1, "stress_trigger_log",
+             "Week {w} — Stress Trigger Log",
+             "stress trigger tracking log pattern identification",
+             "a daily log of stress triggers and intensity to identify patterns worth addressing"),
+            (2, "relaxation_practice_tracker",
+             "Week {w} — Relaxation Practice Tracker",
+             "relaxation practice tracking breathing meditation habit",
+             "tracking a daily relaxation practice (breathing, meditation, or stretching) to "
+             "build consistency"),
+            (3, "energy_stress_diary",
+             "Week {w} — Energy and Stress Diary",
+             "energy level stress diary daily tracking correlation",
+             "logging energy levels alongside stress ratings to spot the connection over a week"),
+            (4, "monthly_stress_review",
+             "Week {w} — Monthly Stress Review",
+             "stress review monthly trend coping strategies effectiveness",
+             "a 4-week review of stress trends and which coping strategies worked, adjusting "
+             "the plan going forward"),
+        ],
+    },
+    "Sleep": {
+        "condition_tags": ["Sleep Disturbance", "Insomnia"],
+        "E": [
+            (1, "daytime_activity_sleep",
+             "Week {w} — Daytime Activity for Better Sleep",
+             "daytime exercise sleep quality circadian rhythm timing",
+             "how regular daytime activity improves night-time sleep quality, and the right "
+             "timing (avoiding late-evening vigorous exercise)"),
+            (2, "evening_winddown",
+             "Week {w} — Evening Wind-Down Movement",
+             "gentle evening stretching wind down sleep preparation",
+             "a gentle 10-min evening stretching routine as part of a wind-down ritual before bed"),
+            (3, "morning_light_walk",
+             "Week {w} — Morning Light Walk",
+             "morning sunlight walk circadian rhythm melatonin sleep",
+             "a short morning walk to anchor the circadian rhythm and improve night-time "
+             "melatonin release"),
+            (4, "weekend_consistency",
+             "Week {w} — Keeping Activity Consistent on Weekends",
+             "weekend activity consistency sleep schedule routine",
+             "why keeping activity and wake times consistent on weekends helps stabilise sleep, "
+             "avoiding 'social jet lag'"),
+        ],
+        "K": [
+            (1, "sleep_architecture",
+             "Week {w} — Understanding Sleep Stages",
+             "sleep stages architecture REM deep sleep cycle",
+             "what happens during a night's sleep (light, deep, REM stages) and why each "
+             "matters for health"),
+            (2, "sleep_heart_link",
+             "Week {w} — Sleep and Heart Health",
+             "poor sleep cardiovascular disease blood pressure risk evidence",
+             "the evidence linking poor sleep duration/quality to hypertension, weight gain, "
+             "and cardiovascular risk"),
+            (3, "sleep_hygiene",
+             "Week {w} — Sleep Hygiene Fundamentals",
+             "sleep hygiene bedroom environment habits caffeine screens",
+             "practical sleep hygiene: bedroom environment, caffeine timing, screen use, and "
+             "consistent schedules"),
+            (4, "when_to_see_doctor_sleep",
+             "Week {w} — When Sleep Problems Need a Doctor",
+             "sleep apnea insomnia snoring doctor referral warning signs",
+             "warning signs that sleep problems need medical assessment (e.g. loud snoring with "
+             "pauses suggesting sleep apnea) and why untreated sleep apnea is a cardiac risk"),
+        ],
+        "A": [
+            (1, "sleep_diary",
+             "Week {w} — 7-Day Sleep Diary",
+             "sleep diary bedtime waketime quality tracking",
+             "a 7-day sleep diary logging bedtime, wake time, and subjective quality"),
+            (2, "caffeine_screen_log",
+             "Week {w} — Caffeine and Screen-Time Log",
+             "caffeine intake screen time evening tracking sleep",
+             "tracking afternoon/evening caffeine and screen use to see their effect on sleep "
+             "that night"),
+            (3, "winddown_routine_tracker",
+             "Week {w} — Wind-Down Routine Tracker",
+             "wind down routine bedtime habit consistency tracking",
+             "building and tracking a consistent 30-min wind-down routine before bed"),
+            (4, "monthly_sleep_review",
+             "Week {w} — Monthly Sleep Review",
+             "sleep review monthly trend quality improvement",
+             "a 4-week review of sleep duration/quality trends and which changes helped most"),
+        ],
+    },
+    "Atrial Fibrillation": {
+        "condition_tags": ["Atrial Fibrillation"],
+        "E": [
+            (1, "safe_cardio_afib",
+             "Week {w} — Safe Cardio with AFib",
+             "atrial fibrillation exercise safe cardio intensity guidance",
+             "general guidance on light-to-moderate cardio activity with atrial fibrillation, and "
+             "the importance of clearing intensity with your cardiologist first"),
+            (2, "walking_progression_afib",
+             "Week {w} — Walking Progression",
+             "walking programme atrial fibrillation pacing gradual",
+             "a gradual walking progression plan and pacing by how you feel, not just a fixed target"),
+            (3, "strength_light_afib",
+             "Week {w} — Light Strength Work",
+             "light resistance training atrial fibrillation general guidance",
+             "general, non-strenuous strength-maintenance movement and why very heavy "
+             "straining/Valsalva-type effort is generally avoided"),
+            (4, "recognising_limits",
+             "Week {w} — Recognising Your Limits During Activity",
+             "atrial fibrillation exercise stop signs symptoms activity",
+             "how to recognise symptoms that mean it's time to stop and rest (palpitations, "
+             "dizziness, breathlessness) during any activity"),
+        ],
+        "K": [
+            (1, "understanding_afib",
+             "Week {w} — Understanding Atrial Fibrillation",
+             "atrial fibrillation pathophysiology irregular heart rhythm explanation",
+             "what atrial fibrillation is, how the irregular rhythm happens, and why it matters "
+             "for stroke risk"),
+            (2, "afib_stroke_risk",
+             "Week {w} — AFib and Stroke Risk",
+             "atrial fibrillation stroke risk anticoagulation general education",
+             "why AFib raises stroke risk and the general role of anticoagulation — never "
+             "suggesting starting/stopping/adjusting any medication"),
+            (3, "afib_triggers",
+             "Week {w} — Common AFib Triggers",
+             "atrial fibrillation triggers alcohol caffeine sleep stress general",
+             "commonly recognised triggers (alcohol, poor sleep, stress, excess caffeine) that "
+             "can worsen AFib episodes"),
+            (4, "living_well_afib",
+             "Week {w} — Living Well with AFib",
+             "atrial fibrillation lifestyle management quality of life general",
+             "general lifestyle factors (weight, blood pressure, sleep apnea treatment) shown "
+             "to help AFib management long-term"),
+        ],
+        "A": [
+            (1, "pulse_rhythm_log",
+             "Week {w} — Pulse and Rhythm Log",
+             "atrial fibrillation pulse tracking symptom log daily",
+             "a daily log of resting pulse feel (regular/irregular) and any symptoms, to share "
+             "with your cardiologist"),
+            (2, "episode_diary",
+             "Week {w} — Episode Diary",
+             "atrial fibrillation episode diary trigger tracking",
+             "logging any felt episodes alongside possible triggers (caffeine, alcohol, stress, "
+             "poor sleep) that day"),
+            (3, "medication_adherence_afib",
+             "Week {w} — Medication Adherence Tracker",
+             "atrial fibrillation medication adherence anticoagulant tracking",
+             "a simple daily tick-off for anticoagulant/rate-control medication and why "
+             "consistency matters for stroke prevention"),
+            (4, "monthly_afib_review",
+             "Week {w} — Monthly AFib Review",
+             "atrial fibrillation monthly review episode trend doctor",
+             "a 4-week review of episode frequency/triggers to discuss with your cardiologist "
+             "at the next visit"),
+        ],
+    },
+    "Heart Failure": {
+        "condition_tags": ["Heart Failure"],
+        "E": [
+            (1, "cardiac_rehab_hf",
+             "Week {w} — Cardiac Rehab-Style Movement for HF",
+             "heart failure exercise cardiac rehabilitation supervised gradual",
+             "general education on structured, gradual cardiac-rehab-style activity for heart "
+             "failure, and the importance of a supervised programme"),
+            (2, "breathing_paced_activity",
+             "Week {w} — Pacing Activity with Breathlessness",
+             "heart failure breathlessness pacing activity energy conservation",
+             "energy-conservation and pacing techniques for daily activity when breathlessness "
+             "is a limiting symptom"),
+            (3, "seated_gentle_hf",
+             "Week {w} — Seated and Gentle Movement Options",
+             "heart failure seated exercise low intensity gentle safe",
+             "low-intensity seated or standing movement options for days with more fatigue, "
+             "without pushing through red-flag symptoms"),
+            (4, "progress_tolerance_hf",
+             "Week {w} — Noticing Activity Tolerance Changes",
+             "heart failure functional capacity NYHA activity tolerance change",
+             "why tracking activity tolerance over time matters in heart failure, and when a "
+             "change should prompt a doctor visit"),
+        ],
+        "K": [
+            (1, "understanding_hf",
+             "Week {w} — Understanding Heart Failure",
+             "heart failure pathophysiology ejection fraction explanation",
+             "what heart failure means, ejection fraction in plain language, and common types "
+             "(reduced vs preserved)"),
+            (2, "fluid_sodium_hf",
+             "Week {w} — Fluid and Sodium Awareness",
+             "heart failure fluid restriction sodium awareness general education",
+             "why fluid and sodium intake matter in heart failure, at a general educational "
+             "level — exact limits always set by the patient's own care team"),
+            (3, "warning_signs_hf",
+             "Week {w} — Warning Signs That Need Urgent Attention",
+             "heart failure warning signs weight gain swelling breathlessness emergency",
+             "the classic HF red flags (rapid weight gain, worsening swelling, increasing "
+             "breathlessness) and when to seek urgent care"),
+            (4, "medication_importance_hf",
+             "Week {w} — Why Heart Failure Medications Matter",
+             "heart failure medication importance adherence general education",
+             "plain-language explanation of why heart failure medication classes matter and "
+             "the danger of stopping them without medical guidance"),
+        ],
+        "A": [
+            (1, "daily_weight_log",
+             "Week {w} — Daily Weight Log",
+             "heart failure daily weight monitoring fluid retention tracking",
+             "a daily morning weight log (same time, same conditions) — the single most "
+             "important heart-failure self-monitoring habit, with a note to flag any rapid "
+             "gain to the care team"),
+            (2, "symptom_traffic_light",
+             "Week {w} — Symptom Traffic-Light Log",
+             "heart failure symptom traffic light zone tool tracking",
+             "a simple green/yellow/red symptom traffic-light log (breathlessness, swelling, "
+             "fatigue) to make it easy to know when to act"),
+            (3, "medication_adherence_hf",
+             "Week {w} — Medication Adherence Tracker",
+             "heart failure medication adherence tracking daily habit",
+             "a daily medication tick-off chart and what to do about a missed dose"),
+            (4, "monthly_hf_review",
+             "Week {w} — Monthly Heart Failure Review",
+             "heart failure monthly review weight symptom trend doctor",
+             "a 4-week review of weight and symptom trends to bring to the next care-team "
+             "appointment"),
+        ],
+    },
+    "CVD Risk Management": {
+        "condition_tags": ["Cardiovascular Risk"],
+        "E": [
+            (1, "aerobic_base_cvd",
+             "Week {w} — Building an Aerobic Base",
+             "cardiovascular risk reduction aerobic exercise 150 minutes evidence",
+             "the WHO-recommended 150 min/week moderate aerobic activity target and how it "
+             "lowers overall CVD risk"),
+            (2, "strength_cvd_risk",
+             "Week {w} — Strength Training for Risk Reduction",
+             "resistance training cardiovascular risk reduction metabolic benefit",
+             "evidence for 2x/week resistance training reducing cardiovascular risk via "
+             "metabolic and blood-pressure effects"),
+            (3, "reduce_sedentary_time",
+             "Week {w} — Reducing Sedentary Time",
+             "sedentary behaviour cardiovascular risk breaking up sitting",
+             "why breaking up long sitting periods independently reduces cardiovascular risk, "
+             "with practical every-30-min movement cues"),
+            (4, "risk_appropriate_intensity",
+             "Week {w} — Matching Intensity to Your Risk Profile",
+             "exercise intensity cardiovascular risk stratification safe progression",
+             "how exercise intensity should be matched to individual risk profile, and general "
+             "safe-progression principles"),
+        ],
+        "K": [
+            (1, "understanding_cvd_risk_factors",
+             "Week {w} — Understanding Your CVD Risk Factors",
+             "cardiovascular risk factors blood pressure cholesterol smoking diabetes overview",
+             "an overview of the major modifiable CVD risk factors (blood pressure, cholesterol, "
+             "smoking, diabetes, weight, inactivity)"),
+            (2, "risk_score_explained",
+             "Week {w} — How Risk Scores Work",
+             "cardiovascular risk score calculation general explanation Framingham",
+             "a plain-language explanation of how CVD risk scoring generally works and why "
+             "it's a starting point, not a diagnosis, for a doctor conversation"),
+            (3, "diet_cvd_risk",
+             "Week {w} — Diet and Cardiovascular Risk",
+             "heart healthy diet cardiovascular risk reduction evidence Malaysia",
+             "evidence-based dietary patterns (Mediterranean-style, DASH) shown to reduce "
+             "cardiovascular risk, with Malaysian-friendly examples"),
+            (4, "smoking_alcohol_cvd",
+             "Week {w} — Smoking, Alcohol, and CVD Risk",
+             "smoking alcohol cardiovascular risk cessation reduction general",
+             "how smoking and excess alcohol independently raise cardiovascular risk, and the "
+             "general benefit of cutting down or quitting"),
+        ],
+        "A": [
+            (1, "risk_factor_checklist",
+             "Week {w} — Personal Risk Factor Checklist",
+             "cardiovascular risk factor checklist self assessment tracking",
+             "a self-assessment checklist of known risk factors to review and discuss with a doctor"),
+            (2, "activity_minutes_tracker",
+             "Week {w} — Weekly Activity Minutes Tracker",
+             "weekly activity minutes tracking 150 minutes goal cardiovascular",
+             "tracking weekly moderate-activity minutes toward the 150-min target"),
+            (3, "lifestyle_habit_tracker",
+             "Week {w} — Daily Lifestyle Habit Tracker",
+             "lifestyle habit tracker diet activity smoking cardiovascular risk",
+             "a simple daily tick-off for the key lifestyle habits that influence CVD risk "
+             "(activity, diet quality, no smoking)"),
+            (4, "monthly_risk_review",
+             "Week {w} — Monthly Risk Review",
+             "cardiovascular risk monthly review progress doctor discussion",
+             "a 4-week review of habit trends and a prompt to discuss risk-score changes at "
+             "the next doctor visit"),
+        ],
+    },
 }
 
 
@@ -553,9 +963,18 @@ def _retrieve_chunks(query: str, client_id: int, top_k: int = 8) -> str:
 _PERSONALIZATION_GUIDANCE = """\
 Personalization level rules:
 L0 (no risk, general wellness): Full spectrum; vigorous activity allowed; no clinical stop signs needed.
+  Role: Coach. Tone: Performance-oriented. Knowledge topics: healthy diet, smoking harms, weight
+  management, CVD prevention. Activities: step goals and structured activities allowed.
 L1 (emerging/moderate risk): Structured, safety-aware; clear do/don't boundaries; moderate intensity max.
+  Role: Guide. Tone: Supportive. Knowledge topics: smoking cessation, obesity prevention, LDL/HDL
+  basics, preventive education. Activities: consistency-focused.
 L2 (established conditions, higher CV risk): Low-intensity only; symptom monitoring required; strict stop conditions.
+  Role: Protector. Tone: Cautious, reassuring. Knowledge topics: medication adherence, salt reduction,
+  disease-specific education, risk reduction. Activities: ADL only; fatigue-aware; pain-aware.
 L3 (high clinical risk, recent cardiac event): Medical oversight only; extremely gentle; include emergency guidance.
+  Role: Gatekeeper. Tone: Clinical, calm, safety-first. Knowledge topics: emergency awareness, severe
+  hypertension awareness, exercise safety, high-risk precautions. Activities: micro-movement only;
+  sedentary-break reminders only.
 """
 
 # General-education guardrail (added 2026-08-14, see docs/component_taxonomy_contract.md
@@ -585,6 +1004,10 @@ _GROUP_LEVEL = {
     "T2DM": "L1", "HTN": "L1", "Dyslipidaemia": "L1", "PCOS": "L1",
     "CKD": "L2", "Cardiac": "L2",
     "General": "L0",
+    # 2026-09-07 additions
+    "Mental Health": "L1", "Stress Management": "L1", "Sleep": "L1",
+    "CVD Risk Management": "L1",
+    "Atrial Fibrillation": "L2", "Heart Failure": "L2",
 }
 
 
@@ -618,6 +1041,8 @@ APPROVED EXERCISE CATALOG (you may ONLY reference these exact items — never in
 {catalog_text}
 
 {_SAFETY_GUARDRAILS}
+
+{_PERSONALIZATION_GUIDANCE}
 
 TASK: Write general, non-prescriptive framing copy for this week's theme, tying it to the catalog above. Return ONLY valid JSON — no prose, no markdown fences, and the "title" field in each highlight must be copied verbatim from the catalog above:
 {{
@@ -656,6 +1081,8 @@ CLINICAL EVIDENCE:
 
 {_SAFETY_GUARDRAILS}
 
+{_PERSONALIZATION_GUIDANCE}
+
 TASK: Generate 6 educational learning points for patients. Each point should be clear, jargon-free, general (not a personalized prescription), and culturally relevant to Malaysia. Return ONLY valid JSON — no prose, no markdown fences:
 {{
   "topic_summary": "one sentence summarising the topic",
@@ -682,6 +1109,8 @@ CONDITION GROUP: {niche["group"]}
 WEEK: {niche["week_number"]}
 
 {_SAFETY_GUARDRAILS}
+
+{_PERSONALIZATION_GUIDANCE}
 
 TASK: Design a practical weekly behavioural activity. It must be simple enough to do daily, relevant to Malaysian patients, and directly support health outcomes. Return ONLY valid JSON — no prose, no markdown fences:
 {{
@@ -730,7 +1159,12 @@ _GENERATORS = {"E": _generate_exercise, "K": _generate_knowledge, "A": _generate
 # Excel export
 # ---------------------------------------------------------------------------
 
-def _write_eka_excel(results: list, output_path: str):
+def _write_eka_excel(results: list, output_path: str, status_fn=None, comments_fn=None):
+    """status_fn/comments_fn: optional item -> str callables, used by the
+    /eka-review "reviewed" export (docs_api.py) to show live approval status
+    and reviewer notes instead of the generation-time placeholder. Default
+    behavior (no callables passed) is unchanged from before this was added.
+    """
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
@@ -754,7 +1188,7 @@ def _write_eka_excel(results: list, output_path: str):
 
     for ctype in ("E", "K", "A"):
         ws = wb.create_sheet(title=type_labels[ctype])
-        headers = ["Group", "Week", "Topic", "Title", "Field", "Value", "Status"]
+        headers = ["Group", "Week", "Topic", "Title", "Field", "Value", "Status", "Comments"]
         for col, h in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=h)
             cell.font = hdr_font
@@ -770,13 +1204,15 @@ def _write_eka_excel(results: list, output_path: str):
             if not content:
                 content = {"(empty)": "(generation failed)"}
             fill = type_fills[ctype]
+            status = status_fn(item) if status_fn else "raw — pending review"
+            comments = comments_fn(item) if comments_fn else ""
             for field, value in content.items():
                 if isinstance(value, (list, dict)):
                     value = json.dumps(value, ensure_ascii=False)
                 for col, val in enumerate([
                     item["group"], item["week_number"],
                     item["topic"], item["title"],
-                    field, str(value), "raw — pending review"
+                    field, str(value), status, comments
                 ], 1):
                     cell = ws.cell(row=row, column=col, value=val)
                     cell.border = thin
@@ -785,12 +1221,70 @@ def _write_eka_excel(results: list, output_path: str):
                         cell.fill = fill
                 row += 1
 
-        for i, w in enumerate([14, 8, 22, 40, 25, 70, 20], 1):
+        for i, w in enumerate([14, 8, 22, 40, 25, 70, 20, 50], 1):
             ws.column_dimensions[get_column_letter(i)].width = w
         ws.freeze_panes = "A2"
 
     wb.save(output_path)
     print(f"  Excel saved → {output_path}")
+
+
+def export_reviewed_excel(db_session, week_number: int, output_dir: str = None):
+    """Write materials/eka_week{N}_reviewed.xlsx reflecting the CURRENT DB
+    state (live approval status + reviewer notes) for one week — a single,
+    always-overwritten file, separate from the generation-time snapshot
+    (eka_week{N}_{date}.xlsx), which this never touches.
+
+    Shared by two callers:
+      - docs_api.py's /eka-review action endpoints (approve/unapprove/edit/
+        note), to keep the file live as reviewers work.
+      - database.py's cleanup_expired_eka_materials(), called right before
+        deleting a week's expired rows — added 2026-09-08 after a real
+        incident where a week generated under an earlier, shorter expiry
+        policy was deleted with no export ever having been written for it
+        (nobody had reviewed anything in it yet, so the docs_api sync path
+        had never fired). Calling this unconditionally here means an
+        expiring batch is always archived first, never silently lost.
+
+    Returns the path written, or None if the week has no E/K/A materials.
+    """
+    import database as db_module
+
+    materials = db_module.get_materials_by_filters(
+        db_session, week_number=week_number, is_active=None, include_expired=True,
+        limit=1000, offset=0,
+    )
+    results = [
+        {
+            "group": m.condition_group,
+            "week_number": m.week_number,
+            "topic": m.topic,
+            "title": m.title,
+            "content": m.raw_tips or {},
+            "content_type": m.content_type,
+            "_status": "✓ approved" if m.is_active else "pending review",
+            "_notes": m.review_notes or [],
+        }
+        for m in materials
+        if m.content_type in ("E", "K", "A")
+    ]
+    if not results:
+        return None
+
+    def status_fn(item):
+        return item["_status"]
+
+    def comments_fn(item):
+        return " | ".join(
+            f"{n.get('reviewer') or 'unknown'}: {n.get('text', '')}" for n in item["_notes"]
+        )
+
+    if output_dir is None:
+        output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "materials")
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"eka_week{week_number}_reviewed.xlsx")
+    _write_eka_excel(results, output_path, status_fn=status_fn, comments_fn=comments_fn)
+    return output_path
 
 
 # ---------------------------------------------------------------------------
@@ -900,7 +1394,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate weekly EKA content library")
     parser.add_argument("--week",      type=int, help="ISO week number (default: current week)")
     parser.add_argument("--client-id", type=int, default=4)
-    parser.add_argument("--group",     type=str, help="Filter to one group (T2DM, HTN, CKD, Cardiac, PCOS, Dyslipidaemia, General)")
+    parser.add_argument("--group",     type=str, help="Filter to one group (T2DM, HTN, CKD, Cardiac, Dyslipidaemia, General, Mental Health, Stress Management, Sleep, Atrial Fibrillation, Heart Failure, CVD Risk Management, PCOS)")
     parser.add_argument("--type",      type=str, help="Filter to one type (E, K, A)")
     parser.add_argument("--dry-run",   action="store_true")
     parser.add_argument("--force",     action="store_true", help="Overwrite existing DB rows")
