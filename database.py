@@ -740,14 +740,21 @@ def upsert_eka_material(
 
 def cleanup_expired_eka_materials(db_session) -> int:
     """
-    Archive-then-delete EKA materials whose expires_at has passed: every
-    affected week is exported to materials/eka_week{N}_reviewed.xlsx
-    (full content + approval status + reviewer notes) BEFORE its rows are
-    deleted, so an expiring batch is always archived, never silently lost —
-    added 2026-09-08 after a week generated under an earlier, shorter
-    expiry policy was deleted with no export ever having been written for
-    it (nobody had reviewed anything in it yet, so the docs_api live-sync
-    path had never fired for that week).
+    Archive-then-delete EKA materials whose expires_at has passed. For
+    every affected week, BEFORE its rows are deleted:
+      1. export_reviewed_excel() refreshes its final per-week snapshot
+         (materials/eka_week{N}_reviewed.xlsx) — added 2026-09-08 after a
+         week generated under an earlier, shorter expiry policy was
+         deleted with no export ever having been written for it (nobody
+         had reviewed anything in it yet, so the docs_api live-sync path
+         had never fired for that week).
+      2. append_to_archive_excel() merges that same state into a single
+         cumulative materials/eka_archive.xlsx — added 2026-09-08 so
+         history consolidates into one growing file instead of a separate
+         eka_week{N}_reviewed.xlsx piling up per expired week forever. An
+         existing archive row for the same (group, week, content_type, topic)
+         is updated in place to this week's latest state; nothing already
+         archived from other weeks is touched.
     Called at the start of each weekly scheduler run.
     Returns the number of rows deleted.
     """
@@ -767,9 +774,10 @@ def cleanup_expired_eka_materials(db_session) -> int:
         return 0
 
     weeks = sorted({mat.week_number for mat in expired if mat.week_number is not None})
-    from scripts.generate_weekly_eka import export_reviewed_excel
+    from scripts.generate_weekly_eka import export_reviewed_excel, append_to_archive_excel
     for week_number in weeks:
         export_reviewed_excel(db_session, week_number)
+        append_to_archive_excel(db_session, week_number)
 
     for mat in expired:
         db_session.delete(mat)

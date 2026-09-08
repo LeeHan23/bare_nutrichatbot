@@ -1287,6 +1287,105 @@ def export_reviewed_excel(db_session, week_number: int, output_dir: str = None):
     return output_path
 
 
+def _read_excel_as_results(path: str) -> list:
+    """Read a _write_eka_excel-shaped workbook back into a results-like
+    list — one dict per (group, week, content_type, topic), content fields
+    un-flattened from their Field/Value rows (JSON-looking values parsed
+    back into list/dict). Used by append_to_archive_excel() to merge a
+    newly-expiring week into whatever's already in the cumulative archive.
+    """
+    import openpyxl
+    wb = openpyxl.load_workbook(path)
+    sheet_to_ctype = {"Exercise": "E", "Knowledge": "K", "Activity": "A"}
+    items = {}
+    for sheet_name, ctype in sheet_to_ctype.items():
+        if sheet_name not in wb.sheetnames:
+            continue
+        ws = wb[sheet_name]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row or row[0] is None:
+                continue
+            group, week, topic, title, field, value, status, comments = row
+            key = (group, week, ctype, topic)
+            if key not in items:
+                items[key] = {
+                    "group": group, "week_number": week, "topic": topic,
+                    "title": title, "content_type": ctype, "content": {},
+                    "_status": status, "_comments": comments,
+                }
+            v = value
+            if isinstance(value, str):
+                try:
+                    parsed = json.loads(value)
+                    if isinstance(parsed, (list, dict)):
+                        v = parsed
+                except (ValueError, TypeError):
+                    pass
+            items[key]["content"][field] = v
+    return list(items.values())
+
+
+def append_to_archive_excel(db_session, week_number: int, archive_path: str = None):
+    """Merge one week's current state into a single cumulative archive
+    workbook (materials/eka_archive.xlsx by default) instead of leaving a
+    separate eka_week{N}_reviewed.xlsx behind for every week that's ever
+    expired. An existing archive row for the same (group, week, content_type,
+    topic) is updated in place (content/status/comments refreshed to this
+    week's latest state); anything not already archived is appended.
+    Everything already in the archive from OTHER weeks is preserved as-is.
+
+    Called by database.py's cleanup_expired_eka_materials() right before a
+    week's rows are deleted (2026-09-08) — added alongside, not instead of,
+    export_reviewed_excel()'s per-week snapshot, so both a final per-week
+    file and a growing consolidated history exist.
+
+    Returns the archive path, or None if the week has no E/K/A materials.
+    """
+    import database as db_module
+
+    if archive_path is None:
+        archive_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "materials", "eka_archive.xlsx"
+        )
+
+    materials = db_module.get_materials_by_filters(
+        db_session, week_number=week_number, is_active=None, include_expired=True,
+        limit=1000, offset=0,
+    )
+    new_items = []
+    for m in materials:
+        if m.content_type not in ("E", "K", "A"):
+            continue
+        notes = m.review_notes or []
+        comments = " | ".join(f"{n.get('reviewer') or 'unknown'}: {n.get('text', '')}" for n in notes)
+        new_items.append({
+            "group": m.condition_group, "week_number": m.week_number, "topic": m.topic,
+            "title": m.title, "content": m.raw_tips or {}, "content_type": m.content_type,
+            "_status": "✓ approved" if m.is_active else "pending review",
+            "_comments": comments,
+        })
+    if not new_items:
+        return None
+
+    combined = {}
+    if os.path.exists(archive_path):
+        for item in _read_excel_as_results(archive_path):
+            key = (item["group"], item["week_number"], item["content_type"], item["topic"])
+            combined[key] = item
+    for item in new_items:
+        key = (item["group"], item["week_number"], item["content_type"], item["topic"])
+        combined[key] = item  # this week's current state wins over any prior archive entry
+
+    def status_fn(item):
+        return item.get("_status", "archived")
+
+    def comments_fn(item):
+        return item.get("_comments") or ""
+
+    _write_eka_excel(list(combined.values()), archive_path, status_fn=status_fn, comments_fn=comments_fn)
+    return archive_path
+
+
 # ---------------------------------------------------------------------------
 # Main generation function
 # ---------------------------------------------------------------------------
