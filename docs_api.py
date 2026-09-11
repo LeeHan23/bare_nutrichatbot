@@ -110,7 +110,13 @@ def eka_review_data(
             condition_group=condition_group,
             is_active=None,
             include_expired=include_expired,
-            limit=500,
+            # The review page loads every visible week in one call and does its
+            # own client-side week-tab filtering (see eka_review.html's
+            # loadData()), so this needs "everything currently in the table,"
+            # not a paginated slice. 500 silently truncated once the L0-L3/
+            # OB-track generation change took weekly volume from ~60 to ~230+
+            # rows/week — 5000 covers several months of weeks with room to spare.
+            limit=5000,
             offset=0,
         )
         return {"materials": [_serialize_material(m) for m in materials]}

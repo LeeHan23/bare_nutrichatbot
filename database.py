@@ -355,6 +355,13 @@ class ContentMaterial(Base):
         String, nullable=True, index=True
     )  # MyHeartCoach Component slug (taxonomy.py) — NULL for legacy rows,
     # orthogonal to condition_group (disease-niche axis, unchanged)
+    personalization_level = Column(
+        String, nullable=True, index=True
+    )  # "L0".."L3" (taxonomy.LEVEL_EKA_CONSTRAINTS) — set XOR onboarding_stage;
+    # NULL for legacy/pre-tagging rows
+    onboarding_stage = Column(
+        String, nullable=True, index=True
+    )  # "OB1".."OB3" (taxonomy.OB_EKA_CONSTRAINTS) — set XOR personalization_level
     topic = Column(String, nullable=False)  # "breakfast_choices"
     title = Column(String, nullable=False)  # human-readable
     raw_tips = Column(
@@ -695,8 +702,13 @@ def upsert_eka_material(
     title: str,
     raw_content: dict,
     force: bool = False,
+    personalization_level: str = None,
+    onboarding_stage: str = None,
 ) -> "ContentMaterial":
-    """Insert a weekly E/K/A material. Skips if (group, type, week, topic) already exists unless force=True."""
+    """Insert a weekly E/K/A material. Skips if
+    (group, type, week, topic, personalization_level, onboarding_stage) already
+    exists unless force=True — the level/stage are part of the identity key so
+    the L-track and OB-track variants of the same topic don't collide."""
     from datetime import datetime, timedelta
 
     existing = (
@@ -706,6 +718,8 @@ def upsert_eka_material(
             ContentMaterial.content_type == content_type,
             ContentMaterial.week_number == week_number,
             ContentMaterial.topic == topic,
+            ContentMaterial.personalization_level == personalization_level,
+            ContentMaterial.onboarding_stage == onboarding_stage,
         )
         .first()
     )
@@ -728,6 +742,8 @@ def upsert_eka_material(
         topic=topic,
         title=title,
         raw_tips=raw_content,
+        personalization_level=personalization_level,
+        onboarding_stage=onboarding_stage,
         is_active=False,
         created_at=now,
         expires_at=now + timedelta(days=EKA_EXPIRY_DAYS),
@@ -833,8 +849,16 @@ def get_weekly_feed_for_conditions(
     week_number: int,
     content_type: str = None,
     is_active: bool = True,
+    personalization_level: str = None,
+    onboarding_stage: str = None,
 ) -> list:
-    """Return this week's E/K/A materials for given condition groups. Expired materials are excluded."""
+    """Return this week's E/K/A materials for given condition groups. Expired materials are excluded.
+
+    personalization_level / onboarding_stage: when given, matches rows tagged
+    for that exact level/stage OR untagged rows (personalization_level/
+    onboarding_stage IS NULL) — the OR keeps legacy/untagged content visible
+    during rollout instead of a patient's feed going empty.
+    """
     from datetime import datetime
 
     q = db_session.query(ContentMaterial).filter(
@@ -848,6 +872,25 @@ def get_weekly_feed_for_conditions(
         q = q.filter(ContentMaterial.content_type == content_type)
     if is_active is not None:
         q = q.filter(ContentMaterial.is_active == is_active)
+    if personalization_level:
+        # Match this exact level, or a truly legacy/untagged row (both fields
+        # NULL) — NOT an OB-track row (onboarding_stage set, level NULL),
+        # which would otherwise leak into every level-governed patient's feed.
+        q = q.filter(
+            (ContentMaterial.personalization_level == personalization_level)
+            | (
+                (ContentMaterial.personalization_level.is_(None))
+                & (ContentMaterial.onboarding_stage.is_(None))
+            )
+        )
+    elif onboarding_stage:
+        q = q.filter(
+            (ContentMaterial.onboarding_stage == onboarding_stage)
+            | (
+                (ContentMaterial.onboarding_stage.is_(None))
+                & (ContentMaterial.personalization_level.is_(None))
+            )
+        )
     return q.order_by(
         ContentMaterial.content_type, ContentMaterial.condition_group
     ).all()

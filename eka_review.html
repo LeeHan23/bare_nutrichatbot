@@ -217,6 +217,7 @@
       <div class="row scrollrow" id="weekTabs"></div>
       <div class="row">
         <div class="seg" id="categorySeg"></div>
+        <div class="seg" id="levelSeg"></div>
         <div class="row scrollrow" id="groupChips" style="flex:1 1 auto;"></div>
         <div class="search">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -308,7 +309,8 @@
   // includeExpired defaults true here (unlike a patient-facing view) — this
   // page exists to look back over past batches, so a material's delivery
   // expiry shouldn't hide it from review by default.
-  var state = { week: null, weekWindowStart: null, category: "All", groups: new Set(), query: "", includeExpired: true };
+  var state = { week: null, weekWindowStart: null, category: "All", level: "All", groups: new Set(), query: "", includeExpired: true };
+  var LEVELS = ["All", "L0", "L1", "L2", "L3", "OB1", "OB2", "OB3", "Untagged"];
   var ALL_ITEMS = [];
 
   function displayWeekNumber(isoWeek) { return isoWeek - DISPLAY_WEEK_OFFSET; }
@@ -583,6 +585,20 @@
       var b = el("button", { "aria-pressed": String(cat === state.category), text: cat });
       b.addEventListener("click", function () {
         state.category = cat;
+        Array.prototype.forEach.call(wrap.children, function (c) { c.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+        render();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  function buildLevelSeg() {
+    var wrap = document.getElementById("levelSeg");
+    LEVELS.forEach(function (lvl) {
+      var b = el("button", { "aria-pressed": String(lvl === state.level), text: lvl });
+      b.addEventListener("click", function () {
+        state.level = lvl;
         Array.prototype.forEach.call(wrap.children, function (c) { c.setAttribute("aria-pressed", "false"); });
         b.setAttribute("aria-pressed", "true");
         render();
@@ -878,11 +894,13 @@
     var card = el("div", { class: "card" });
     card.style.setProperty("--cat-border", "var(--cat-" + category.toLowerCase() + ")");
 
+    var stageLabel = item.personalization_level || item.onboarding_stage;
     var tags = el("div", { class: "card-tags" }, [
       el("span", { class: "tag group", text: item.condition_group }),
       el("span", { class: "tag", style: "background:var(--cat-" + category.toLowerCase() + "-soft);color:var(--cat-" + category.toLowerCase() + ")", text: category }),
+    ].concat(stageLabel ? [el("span", { class: "tag", text: stageLabel })] : []).concat([
       statusTag(item),
-    ]);
+    ]));
 
     var titleEl = el("h3", { text: displayTitle(item) });
     var head = el("div", { class: "card-head" }, [
@@ -969,6 +987,13 @@
   function matchesFilters(item) {
     if (item.week_number !== state.week) return false;
     if (state.category !== "All" && item.content_type_label !== state.category) return false;
+    if (state.level !== "All") {
+      if (state.level === "Untagged") {
+        if (item.personalization_level || item.onboarding_stage) return false;
+      } else if (item.personalization_level !== state.level && item.onboarding_stage !== state.level) {
+        return false;
+      }
+    }
     if (state.groups.size > 0 && !state.groups.has(item.condition_group)) return false;
     if (state.query) {
       var hay = (item.title + " " + item.topic + " " + item.condition_group + " " + item.content_type_label + " " + JSON.stringify(item.content)).toLowerCase();
@@ -1336,6 +1361,7 @@
   });
 
   buildCategorySeg();
+  buildLevelSeg();
   var saved = getKey();
   if (saved) loadData(); else showGate();
 })();

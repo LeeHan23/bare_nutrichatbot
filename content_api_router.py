@@ -46,6 +46,8 @@ def _serialize_material(mat) -> dict:
         "content_type_label": TYPE_LABELS.get(mat.content_type, "Nutrition"),
         "condition_group":  mat.condition_group,
         "condition_tags":   mat.condition_tags or [],
+        "personalization_level": mat.personalization_level,
+        "onboarding_stage": mat.onboarding_stage,
         "week_number":      mat.week_number,
         "day_offset":       mat.day_offset,
         "topic":            mat.topic,
@@ -193,8 +195,15 @@ def patient_feed(
     from scripts.generate_content import conditions_to_groups  # type: ignore
     groups = conditions_to_groups(patient.conditions or [])
 
+    # personalization_level wins over onboarding_stage once a patient is
+    # risk-stratified, same precedence as taxonomy.resolve_active_role().
     materials = db.get_weekly_feed_for_conditions(
-        database, condition_groups=groups, week_number=week_number, is_active=is_active
+        database,
+        condition_groups=groups,
+        week_number=week_number,
+        is_active=is_active,
+        personalization_level=patient.personalization_level,
+        onboarding_stage=patient.onboarding_stage,
     )
 
     feed: dict[str, list] = {"E": [], "K": [], "A": []}

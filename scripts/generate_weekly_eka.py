@@ -36,6 +36,8 @@ from datetime import datetime, date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import taxonomy
+
 # ---------------------------------------------------------------------------
 # 4-week rotating topic library per condition group × content type
 # ---------------------------------------------------------------------------
@@ -931,22 +933,66 @@ def build_eka_cases(iso_week: int) -> list:
 
 
 # ---------------------------------------------------------------------------
+# Expand each (group, content_type) case into its L0-L3 / OB1-OB3 variants
+# ---------------------------------------------------------------------------
+
+def _expand_variants(niche: dict) -> list:
+    """Expand one (group, content_type) case into its L-track (L0-L3, every
+    group) and OB-track variants (OB1 only for the "General" group — no known
+    conditions yet, per the xlsx; OB2/OB3 for every other group, which are all
+    already condition-specific).
+
+    Not a full L x OB cross-product: taxonomy.resolve_active_role() treats
+    personalization_level and onboarding_stage as mutually-exclusive
+    governance (level wins once a patient is risk-stratified, stage is only
+    the fallback before that), so each variant here carries exactly one tag.
+    """
+    variants = []
+    for level in ("L0", "L1", "L2", "L3"):
+        variants.append({
+            **niche, "personalization_level": level, "onboarding_stage": None,
+            "guidance": taxonomy.eka_constraints_prompt_block(taxonomy.LEVEL_EKA_CONSTRAINTS[level]),
+        })
+    stages = ("OB1",) if niche["group"] == "General" else ("OB2", "OB3")
+    for stage in stages:
+        variants.append({
+            **niche, "personalization_level": None, "onboarding_stage": stage,
+            "guidance": taxonomy.eka_constraints_prompt_block(taxonomy.OB_EKA_CONSTRAINTS[stage]),
+        })
+    return variants
+
+
+# ---------------------------------------------------------------------------
 # RAG retrieval helper (shared with generate_content.py)
 # ---------------------------------------------------------------------------
 
+_base_db_cache = None
+_client_db_cache = {}
+
+
 def _retrieve_chunks(query: str, client_id: int, top_k: int = 8) -> str:
+    """Cache PGVector store instances at module level (mirrors
+    embeddings.get_embedding_function()'s caching) instead of opening a new
+    engine/connection pool on every call — with the L0-L3/OB-track expansion,
+    this function now runs ~6x more often per generation pass, and the
+    previous uncached version OOM-killed a full run after ~116 uncached
+    engines had accumulated."""
     from langchain_community.vectorstores import PGVector
     from vector_store import get_connection_string
     from embeddings import get_embedding_function
 
+    global _base_db_cache
     conn = get_connection_string()
     emb = get_embedding_function()
-    base_db = PGVector(connection_string=conn, embedding_function=emb,
-                       collection_name="base_knowledge", use_jsonb=True)
-    docs = base_db.similarity_search(query, k=top_k)
+    if _base_db_cache is None:
+        _base_db_cache = PGVector(connection_string=conn, embedding_function=emb,
+                                  collection_name="base_knowledge", use_jsonb=True)
+    docs = _base_db_cache.similarity_search(query, k=top_k)
     try:
-        client_db = PGVector(connection_string=conn, embedding_function=emb,
-                             collection_name=f"client_{client_id}_knowledge", use_jsonb=True)
+        if client_id not in _client_db_cache:
+            _client_db_cache[client_id] = PGVector(connection_string=conn, embedding_function=emb,
+                                                    collection_name=f"client_{client_id}_knowledge", use_jsonb=True)
+        client_db = _client_db_cache[client_id]
         seen = {d.page_content for d in docs}
         for d in client_db.similarity_search(query, k=3):
             if d.page_content not in seen:
@@ -960,22 +1006,11 @@ def _retrieve_chunks(query: str, client_id: int, top_k: int = 8) -> str:
 # Type-specific LLM generation
 # ---------------------------------------------------------------------------
 
-_PERSONALIZATION_GUIDANCE = """\
-Personalization level rules:
-L0 (no risk, general wellness): Full spectrum; vigorous activity allowed; no clinical stop signs needed.
-  Role: Coach. Tone: Performance-oriented. Knowledge topics: healthy diet, smoking harms, weight
-  management, CVD prevention. Activities: step goals and structured activities allowed.
-L1 (emerging/moderate risk): Structured, safety-aware; clear do/don't boundaries; moderate intensity max.
-  Role: Guide. Tone: Supportive. Knowledge topics: smoking cessation, obesity prevention, LDL/HDL
-  basics, preventive education. Activities: consistency-focused.
-L2 (established conditions, higher CV risk): Low-intensity only; symptom monitoring required; strict stop conditions.
-  Role: Protector. Tone: Cautious, reassuring. Knowledge topics: medication adherence, salt reduction,
-  disease-specific education, risk reduction. Activities: ADL only; fatigue-aware; pain-aware.
-L3 (high clinical risk, recent cardiac event): Medical oversight only; extremely gentle; include emergency guidance.
-  Role: Gatekeeper. Tone: Clinical, calm, safety-first. Knowledge topics: emergency awareness, severe
-  hypertension awareness, exercise safety, high-risk precautions. Activities: micro-movement only;
-  sedentary-break reminders only.
-"""
+# Per-variant L0-L3 / OB1-OB3 guidance is no longer a hand-copied string here —
+# it's rendered from taxonomy.LEVEL_EKA_CONSTRAINTS / taxonomy.OB_EKA_CONSTRAINTS
+# via taxonomy.eka_constraints_prompt_block() (see _expand_variants above) and
+# passed into each _generate_* function as `guidance`, so this file can't drift
+# out of sync with the structured source of truth the way the old duplicate did.
 
 # General-education guardrail (added 2026-08-14, see docs/component_taxonomy_contract.md
 # and taxonomy.COMPONENT_SCOPE): this is what changed when the weekly EKA generator was
@@ -997,9 +1032,10 @@ Safety rules — do not violate these:
   and must be confirmed with their own dietitian.
 """
 
-# Weekly EKA content is written for a condition group in general, not one patient's exact
-# personalization_level — this maps each group to the level used to sample the REAL exercise
-# catalog below (exercise_lookup.py), mirroring the live chat pipeline's risk-tier framing.
+# Fallback level for exercise-video catalog sampling on OB-track variants,
+# which carry an onboarding_stage (not a personalization_level) — the catalog
+# itself is only indexed by L-level, so an OB-track item still needs *a* level
+# to sample from. Unused for L-track variants, which pass their own real level.
 _GROUP_LEVEL = {
     "T2DM": "L1", "HTN": "L1", "Dyslipidaemia": "L1", "PCOS": "L1",
     "CKD": "L2", "Cardiac": "L2",
@@ -1011,7 +1047,7 @@ _GROUP_LEVEL = {
 }
 
 
-def _generate_exercise(niche: dict, chunks: str) -> dict:
+def _generate_exercise(niche: dict, chunks: str, guidance: str) -> dict:
     """Grounded in the REAL approved exercise-video catalog (exercise_lookup.py) —
     same source of truth the live chat 'exercise' Component uses. The LLM only
     writes short framing/why-it-helps copy about real catalog entries; it never
@@ -1021,7 +1057,7 @@ def _generate_exercise(niche: dict, chunks: str) -> dict:
     from llm import call_ollama_generate
     from exercise_lookup import list_exercise_samples_for_level
 
-    level = _GROUP_LEVEL.get(niche["group"], "L1")
+    level = niche.get("personalization_level") or _GROUP_LEVEL.get(niche["group"], "L1")
     catalog = list_exercise_samples_for_level(level, per_type=2)
     if not catalog:
         return {"catalog_highlights": [], "note": "no catalog entries available for this level"}
@@ -1042,7 +1078,7 @@ APPROVED EXERCISE CATALOG (you may ONLY reference these exact items — never in
 
 {_SAFETY_GUARDRAILS}
 
-{_PERSONALIZATION_GUIDANCE}
+{guidance}
 
 TASK: Write general, non-prescriptive framing copy for this week's theme, tying it to the catalog above. Return ONLY valid JSON — no prose, no markdown fences, and the "title" field in each highlight must be copied verbatim from the catalog above:
 {{
@@ -1068,7 +1104,7 @@ TASK: Write general, non-prescriptive framing copy for this week's theme, tying 
     return result
 
 
-def _generate_knowledge(niche: dict, chunks: str) -> dict:
+def _generate_knowledge(niche: dict, chunks: str, guidance: str) -> dict:
     from llm import call_ollama_generate
     prompt = f"""You are a clinical educator creating patient health literacy content for a Malaysian hospital.
 
@@ -1081,7 +1117,7 @@ CLINICAL EVIDENCE:
 
 {_SAFETY_GUARDRAILS}
 
-{_PERSONALIZATION_GUIDANCE}
+{guidance}
 
 TASK: Generate 6 educational learning points for patients. Each point should be clear, jargon-free, general (not a personalized prescription), and culturally relevant to Malaysia. Return ONLY valid JSON — no prose, no markdown fences:
 {{
@@ -1100,7 +1136,7 @@ TASK: Generate 6 educational learning points for patients. Each point should be 
     return _call_and_parse(prompt, 900)
 
 
-def _generate_activity(niche: dict, chunks: str) -> dict:
+def _generate_activity(niche: dict, chunks: str, guidance: str) -> dict:
     from llm import call_ollama_generate
     prompt = f"""You are a health behaviour coach creating patient habit-building tasks for a Malaysian hospital programme.
 
@@ -1110,7 +1146,7 @@ WEEK: {niche["week_number"]}
 
 {_SAFETY_GUARDRAILS}
 
-{_PERSONALIZATION_GUIDANCE}
+{guidance}
 
 TASK: Design a practical weekly behavioural activity. It must be simple enough to do daily, relevant to Malaysian patients, and directly support health outcomes. Return ONLY valid JSON — no prose, no markdown fences:
 {{
@@ -1401,19 +1437,24 @@ def generate_weekly_eka(iso_week: int = None, client_id: int = 4,
         output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "materials")
     os.makedirs(output_dir, exist_ok=True)
 
-    cases = build_eka_cases(iso_week)
+    base_cases = build_eka_cases(iso_week)
     if filter_group:
-        cases = [c for c in cases if c["group"] == filter_group]
+        base_cases = [c for c in base_cases if c["group"] == filter_group]
     if filter_type:
-        cases = [c for c in cases if c["content_type"] == filter_type]
+        base_cases = [c for c in base_cases if c["content_type"] == filter_type]
 
-    if not cases:
+    if not base_cases:
         print("No cases match filters.")
         return []
 
+    # Expand each (group, content_type) case into its L0-L3 / OB-track
+    # variants — see _expand_variants().
+    cases = [v for niche in base_cases for v in _expand_variants(niche)]
+
     rotation = ((iso_week - 1) % 4) + 1
     print(f"\n{'[DRY RUN] ' if dry_run else ''}Weekly EKA Generation — ISO Week {iso_week} (Rotation {rotation}/4)")
-    print(f"  Generating {len(cases)} items  |  Client: {client_id}  |  Force: {force}\n")
+    print(f"  Generating {len(cases)} items ({len(base_cases)} base cases x L0-L3/OB-track)  "
+          f"|  Client: {client_id}  |  Force: {force}\n")
 
     db_session = None
     if not dry_run:
@@ -1424,7 +1465,8 @@ def generate_weekly_eka(iso_week: int = None, client_id: int = 4,
     results = []
     try:
         for i, niche in enumerate(cases, 1):
-            label = f"[{i}/{len(cases)}] {niche['group']} / {niche['content_type']} / {niche['topic']}"
+            tag = niche["personalization_level"] or niche["onboarding_stage"]
+            label = f"[{i}/{len(cases)}] {niche['group']} / {niche['content_type']} / {niche['topic']} / {tag}"
             print(f"  {label}")
 
             if dry_run:
@@ -1442,7 +1484,7 @@ def generate_weekly_eka(iso_week: int = None, client_id: int = 4,
             print("    → generating via Ollama...")
             try:
                 gen_fn = _GENERATORS[niche["content_type"]]
-                content = gen_fn(niche, chunks)
+                content = gen_fn(niche, chunks, niche["guidance"])
             except Exception as e:
                 print(f"    → generation error: {e}")
                 content = {"error": str(e)}
@@ -1465,6 +1507,8 @@ def generate_weekly_eka(iso_week: int = None, client_id: int = 4,
                         title=niche["title"],
                         raw_content=content,
                         force=force,
+                        personalization_level=niche["personalization_level"],
+                        onboarding_stage=niche["onboarding_stage"],
                     )
                 except Exception as e:
                     print(f"    → DB write error: {e}")

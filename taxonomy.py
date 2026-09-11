@@ -368,6 +368,183 @@ ONBOARDING_STAGE_ROLE = {
 }
 
 
+# Structured (machine-checkable) EKA content-generation constraints, transcribed
+# verbatim from MyHeartCoach_RulesPolicyTables_v2.xlsx's "L0-L3 EKA" and
+# "OB1-OB3 EKA" sheets, per the "EKA schema" sheet's field dictionary. Unlike
+# PERSONALIZATION_LEVEL_PROFILE/ONBOARDING_STAGE_LABELS above (prose for live
+# chat), these are data — the single source of truth for
+# scripts/generate_weekly_eka.py's per-level/per-stage generation loop and
+# prompt guidance, so the two no longer drift out of sync.
+LEVEL_EKA_CONSTRAINTS = {
+    "L0": {
+        "role": "Coach", "tone": "Performance-oriented",
+        "exercise": {
+            "types": ["Warm Up/Aerobic", "Cardio/Aerobic", "Strength/Resistance",
+                       "Cooling Down/Stretching", "Cooling Down"],
+            "intensity": ["Light", "Moderate", "Vigorous"],
+            "stop_conditions": "mandatory", "safety_note": "required",
+            "progression": "allowed",
+        },
+        "knowledge": {
+            "topics": ["healthy diet", "smoking harms", "weight management", "CVD prevention"],
+            "key_points_style": "descriptive, non-technical, no disease thresholds or medication details",
+            "actionable_tip_style": "goal-oriented",
+            "warning_signs_style": "minimal, non-alarmist",
+        },
+        "activity": {
+            "suggested_activity": "vigorous daily activity, step targets",
+            "frequency": "structured or flexible",
+            "reminder_style": "motivational",
+            "adaptation_tip": "optional",
+        },
+    },
+    "L1": {
+        "role": "Guide", "tone": "Supportive",
+        "exercise": {
+            "types": ["Warm Up/Aerobic", "Cardio/Aerobic", "Strength/Resistance",
+                       "Cooling Down/Stretching", "Cooling Down"],
+            "intensity": ["Light", "Moderate"],
+            "stop_conditions": "mandatory, symptom-based", "safety_note": "required",
+            "progression": "limited, cautious only",
+        },
+        "knowledge": {
+            "topics": ["diet types", "structured smoking cessation intervention",
+                       "obesity prevention & control", "cholesterol basics (LDL/HDL concepts)"],
+            "key_points_style": "risk-linked (cause -> effect), non-prescriptive",
+            "actionable_tip_style": "preventive only",
+            "warning_signs_style": "early warning symptoms",
+        },
+        "activity": {
+            "suggested_activity": "light daily movement",
+            "frequency": "encourage consistency",
+            "reminder_style": "supportive",
+            "adaptation_tip": "based on baseline activity",
+        },
+    },
+    "L2": {
+        "role": "Protector", "tone": "Cautious, reassuring",
+        "exercise": {
+            "types": ["Warm Up/Aerobic", "Cardio/Aerobic", "Strength/Resistance",
+                       "Cooling Down/Stretching", "Cooling Down"],
+            "intensity": ["Light", "Moderate"],
+            "stop_conditions": "strict and explicit", "safety_note": "mandatory",
+            "progression": "forbidden",
+        },
+        "knowledge": {
+            "topics": ["diet for comorbidities", "salt intake reduction",
+                       "disease-specific knowledge", "cholesterol levels (interpretive, not diagnostic)",
+                       "CVD risk & medication adherence"],
+            "key_points_style": "safety-first, risk reduction not optimization",
+            "actionable_tip_style": "avoidance & protection, reinforce adherence and caution",
+            "warning_signs_style": "red-flag-adjacent symptoms, escalation guidance without panic",
+        },
+        "activity": {
+            "suggested_activity": "ADL-based only",
+            "frequency": "gentle reminders",
+            "reminder_style": "reassurance-focused",
+            "adaptation_tip": "pain/fatigue aligned",
+        },
+    },
+    "L3": {
+        "role": "Gatekeeper", "tone": "Clinical, calm, safety-first",
+        "exercise": {
+            "types": ["Cooling Down/Stretching", "Cooling Down"],
+            "intensity": ["Light"],
+            "stop_conditions": "absolute", "safety_note": "medical disclaimer",
+            "progression": "forbidden",
+        },
+        "knowledge": {
+            "topics": ["emergency and safety awareness", "management of severe hypertension",
+                       "prevention from exercise related cardiac events", "high-risk condition precautions"],
+            "key_points_style": "critical only",
+            "actionable_tip_style": "seek care, conserve energy, avoid triggers",
+            "warning_signs_style": "emergency symptoms",
+        },
+        "activity": {
+            "suggested_activity": "ADL-based or micro-movement only",
+            "frequency": "break sedentary behavior",
+            "reminder_style": "not specified — keep neutral, non-demanding",
+            "adaptation_tip": "n/a",
+        },
+    },
+}
+
+OB_EKA_CONSTRAINTS = {
+    "OB1": {
+        "role": "Coach", "tone": "Motivational, supportive",
+        "exercise": {
+            "types": ["Warm Up/Aerobic", "Cardio/Aerobic", "Strength/Resistance",
+                       "Cooling Down/Stretching", "Cooling Down"],
+            "intensity": ["Light", "Moderate"],
+            "duration_max_minutes": 10, "frequency_max_loops_per_day": 2,
+            "stop_conditions": "mandatory", "safety_note": "required",
+            "progression": "optional",
+        },
+        "knowledge": {
+            "topics": ["healthy habits", "diet", "hydration", "stress management",
+                       "early signs of cardiac issues"],
+            "key_points_max": 3, "key_points_style": "non-clinical",
+            "actionable_tip_style": "simple, lifestyle-based",
+            "warning_signs_style": "basic early cardiac awareness only",
+        },
+        "activity": {
+            "suggested_activity": "ADL-based",
+            "frequency": "light, non-structured",
+            "reminder_style": "motivational, non-pressuring",
+            "adaptation_tip": "optional",
+        },
+    },
+    "OB2": {
+        "role": "Guide", "tone": "Safety-aware",
+        "exercise": {
+            "types": ["Warm Up/Aerobic", "Cardio/Aerobic", "Strength/Resistance",
+                       "Cooling Down/Stretching", "Cooling Down"],
+            "intensity": ["Light", "Moderate"],
+            "duration_max_minutes": 10, "frequency_max_loops_per_day": 2,
+            "stop_conditions": "mandatory", "safety_note": "required",
+            "progression": "optional",
+        },
+        "knowledge": {
+            "topics": ["chronic condition awareness (hypertension, diabetes, stroke, "
+                       "kidney/heart failure)", "lifestyle adjustments for disease management"],
+            "key_points_style": "disease-specific, safety-focused",
+            "actionable_tip_style": "lifestyle adjustments only (non-medical)",
+            "warning_signs_style": "early complication indicators",
+        },
+        "activity": {
+            "suggested_activity": "ADL-based",
+            "frequency": "encourage breaks from sedentary behavior",
+            "reminder_style": "supportive, non-demanding",
+            "adaptation_tip": "align with physical limitation",
+        },
+    },
+    "OB3": {
+        "role": "Guide", "tone": "Safety-aware",
+        "exercise": {
+            "types": ["Warm Up/Aerobic", "Cardio/Aerobic", "Strength/Resistance",
+                       "Cooling Down/Stretching", "Cooling Down"],
+            "intensity": ["Light", "Moderate"],
+            "duration_max_minutes": 10, "frequency_max_loops_per_day": 2,
+            "stop_conditions": "mandatory", "safety_note": "required",
+            "progression": "optional",
+            "extra_fields": ["instructions"],  # "simple, beginner-friendly" — only OB3 carries this
+        },
+        "knowledge": {
+            "topics": ["medication purpose", "medication adherence"],
+            "key_points_style": "interaction with activity or lifestyle",
+            "actionable_tip_style": "compliance-supportive only",
+            "warning_signs_style": "adverse reactions",
+        },
+        "activity": {
+            "suggested_activity": "ADL-based",
+            "frequency": "encourage breaks from sedentary behavior",
+            "reminder_style": "supportive, non-demanding",
+            "adaptation_tip": "align with physical limitation",
+        },
+    },
+}
+
+
 def resolve_active_role(profile: dict | None) -> tuple[str, str] | None:
     """Return (role, tone) for the main persona to adopt right now, or None.
 
@@ -385,6 +562,32 @@ def resolve_active_role(profile: dict | None) -> tuple[str, str] | None:
     if stage in ONBOARDING_STAGE_ROLE:
         return ONBOARDING_STAGE_ROLE[stage]
     return None
+
+
+def eka_constraints_prompt_block(constraints: dict) -> str:
+    """Render one LEVEL_EKA_CONSTRAINTS/OB_EKA_CONSTRAINTS entry as prompt text
+    for scripts/generate_weekly_eka.py — single source of truth so the
+    generator's guidance can't drift from the structured data above."""
+    ex, kn, ac = constraints["exercise"], constraints["knowledge"], constraints["activity"]
+    lines = [f"Role: {constraints['role']}. Tone: {constraints['tone']}.", ""]
+    lines.append(
+        f"Exercise: types={ex['types']}; intensity={ex['intensity']}; "
+        f"progression={ex['progression']}; stop_conditions={ex['stop_conditions']}; "
+        f"safety_note={ex['safety_note']}"
+        + (f"; duration_max_minutes={ex['duration_max_minutes']}" if "duration_max_minutes" in ex else "")
+        + (f"; frequency_max_loops_per_day={ex['frequency_max_loops_per_day']}" if "frequency_max_loops_per_day" in ex else "")
+        + (f"; extra_fields={ex['extra_fields']}" if "extra_fields" in ex else "")
+    )
+    lines.append(
+        f"Knowledge: topics={kn['topics']}; key_points_style={kn['key_points_style']}"
+        + (f"; key_points_max={kn['key_points_max']}" if "key_points_max" in kn else "")
+        + f"; actionable_tip_style={kn['actionable_tip_style']}; warning_signs_style={kn['warning_signs_style']}"
+    )
+    lines.append(
+        f"Activity: suggested_activity={ac['suggested_activity']}; frequency={ac['frequency']}; "
+        f"reminder_style={ac['reminder_style']}; adaptation_tip={ac['adaptation_tip']}"
+    )
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
@@ -437,5 +640,28 @@ if __name__ == "__main__":
     ]
     assert uncovered_modules({"tobacco_status": "Never smoked", "activity_freq": "3x/week",
                                "medication_compliance": "Good"}) == []
+
+    # LEVEL_EKA_CONSTRAINTS / OB_EKA_CONSTRAINTS: every level/stage present,
+    # every entry has the full exercise/knowledge/activity field set, and the
+    # prompt-block formatter runs cleanly on each.
+    for _level in ("L0", "L1", "L2", "L3"):
+        assert _level in LEVEL_EKA_CONSTRAINTS, f"{_level} has no LEVEL_EKA_CONSTRAINTS entry"
+        _c = LEVEL_EKA_CONSTRAINTS[_level]
+        for _section in ("exercise", "knowledge", "activity"):
+            assert _section in _c, f"{_level} LEVEL_EKA_CONSTRAINTS missing '{_section}'"
+        assert eka_constraints_prompt_block(_c)
+    for _stage in ("OB1", "OB2", "OB3"):
+        assert _stage in OB_EKA_CONSTRAINTS, f"{_stage} has no OB_EKA_CONSTRAINTS entry"
+        _c = OB_EKA_CONSTRAINTS[_stage]
+        for _section in ("exercise", "knowledge", "activity"):
+            assert _section in _c, f"{_stage} OB_EKA_CONSTRAINTS missing '{_section}'"
+        assert eka_constraints_prompt_block(_c)
+    assert "instructions" in OB_EKA_CONSTRAINTS["OB3"]["exercise"].get("extra_fields", []), (
+        "OB3 must carry the extra 'instructions' exercise field per the xlsx"
+    )
+    assert LEVEL_EKA_CONSTRAINTS["L3"]["exercise"]["progression"] == "forbidden"
+    assert LEVEL_EKA_CONSTRAINTS["L0"]["exercise"]["progression"] == "allowed"
+
+    print("taxonomy.py self-check passed.")
 
     print(f"OK — all {len(COMPONENTS)} components have real scope blocks")
