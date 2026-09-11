@@ -486,31 +486,35 @@ async function loadWeeklyFeed(){
   if(!pat){return;}
   try{
     var pid=pat.patient_id||pat.id;
-    var r=await fetch('/content/patient-feed/'+pid+'?week_number=24',{headers:{'X-API-Key':KEY}});  // TEMP DEMO: pin to week 24 (approved); remove after demo
+    var r=await fetch('/content/patient-feed/'+pid,{headers:{'X-API-Key':KEY}});  // week defaults to current ISO week server-side
     var d=await r.json();
     if(!r.ok){wf.innerHTML='<div class="wf-empty">Could not load this week\'s content. Please try again later.</div>';return;}
     var feed=d.feed||{E:[],K:[],A:[]};
-    var lvl=d.personalization_level;
     var html='';
-    (feed.E||[]).forEach(function(m){html+=renderE(m,lvl);});
+    (feed.E||[]).forEach(function(m){html+=renderE(m);});
     (feed.K||[]).forEach(function(m){html+=renderK(m);});
     (feed.A||[]).forEach(function(m){html+=renderA(m);});
     wf.innerHTML=html||'<div class="wf-empty">No content available for this week yet. Check back soon!</div>';
   }catch(e){wf.innerHTML='<div class="wf-empty">Network error loading weekly content.</div>';}
 }
 function wfList(items){return '<ul class="wf-list">'+(items||[]).map(function(i){return '<li>'+esc(i)+'</li>';}).join('')+'</ul>';}
-function renderE(m,lvl){
+function renderE(m){
   var c=m.content||{};
   if(c.parse_error)return '';
   var html='<div class="wf-card"><span class="wf-badge">Exercise · Week '+esc(m.week_number)+'</span>';
   html+='<div class="wf-title">'+esc(m.title)+'</div>';
-  html+='<div class="wf-meta">'+esc(c.exercise_type||'')+' · '+esc(c.duration_min||'?')+' min · '+esc(c.frequency_per_week||'?')+'x/week · '+esc(c.intensity||'')+' intensity</div>';
-  if((c.warmup||[]).length)html+='<div class="wf-section"><h4>Warm-up</h4>'+wfList(c.warmup)+'</div>';
-  if((c.main_activity||[]).length)html+='<div class="wf-section"><h4>Main Activity</h4>'+wfList(c.main_activity)+'</div>';
-  if((c.cooldown||[]).length)html+='<div class="wf-section"><h4>Cool-down</h4>'+wfList(c.cooldown)+'</div>';
-  var lvlMod=c.level_modifications&&lvl?c.level_modifications[lvl]:null;
-  if(lvlMod)html+='<div class="wf-take">For you: '+esc(lvlMod)+'</div>';
-  if((c.safety_stop_signs||[]).length)html+='<div class="wf-section"><h4>Stop &amp; rest if you feel</h4>'+wfList(c.safety_stop_signs)+'</div>';
+  if(c.framing)html+='<div class="wf-meta">'+esc(c.framing)+'</div>';
+  var highlights=c.catalog_highlights||[];
+  if(highlights.length){
+    html+='<div class="wf-section"><h4>This Week\'s Exercises</h4><ul class="wf-list">';
+    highlights.forEach(function(h){
+      html+='<li><b>'+esc(h.title||'')+'</b>'+(h.type?' — '+esc(h.type):'')+(h.intensity_tier?' ('+esc(h.intensity_tier)+')':'');
+      if(h.why_it_helps)html+='<div class="wf-why">'+esc(h.why_it_helps)+'</div>';
+      html+='</li>';
+    });
+    html+='</ul></div>';
+  }
+  if(c.general_safety_note)html+='<div class="wf-section"><h4>Stay Safe</h4><div class="wf-sub">'+esc(c.general_safety_note)+'</div></div>';
   if(c.malaysian_context)html+='<div class="wf-sub">🇲🇾 '+esc(c.malaysian_context)+'</div>';
   html+='</div>';
   return html;
