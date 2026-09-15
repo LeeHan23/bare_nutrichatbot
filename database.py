@@ -55,6 +55,17 @@ class ApiClient(Base):
     )
 
 
+# --- Admin User Model (invite-only login, shared across nutribot/docs-api/eval) ---
+class AdminUser(Base):
+    __tablename__ = "admin_users"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    hashed_token = Column(String, unique=True, index=True)
+    created_at = Column(DateTime, nullable=False)
+    revoked = Column(Boolean, default=False)
+    last_used_at = Column(DateTime, nullable=True)
+
+
 # --- NEW: Document Metadata Model ---
 class DocumentMetadata(Base):
     __tablename__ = "document_metadata"
@@ -246,6 +257,46 @@ def get_all_api_clients(db_session):
     Returns a list of all API clients.
     """
     return db_session.query(ApiClient).all()
+
+
+# --- Admin User Management Functions (invite-only login) ---
+def add_admin_user(db_session, name: str):
+    """Mint a new admin invite. Returns (AdminUser, raw_token) — raw_token is
+    shown/printed exactly once, same convention as add_api_client."""
+    from datetime import datetime
+
+    raw_token = secrets.token_hex(32)
+    admin = AdminUser(
+        name=name,
+        hashed_token=generate_password_hash(raw_token),
+        created_at=datetime.utcnow(),
+        revoked=False,
+    )
+    db_session.add(admin)
+    db_session.commit()
+    db_session.refresh(admin)
+    return admin, raw_token
+
+
+def get_admin_by_token(db_session, raw_token: str) -> "AdminUser | None":
+    """Finds the admin by checking the token against all hashed tokens
+    (same slow-but-timing-safe pattern as get_client_by_key). Revoked
+    admins never match."""
+    from datetime import datetime
+
+    if not raw_token:
+        return None
+    admins = db_session.query(AdminUser).filter(AdminUser.revoked == False).all()
+    for admin in admins:
+        if check_password_hash(admin.hashed_token, raw_token):
+            admin.last_used_at = datetime.utcnow()
+            db_session.commit()
+            return admin
+    return None
+
+
+def get_all_admin_users(db_session):
+    return db_session.query(AdminUser).order_by(AdminUser.created_at).all()
 
 
 # --- NEW: Document Management Functions ---
@@ -896,6 +947,31 @@ def get_weekly_feed_for_conditions(
     ).all()
 
 
+def get_effective_personalization_level(patient) -> str | None:
+    """patient.personalization_level, falling back to the My Heart Coach
+    staging DB's users.risk_level (same L0-L3 vocabulary) when unset —
+    see docs/state_machine_contract.md. Shared by every caller that needs
+    a patient's personalization level (chat prompt, EKA content feed) so
+    the fallback isn't reimplemented per call site."""
+    if patient.personalization_level:
+        return patient.personalization_level
+    import myheart_db
+
+    return myheart_db.get_myheart_risk_level(patient.phone_number)
+
+
+def get_effective_onboarding_stage(patient) -> str | None:
+    """patient.onboarding_stage, falling back to a best-guess OB1-3 derived
+    from the My Heart Coach staging DB's per-step completion flags when
+    unset — see myheart_db.get_myheart_onboarding_stage() for the mapping
+    and its provisional-until-confirmed caveat."""
+    if patient.onboarding_stage:
+        return patient.onboarding_stage
+    import myheart_db
+
+    return myheart_db.get_myheart_onboarding_stage(patient.phone_number)
+
+
 def patient_to_profile_dict(patient, db_session=None) -> dict:
     """
     Convert a Patient ORM object to the profile dict consumed by rag.get_rag_response().
@@ -907,11 +983,7 @@ def patient_to_profile_dict(patient, db_session=None) -> dict:
         if screening:
             clinical_risk_tier = screening.calculated_risk_category
 
-    personalization_level = patient.personalization_level
-    if not personalization_level:
-        import myheart_db
-
-        personalization_level = myheart_db.get_myheart_risk_level(patient.phone_number)
+    personalization_level = get_effective_personalization_level(patient)
 
     return {
         "condition": patient.conditions or [],
@@ -931,7 +1003,7 @@ def patient_to_profile_dict(patient, db_session=None) -> dict:
         "objective_ids": patient.objective_ids or [],
         "difficulty_ceiling": patient.difficulty_ceiling,
         "clinical_risk_tier": clinical_risk_tier,
-        "onboarding_stage": patient.onboarding_stage,
+        "onboarding_stage": get_effective_onboarding_stage(patient),
         # v2 cardiac supplementary fields (extractor-filled)
         "fat_intake_level": patient.fat_intake_level,
         "fat_sources": patient.fat_sources or [],

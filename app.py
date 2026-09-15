@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 
 # MHR Router (Phase 3 Integration)
 import myheartrisk_router
@@ -677,6 +678,69 @@ async def patient_login(
     return {
         "found": False,
         "message": "No patient record found with that name. Please check your spelling or contact your clinic.",
+    }
+
+
+class PatientRegisterRequest(_BaseModel):
+    name: str
+    ic_number: str
+
+
+@app.post("/patient/register", tags=["Patients"])
+async def patient_register(
+    request: PatientRegisterRequest,
+    client=Depends(get_api_client),
+    database: Session = Depends(get_db),
+):
+    """
+    Explicit signup step for a first-time visitor with no existing patient
+    record (/patient/login never auto-creates one — see its docstring).
+    Creates a minimal patient row keyed by name + IC so the caller gets a
+    patient_id back, which is what every other patient-scoped endpoint
+    (chat, EKA content feed, etc.) needs to locate them. Clinical fields
+    start empty and are filled in later by the care team or the extractor.
+    """
+    ic = request.ic_number.strip()
+    if db.get_patient_by_ic(database, ic, client.id):
+        raise HTTPException(
+            status_code=409,
+            detail="A profile with this IC number already exists. Please log in instead.",
+        )
+
+    p = db.add_patient(
+        database,
+        client_id=client.id,
+        name=request.name.strip(),
+        age=None,
+        gender=None,
+        ethnicity=None,
+        weight_kg=None,
+        height_cm=None,
+        conditions=[],
+        medications=[],
+        dietary_restrictions=[],
+        allergies=[],
+        notes="",
+        username=f"self-{uuid.uuid4().hex[:12]}",
+        password=uuid.uuid4().hex,
+        ic_number=ic,
+    )
+    return {
+        "found": True,
+        "is_new": True,
+        "patient_id": p.id,
+        "name": p.name,
+        "age": p.age,
+        "gender": p.gender,
+        "ethnicity": p.ethnicity,
+        "weight_kg": p.weight_kg,
+        "height_cm": p.height_cm,
+        "conditions": p.conditions or [],
+        "medications": p.medications or [],
+        "dietary_restrictions": p.dietary_restrictions or [],
+        "allergies": p.allergies or [],
+        "personalization_level": p.personalization_level,
+        "care_path": p.care_path,
     }
 
 

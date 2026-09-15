@@ -88,11 +88,7 @@ class LocalPatientStore(PatientStore):
             if screening:
                 clinical_risk_tier = screening.calculated_risk_category
 
-        personalization_level = patient.personalization_level
-        if not personalization_level:
-            import myheart_db
-
-            personalization_level = myheart_db.get_myheart_risk_level(patient.phone_number)
+        personalization_level = db.get_effective_personalization_level(patient)
 
         # Existing clinical fields (matches db.patient_to_profile_dict shape)
         profile: dict[str, Any] = {
@@ -113,6 +109,7 @@ class LocalPatientStore(PatientStore):
             "objective_ids":         patient.objective_ids        or [],
             "difficulty_ceiling":    patient.difficulty_ceiling,
             "clinical_risk_tier":    clinical_risk_tier,
+            "onboarding_stage":      db.get_effective_onboarding_stage(patient),
         }
 
         # Supplementary fields — only included if they have values

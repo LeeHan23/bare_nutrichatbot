@@ -205,14 +205,14 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     <div><div class="logo-name">NutriBot</div></div>
   </div>
   <h2 id="vh" style="font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px">Welcome back</h2>
-  <p style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--muted);margin-bottom:26px;line-height:1.5">To keep your records secure, please verify your identity with your IC number.</p>
+  <p id="vp" style="font-family:system-ui,sans-serif;font-size:.85rem;color:var(--muted);margin-bottom:26px;line-height:1.5">To keep your records secure, please verify your identity with your IC number.</p>
   <div class="field">
     <label class="fl">IC Number (MyKad)</label>
     <input id="vi" type="text" class="mono" placeholder="YYMMDD-SS-XXXX" maxlength="14" oninput="fmtIC(this)" onkeydown="if(event.key==='Enter')doVerify()">
     <div class="fhint">Your 12-digit national identification number</div>
   </div>
   <div class="brow">
-    <button class="btn bp" onclick="doVerify()">Verify Identity</button>
+    <button class="btn bp" id="vbtn" onclick="doVerify()">Verify Identity</button>
     <button class="btn bg" onclick="goBack()">Back</button>
   </div>
   <div class="st" id="vs"></div>
@@ -278,7 +278,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 </div>
 
 <script>
-var KEY='',pendingName='',pat=null,sid='',busy=false;
+var KEY='',pendingName='',pendingRegister=false,pat=null,sid='',busy=false;
 var META_MARKER='\n\n[[NUTRIBOT_META]]';
 (function(){
   var p=new URLSearchParams(location.search);
@@ -306,11 +306,21 @@ async function doLogin(){
     var d=await r.json();
     if(!r.ok){setSt('ls',d.detail||'Something went wrong. Please try again.','err');return;}
     clrSt('ls');pendingName=name;
-    if(!d.found){setSt('ls',d.message||'No patient record found. Please check your name or contact your clinic.','err');return;}
-    if(d.multiple){document.getElementById('vh').textContent='One more step';showScr('scr-verify');setTimeout(function(){document.getElementById('vi').focus();},350);return;}
+    if(!d.found){
+      pendingRegister=true;
+      document.getElementById('vh').textContent="Let's set up your profile";
+      document.getElementById('vp').textContent='No existing record found for that name. Enter your IC number to create your profile.';
+      document.getElementById('vbtn').textContent='Create Profile';
+      showScr('scr-verify');setTimeout(function(){document.getElementById('vi').focus();},350);
+      return;
+    }
+    if(d.multiple){pendingRegister=false;document.getElementById('vh').textContent='One more step';document.getElementById('vp').textContent='To keep your records secure, please verify your identity with your IC number.';document.getElementById('vbtn').textContent='Verify Identity';showScr('scr-verify');setTimeout(function(){document.getElementById('vi').focus();},350);return;}
     if(d.found){
+      pendingRegister=false;
       var fn=(d.name||name).split(' ')[0];
       document.getElementById('vh').textContent='Welcome back, '+fn;
+      document.getElementById('vp').textContent='To keep your records secure, please verify your identity with your IC number.';
+      document.getElementById('vbtn').textContent='Verify Identity';
       showScr('scr-verify');setTimeout(function(){document.getElementById('vi').focus();},350);
     }
   }catch(e){setSt('ls','Network error. Please check your connection.','err');}
@@ -318,11 +328,16 @@ async function doLogin(){
 async function doVerify(){
   var ic=document.getElementById('vi').value.trim();
   if(ic.replace(/[^0-9]/g,'').length<12){setSt('vs','Please enter a valid 12-digit IC number.','err');return;}
-  setSt('vs','Verifying your identity...','load');
+  var endpoint=pendingRegister?'/patient/register':'/patient/login';
+  setSt('vs',pendingRegister?'Creating your profile...':'Verifying your identity...','load');
   try{
-    var r=await fetch('/patient/login',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({name:pendingName,ic_number:ic})});
+    var r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({name:pendingName,ic_number:ic})});
     var d=await r.json();
-    if(!r.ok||d.multiple||(!d.found&&!d.is_new)){setSt('vs','IC number not matched. Please double-check and try again.','err');return;}
+    if(pendingRegister){
+      if(!r.ok){setSt('vs',d.detail||'Could not create your profile. Please try again.','err');return;}
+    }else if(!r.ok||d.multiple||(!d.found&&!d.is_new)){
+      setSt('vs','IC number not matched. Please double-check and try again.','err');return;
+    }
     clrSt('vs');document.getElementById('vi').value='';goDash(d);
   }catch(e){setSt('vs','Network error. Please check your connection.','err');}
 }

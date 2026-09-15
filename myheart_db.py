@@ -63,6 +63,51 @@ def get_myheart_risk_level(phone_number: str | None) -> str | None:
         return None
 
 
+def get_myheart_onboarding_stage(phone_number: str | None) -> str | None:
+    """Best-effort OB1-3 derived from the My Heart Coach staging DB's
+    per-step completion flags — there is no dedicated onboarding_stage
+    field in that schema (confirmed live 2026-09-16: 27 tables, `users` has
+    is_goals_completed / is_risk_score_completed / is_medicine_completed /
+    is_medicine_history_completed booleans instead). This mapping
+    (goals -> OB1, risk_score -> OB2, medicine + medicine_history -> OB3) is
+    a provisional best guess matched against taxonomy.ONBOARDING_STAGE_LABELS'
+    own definitions, NOT confirmed by the My Heart Coach team — same
+    fallback tier as get_myheart_risk_level(), explicitly opted into despite
+    docs/state_machine_contract.md's standing caution against guessing at
+    this external schema (2026-09-15 decision).
+    Returns None on any failure, no match, or no completed step yet.
+    """
+    if not phone_number:
+        return None
+    try:
+        conn = _get_connection()
+        if conn is None:
+            return None
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT is_goals_completed, is_risk_score_completed, "
+                    "is_medicine_completed, is_medicine_history_completed "
+                    "FROM users WHERE phone_no = %s LIMIT 1",
+                    (phone_number,),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                goals_done, risk_done, med_done, med_hist_done = row
+                if med_done and med_hist_done:
+                    return "OB3"
+                if risk_done:
+                    return "OB2"
+                if goals_done:
+                    return "OB1"
+                return None
+    except Exception:
+        logger.warning("[MyHeartDB] onboarding_stage lookup failed", exc_info=True)
+        return None
+
+
 if __name__ == "__main__":
     print(get_myheart_risk_level("+60000000000"))
+    print(get_myheart_onboarding_stage("+60000000000"))
     print("OK — no exception on a non-matching lookup")

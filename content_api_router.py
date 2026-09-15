@@ -23,11 +23,11 @@ import os
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, Request
 from sqlalchemy.orm import Session
 
 import database as db
-from dependencies import get_db, get_api_client
+from dependencies import get_db, get_api_client, is_admin_session
 
 router = APIRouter()
 
@@ -195,15 +195,20 @@ def patient_feed(
     from scripts.generate_content import conditions_to_groups  # type: ignore
     groups = conditions_to_groups(patient.conditions or [])
 
+    # personalization_level: dietitian-set value wins; falls back to the My
+    # Heart Coach staging DB's users.risk_level when unset (same helper the
+    # chat prompt path uses — see database.get_effective_personalization_level).
     # personalization_level wins over onboarding_stage once a patient is
     # risk-stratified, same precedence as taxonomy.resolve_active_role().
+    personalization_level = db.get_effective_personalization_level(patient)
+    onboarding_stage = db.get_effective_onboarding_stage(patient)
     materials = db.get_weekly_feed_for_conditions(
         database,
         condition_groups=groups,
         week_number=week_number,
         is_active=is_active,
-        personalization_level=patient.personalization_level,
-        onboarding_stage=patient.onboarding_stage,
+        personalization_level=personalization_level,
+        onboarding_stage=onboarding_stage,
     )
 
     feed: dict[str, list] = {"E": [], "K": [], "A": []}
@@ -216,7 +221,8 @@ def patient_feed(
         "patient_id":        patient_id,
         "patient_name":      patient.name,
         "condition_groups":  groups,
-        "personalization_level": patient.personalization_level,
+        "personalization_level": personalization_level,
+        "onboarding_stage": onboarding_stage,
         "is_active":         is_active,
         "feed":              feed,
         "total":             sum(len(v) for v in feed.values()),
@@ -230,17 +236,19 @@ def patient_feed(
 @router.post("/materials/{material_id}/approve")
 def approve_material(
     material_id: int,
-    x_admin_password: str = Header(..., alias="X-Admin-Password"),
+    request: Request,
+    x_admin_password: str = Header("", alias="X-Admin-Password"),
     database: Session = Depends(get_db),
     client = Depends(get_api_client),
 ):
     """
     Mark a content material as approved (is_active=True).
 
-    Requires X-Admin-Password header in addition to X-API-Key.
-    Once approved, the material appears in weekly-feed responses.
+    Requires X-Admin-Password header (or an active invite-login session)
+    in addition to X-API-Key. Once approved, the material appears in
+    weekly-feed responses.
     """
-    if x_admin_password != ADMIN_PASSWORD:
+    if x_admin_password != ADMIN_PASSWORD and not is_admin_session(request, database):
         raise HTTPException(status_code=401, detail="Invalid admin password")
 
     mat = database.query(db.ContentMaterial).filter(db.ContentMaterial.id == material_id).first()
@@ -266,12 +274,13 @@ def approve_material(
 @router.post("/materials/{material_id}/unapprove")
 def unapprove_material(
     material_id: int,
-    x_admin_password: str = Header(..., alias="X-Admin-Password"),
+    request: Request,
+    x_admin_password: str = Header("", alias="X-Admin-Password"),
     database: Session = Depends(get_db),
     client = Depends(get_api_client),
 ):
     """Revoke approval for a content material (sets is_active=False)."""
-    if x_admin_password != ADMIN_PASSWORD:
+    if x_admin_password != ADMIN_PASSWORD and not is_admin_session(request, database):
         raise HTTPException(status_code=401, detail="Invalid admin password")
 
     mat = database.query(db.ContentMaterial).filter(db.ContentMaterial.id == material_id).first()
