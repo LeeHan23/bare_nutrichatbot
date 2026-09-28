@@ -40,6 +40,12 @@ OLLAMA_GENERATE_TIMEOUT_S = int(os.getenv("OLLAMA_GENERATE_TIMEOUT_S", "50"))
 # Single-call path (CLaRa-primary, USE_CLARA=true) — nothing stacks after it,
 # so it gets a bit more headroom, but still well under the old 120s.
 CLARA_GENERATE_TIMEOUT_S = int(os.getenv("CLARA_GENERATE_TIMEOUT_S", "90"))
+# get_direct_llm_response() (food-context detection) runs BEFORE compress+generate
+# in the Option B path, so it stacks on top of the budget above rather than being
+# covered by it — it was defaulting to get_llm()'s 90s timeout, which alone blows
+# past the ~100s client-observed ceiling. It's a small auxiliary lookup, not a
+# primary-generation call, so it gets a much smaller budget.
+DIRECT_LLM_TIMEOUT_S = int(os.getenv("DIRECT_LLM_TIMEOUT_S", "12"))
 
 if not USE_OLLAMA and not OPENAI_API_KEY:
     raise EnvironmentError(
@@ -48,7 +54,7 @@ if not USE_OLLAMA and not OPENAI_API_KEY:
     )
 
 
-def get_llm():
+def get_llm(timeout: int = 90):
     """
     Returns the orchestration LLM (used by LangChain chains for small tasks
     like identify_target_disease, NOT for the main RAG response).
@@ -62,7 +68,7 @@ def get_llm():
             temperature=0.3,
             num_predict=512,
             keep_alive=-1,
-            timeout=90,
+            timeout=timeout,
         )
     else:
         from langchain_openai import ChatOpenAI
@@ -71,6 +77,7 @@ def get_llm():
             temperature=0.3,
             max_tokens=512,
             openai_api_key=OPENAI_API_KEY,
+            timeout=timeout,
         )
         if OPENAI_BASE_URL:
             kwargs["openai_api_base"] = OPENAI_BASE_URL
@@ -79,9 +86,11 @@ def get_llm():
 
 def get_direct_llm_response(question: str) -> str:
     """Direct response from the orchestration LLM, no RAG.
-    Used for small auxiliary tasks like disease identification."""
+    Used for small auxiliary tasks like disease identification and
+    food-context detection — kept on a short timeout since it runs in the
+    critical path ahead of the main compress+generate calls."""
     try:
-        llm = get_llm()
+        llm = get_llm(timeout=DIRECT_LLM_TIMEOUT_S)
         response = llm.invoke(question)
         return response.content
     except Exception as e:

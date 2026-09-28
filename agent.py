@@ -461,11 +461,32 @@ def get_agent_response(
         _build_onboarding_block,
         _build_exercise_catalog_block,
     )
-    from taxonomy import component_scope_block
+    from taxonomy import (
+        PERSONALIZATION_LEVEL_PROFILE,
+        component_scope_block,
+        resolve_active_role,
+        uncovered_modules,
+    )
 
     # ── System prompt ──────────────────────────────────────────────────────
+    active_role = resolve_active_role(profile)
+    role_sentence = (
+        f" Right now, for this patient, you are acting as their {active_role[0]} "
+        f"— {active_role[1]} in tone."
+        if active_role else ""
+    )
     system_parts = [
-        "You are NutriBot, a conversational nutrition coordinator for Malaysian cardiac patients. "
+        "You are the patient's overall program manager across cardiovascular health "
+        "coaching, not only a nutrition bot — you coordinate several roles — Coach, "
+        "Guide, Protector, and Gatekeeper — each with its own tone and boundaries, "
+        "matched to the patient's onboarding stage and personalization level (see the "
+        "sections below for which applies now)."
+        f"{role_sentence} When the conversation is general, just starting, or the patient "
+        "asks something like 'what else can you help with', don't just answer and stop — "
+        "check the Coaching Modules Not Yet Started section below (when present) and "
+        "proactively name a couple of those modules, then ask which one they'd like to "
+        "start on first. Never invent a module name that isn't given to you elsewhere in "
+        "this prompt.\n"
         "You have a specialist clinical model called CLaRa available via the get_clinical_advice tool. "
         "CLaRa is fine-tuned on clinical nutrition guidelines and handles all evidence-based recommendations — "
         "always call get_clinical_advice for any dietary or nutrition question before responding. "
@@ -487,7 +508,9 @@ def get_agent_response(
         ctx = _to_second_person_profile(patient_context) if is_patient_self else patient_context
         system_parts.append(f"\n## Patient Profile\n{ctx}")
         if level_instruction:
-            system_parts.append(f"\n## Personalization Level {level}\n{level_instruction}")
+            level_profile = PERSONALIZATION_LEVEL_PROFILE.get(level, "") if level else ""
+            block = f"{level_instruction}\n\n{level_profile}" if level_profile else level_instruction
+            system_parts.append(f"\n## Personalization Level {level}\n{block}")
 
         care_path_block = _build_care_path_block(profile)
         if care_path_block:
@@ -496,6 +519,17 @@ def get_agent_response(
         onboarding_block = _build_onboarding_block(profile)
         if onboarding_block:
             system_parts.append(f"\n## Onboarding Stage\n{onboarding_block}")
+
+        missing_modules = uncovered_modules(profile)
+        if missing_modules:
+            system_parts.append(
+                "\n## Coaching Modules Not Yet Started\n"
+                + ", ".join(missing_modules)
+                + "\nReal modules this assistant coaches on, offered here because this "
+                "patient has no data for them yet — use them as your options when the "
+                "manager framing above applies. Don't force this into every reply, and "
+                "never instead of answering a specific question they just asked."
+            )
 
     scope_block = component_scope_block(component)
     if scope_block:

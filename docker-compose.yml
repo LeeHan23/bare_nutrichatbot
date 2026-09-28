@@ -2,7 +2,7 @@ services:
 
   # ── PostgreSQL + pgvector ──────────────────────────────────────────────
   # Same image as the pgvector-nutribot container already running on the
-  # RTX 3050 host. If that host container stays as the DB, don't run this
+  # Han Server host. If that host container stays as the DB, don't run this
   # service too — point DATABASE_URL/PGVECTOR_URL at it instead and omit
   # `pgvector` from `docker compose up`.
   pgvector:

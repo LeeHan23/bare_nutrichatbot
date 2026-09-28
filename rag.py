@@ -1,3 +1,4 @@
+import time
 import database as db
 from image_handler import parse_response_for_image
 from llm import (
@@ -10,8 +11,22 @@ from llm import (
     get_direct_llm_response,
 )
 from exercise_lookup import find_exercise_video, list_exercise_samples_for_level
-from taxonomy import ONBOARDING_STAGE_LABELS, component_scope_block
+import structured_store
+from taxonomy import (
+    ONBOARDING_STAGE_LABELS,
+    PERSONALIZATION_LEVEL_PROFILE,
+    component_scope_block,
+    resolve_active_role,
+    uncovered_modules,
+)
 from vector_store import detect_query_component, get_retriever
+
+# CLaRa /compress runs on Apple MPS (not CUDA) and its latency scales with
+# doc count — 5 docs took 35-40s in production, vs 20s for 1 (see [Latency]
+# logs). Retrieval still returns top_k=5 (ranked best-first by
+# TopicBoostedRetriever) for grounding/fallback quality; only the compress
+# call itself gets trimmed to the top 3.
+CLARA_COMPRESS_DOC_LIMIT = 3
 
 # Keyword check for "is this question asking to see/demo an exercise" — same
 # style as the food-context detection above. Deliberately separate from
@@ -278,18 +293,42 @@ def _build_qwen_prompt(
     is_patient_self: bool,
     history_text: str = "",
     component: str | None = None,
+    structured_facts: str = "",
 ) -> str:
     """Build the Qwen generation prompt for Option B (CLaRa-compress → Qwen-generate).
 
     CLaRa produces a structured clinical digest; Qwen turns it into a warm,
     conversational response that respects the patient's profile and voice rules.
     """
+    active_role = resolve_active_role(profile)
+    role_sentence = (
+        f" Right now, for this patient, you are acting as their {active_role[0]} "
+        f"— {active_role[1]} in tone."
+        if active_role else ""
+    )
     parts = [
-        "You are NutriBot, a clinical support assistant for Malaysian cardiac patients. "
-        "Nutrition and dietary guidance is your area of deepest expertise. For other topics "
-        "(blood pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, "
+        "You are the patient's overall program manager across cardiovascular health "
+        "coaching, not only a nutrition bot — you coordinate several roles — Coach, "
+        "Guide, Protector, and Gatekeeper — each with its own tone and boundaries, "
+        "matched to the patient's onboarding stage and personalization level (see the "
+        "sections below for which applies now)."
+        f"{role_sentence} Nutrition and dietary guidance is an area of particular expertise "
+        "across every role, but your job as manager is broader: for other topics (blood "
+        "pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, "
         "psychosocial wellbeing, medication, or general heart-disease education), the "
-        "Component Scope section below (when present) tells you exactly what you may say.\n"
+        "Component Scope section below (when present) tells you exactly what you may say. "
+        "When the conversation is general, just starting, or the patient asks something "
+        "like 'what else can you help with', don't just answer and stop — check the "
+        "Coaching Modules Not Yet Started section below (when present) and proactively "
+        "name a couple of those modules, then ask which one they'd like to start on first. "
+        "Never invent a module name that isn't given to you in that section or elsewhere "
+        "in this prompt.\n"
+        "\nLANGUAGE: Reply in the same language as the patient's latest message — Bahasa "
+        "Malaysia if they wrote in Bahasa Malaysia (including Manglish/mixed BM-English), "
+        "English if they wrote in English. Judge this from their full message, not just a "
+        "greeting word — 'hai' or 'hi' alone does not make the message English. If the "
+        "message is only a bare greeting with no other content (e.g. just 'hai', 'hi', "
+        "'hello'), default to Bahasa Malaysia.\n"
     ]
 
     # Read outside the patient_context guard below: word_limit further down
@@ -312,7 +351,9 @@ def _build_qwen_prompt(
             parts.append("## Patient Profile\n" + patient_context)
 
         if level_instruction:
-            parts.append(f"\n## Personalization Level {level}\n{level_instruction}")
+            level_profile = PERSONALIZATION_LEVEL_PROFILE.get(level, "") if level else ""
+            block = f"{level_instruction}\n\n{level_profile}" if level_profile else level_instruction
+            parts.append(f"\n## Personalization Level {level}\n{block}")
 
         care_path_block = _build_care_path_block(profile)
         if care_path_block:
@@ -321,6 +362,17 @@ def _build_qwen_prompt(
         onboarding_block = _build_onboarding_block(profile)
         if onboarding_block:
             parts.append(f"\n## Onboarding Stage\n{onboarding_block}")
+
+        missing_modules = uncovered_modules(profile)
+        if missing_modules:
+            parts.append(
+                "\n## Coaching Modules Not Yet Started\n"
+                + ", ".join(missing_modules)
+                + "\nReal modules this assistant coaches on, offered here because this "
+                "patient has no data for them yet — use them as your options when the "
+                "manager framing above applies. Don't force this into every reply, and "
+                "never instead of answering a specific question they just asked."
+            )
 
     scope_block = component_scope_block(component)
     if scope_block:
@@ -332,6 +384,9 @@ def _build_qwen_prompt(
             parts.append(f"\n## Approved Exercise Catalog\n{catalog_block}")
 
     parts.append(f"\n## Clinical Evidence Digest\n{digest}")
+
+    if structured_facts:
+        parts.append(f"\n## Structured Facts\n{structured_facts}")
 
     if food_context:
         parts.append(f"\n## Food Context\n{food_context}")
@@ -360,8 +415,23 @@ def _build_qwen_prompt(
             "- If the Personalization Level section above requires a specific phrase (e.g. a care-team "
             "reference), always include it — that requirement takes priority over the structure and "
             "word-count rules below.\n"
+            "- If the person states a health belief, home remedy, or traditional practice as if it's "
+            "already fact or already their routine, and it is medically inaccurate or unsupported, say so "
+            "plainly before anything else — do NOT just give safe advice around it while leaving the false "
+            "belief unaddressed. Staying silent on the belief reads as agreeing with it.\n"
+            "- The Patient Profile above is the COMPLETE and ONLY source of this patient's allergies, "
+            "diagnoses, and restrictions. If an allergy or diagnosis is not literally written there, it "
+            "does not exist for this patient — never say 'your allergy', 'your allergies', or 'your care "
+            "team has noted/set' anything that is not literally present in the Patient Profile text above. "
+            "A patient avoiding a food for a traditional or cultural reason (e.g. pantang) is NOT the same "
+            "as an allergy — do not relabel it as one.\n"
             "\n## Conversation Style — strictly follow this structure\n"
             "You are having a back-and-forth conversation, NOT writing a health article.\n"
+            "Exception: if the message is just a greeting or opener with no real question "
+            "(e.g. 'hi', 'hai', 'hello'), skip the 3-part structure below entirely — greet "
+            "them warmly and, if the Coaching Modules Not Yet Started section above is "
+            "present, ask which of those they'd like to start on today instead of picking "
+            "a clinical topic yourself. Otherwise:\n"
             "ALWAYS follow this 3-part structure:\n"
             "  1. ONE short, direct answer to the question (2–4 sentences max). Pick the single most relevant point from the evidence digest.\n"
             "  2. ONE practical tip or example the person can act on immediately.\n"
@@ -378,7 +448,14 @@ def _build_qwen_prompt(
             "sodium', 'Fluid restriction'), and the food/drink asked about is a well-known significant "
             "source of that restricted nutrient, recommend avoiding or strictly limiting it rather than "
             "framing it as fine in moderation — that restriction was set by their clinical team for a "
-            "specific medical reason."
+            "specific medical reason. "
+            "If the patient's stated belief or practice is medically inaccurate or unsupported, correct it "
+            "explicitly rather than only redirecting to safe advice. The Patient Profile above is the "
+            "COMPLETE and ONLY source of this patient's allergies, diagnoses, and restrictions — if an "
+            "allergy or diagnosis is not literally written there, it does not exist for this patient; never "
+            "attribute a recommendation to an allergy or a care-team note that is not literally present in "
+            "the Patient Profile text above. A patient avoiding a food for a traditional or cultural reason "
+            "(e.g. pantang) is NOT the same as an allergy — do not relabel it as one."
         )
 
     parts.append(f"\n## Question\n{question}")
@@ -568,7 +645,9 @@ def get_rag_response(
             else:
                 header = f"Patient Profile:\n{patient_context}"
             if level_instruction:
-                header += f"\n\nPersonalization Level {level}: {level_instruction}"
+                level_profile = PERSONALIZATION_LEVEL_PROFILE.get(level, "") if level else ""
+                block = f"{level_instruction}\n\n{level_profile}" if level_profile else level_instruction
+                header += f"\n\nPersonalization Level {level}: {block}"
             care_path_block = _build_care_path_block(profile)
             if care_path_block:
                 header += f"\n\nCare Path & Objectives:\n{care_path_block}"
@@ -645,6 +724,7 @@ def get_rag_response(
     # ============================================================
     if USE_CLARA_COMPRESS:
         print("[DEBUG] Using Option B: CLaRa compress → Qwen generate")
+        t0 = time.monotonic()
         conditions_list = profile.get("condition", []) if profile else []
         retriever = get_retriever(str(client_id), patient_conditions=conditions_list, component=component)
         # Prefix query with patient conditions so condition-specific guideline
@@ -655,11 +735,25 @@ def get_rag_response(
         retrieved_docs = retriever.invoke(retrieval_query)
         doc_texts = [doc.page_content for doc in retrieved_docs]
         print(f"[DEBUG] Retrieved {len(doc_texts)} docs for CLaRa compress")
+        t_retrieve = time.monotonic()
 
         for i, doc in enumerate(doc_texts):
             print(f"  [Doc {i + 1}]: {doc[:120].replace(chr(10), ' ')}...")
 
-        digest = call_clara_compress(doc_texts, question, patient_context)
+        # Structured facts (spreadsheet lookups — product nutrition, lab
+        # reference ranges) bypass CLaRa entirely: call_clara_compress has a
+        # hard max_tokens=500 budget that would lossy-summarize exact numbers.
+        try:
+            structured_rows = structured_store.lookup(retrieval_query, top_k=3)
+        except Exception as e:
+            print(f"[Structured lookup error] {e}")
+            structured_rows = []
+        structured_facts = "\n".join(structured_rows)
+        print(f"[DEBUG] Structured lookup: {len(structured_rows)} rows matched")
+        t_structured = time.monotonic()
+
+        digest = call_clara_compress(doc_texts[:CLARA_COMPRESS_DOC_LIMIT], question, patient_context)
+        t_compress = time.monotonic()
 
         if not digest:
             # Graceful fallback: join raw chunks so Qwen still has clinical grounding
@@ -673,6 +767,7 @@ def get_rag_response(
         except Exception as e:
             print(f"[Food context error] {e}")
             food_context = ""
+        t_food = time.monotonic()
 
         qwen_prompt = _build_qwen_prompt(
             question,
@@ -683,10 +778,21 @@ def get_rag_response(
             is_patient_self,
             history_text,
             component,
+            structured_facts,
         )
         print(f"[DEBUG] Qwen prompt length: {len(qwen_prompt)} chars")
 
         answer = call_ollama_generate(qwen_prompt)
+        t_generate = time.monotonic()
+
+        # [Latency] line — stage-by-stage wall clock for this request, so a slow
+        # response can be attributed to a stage instead of guessed at. Grep
+        # `journalctl -u nutribot | grep '\[Latency\]'` to see where time actually goes.
+        print(
+            f"[Latency] retrieve={t_retrieve - t0:.1f}s structured={t_structured - t_retrieve:.1f}s "
+            f"compress={t_compress - t_structured:.1f}s food_context={t_food - t_compress:.1f}s "
+            f"generate={t_generate - t_food:.1f}s total={t_generate - t0:.1f}s"
+        )
 
         if not answer:
             answer = (

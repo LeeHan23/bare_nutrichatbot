@@ -3,7 +3,7 @@ live_pipeline_smoke_test.py
 
 Runs eval/test_rag.py's contraindication_check cases against the REAL
 CLaRa + Ollama models on the Mac Studio, WITHOUT going through rag.py or
-Postgres/PGVector -- both are unreachable from this machine (the RTX 3050
+Postgres/PGVector -- both are unreachable from this machine (the Han Server
 that hosts Postgres is down, and Postgres was never exposed outside it
 anyway, so this isn't just an outage workaround -- there's no path to the
 real DB from here regardless).
@@ -116,6 +116,35 @@ _LEVEL_INSTRUCTIONS_SELF = {
     ),
 }
 
+# --- Ported verbatim from taxonomy.PERSONALIZATION_LEVEL_PROFILE ---
+_PERSONALIZATION_LEVEL_PROFILE = {
+    "L0": (
+        "Role: Coach. Tone: Performance-oriented.\n"
+        "Exercise: Light, Moderate, Vigorous allowed; progression encouraged.\n"
+        "Knowledge topics: healthy diet, smoking harms, weight management, CVD prevention.\n"
+        "Activities: step goals allowed; structured activities allowed."
+    ),
+    "L1": (
+        "Role: Guide. Tone: Supportive.\n"
+        "Exercise: Light to Moderate only; cautious progression.\n"
+        "Knowledge topics: smoking cessation, obesity prevention, LDL/HDL basics, preventive education.\n"
+        "Activities: consistency-focused."
+    ),
+    "L2": (
+        "Role: Protector. Tone: Cautious, reassuring.\n"
+        "Exercise: Light to Moderate only; NO progression.\n"
+        "Knowledge topics: medication adherence, salt reduction, disease-specific education, risk reduction.\n"
+        "Activities: ADL only; fatigue-aware; pain-aware."
+    ),
+    "L3": (
+        "Role: Gatekeeper. Tone: Clinical, calm, safety-first.\n"
+        "Exercise: Stretching only; cooling down only; light intensity only; progression forbidden.\n"
+        "Knowledge topics: emergency awareness, severe hypertension awareness, exercise safety, "
+        "high-risk precautions.\n"
+        "Activities: micro-movement only; sedentary-break reminders only."
+    ),
+}
+
 
 def _to_second_person_profile(patient_context: str) -> str:
     import re
@@ -132,16 +161,39 @@ def _to_second_person_profile(patient_context: str) -> str:
     return "\n".join(out)
 
 
+# --- Ported verbatim from taxonomy.PERSONALIZATION_LEVEL_ROLE. This script's
+# hardcoded profiles never set onboarding_stage, so only the level half of
+# resolve_active_role()'s precedence is reachable here -- not a gap, see
+# docs/PROMPTS.md #1.
+_PERSONALIZATION_LEVEL_ROLE = {
+    "L0": ("Coach", "Performance-oriented"),
+    "L1": ("Guide", "Supportive"),
+    "L2": ("Protector", "Cautious, reassuring"),
+    "L3": ("Gatekeeper", "Clinical, calm, safety-first"),
+}
+
+
 def _build_qwen_prompt(question, patient_context, digest, profile, is_patient_self=True):
     """Ported verbatim (minus food_context/history_text, both empty here since
     there's no extractor/chat-history DB to draw from) from rag.py's
     _build_qwen_prompt()."""
+    level_for_role = profile.get("personalization_level") if profile else None
+    active_role = _PERSONALIZATION_LEVEL_ROLE.get(level_for_role)
+    role_sentence = (
+        f" Right now, for this patient, you are acting as their {active_role[0]} "
+        f"— {active_role[1]} in tone."
+        if active_role else ""
+    )
     parts = [
-        "You are NutriBot, a clinical support assistant for Malaysian cardiac patients. "
-        "Nutrition and dietary guidance is your area of deepest expertise. For other topics "
-        "(blood pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, "
-        "psychosocial wellbeing, medication, or general heart-disease education), the "
-        "Component Scope section below (when present) tells you exactly what you may say.\n"
+        "You coordinate cardiovascular health coaching for Malaysian cardiac patients "
+        "across several roles — Coach, Guide, Protector, and Gatekeeper — each with its "
+        "own tone and boundaries, matched to the patient's onboarding stage and "
+        "personalization level (see the sections below for which applies now)."
+        f"{role_sentence} Nutrition and dietary guidance is an area of particular expertise "
+        "across every role. For other topics (blood pressure, lipids, diabetes, exercise, "
+        "tobacco/alcohol, physical activity, psychosocial wellbeing, medication, or general "
+        "heart-disease education), the Component Scope section below (when present) tells "
+        "you exactly what you may say.\n"
     ]
 
     if patient_context:
@@ -152,7 +204,9 @@ def _build_qwen_prompt(question, patient_context, digest, profile, is_patient_se
         parts.append("## Patient Profile (never repeat these details verbatim)\n" + ctx)
 
         if level_instruction:
-            parts.append(f"\n## Personalization Level {level}\n{level_instruction}")
+            level_profile = _PERSONALIZATION_LEVEL_PROFILE.get(level, "") if level else ""
+            block = f"{level_instruction}\n\n{level_profile}" if level_profile else level_instruction
+            parts.append(f"\n## Personalization Level {level}\n{block}")
 
     parts.append(f"\n## Clinical Evidence Digest\n{digest}")
 
