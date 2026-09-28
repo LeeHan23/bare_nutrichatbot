@@ -1,0 +1,480 @@
+filename,md5,size_mb,action,reason
+2013 HSCT MNT.pdf,3c6592f70a959bbab395544737121f51,0.47,review_manually,org_prefix_no_topic_match:mnt
+2Copy of Copy of NS list (nutrition support) [updated 2020].xlsx,,0,skip_out_of_scope_ext,extension:.xlsx
+709438925-eNCPT-2020-lengkap.txt,,0,skip_already_in_repo,duplicate_of_repo_file
+A Guide to the Treatment of Pressure Ulcers Grade 1-4 2007.pdf,8aeb944947b0663c02f33719bb2f3734,0.66,skip_out_of_scope_topic,hard_exclude:pressure ulcer
+A174-02PaedPNGuidel_ESPGHANESPENPNGuidelines2Energy.pdf,3dee86d55bb0110cd140263d4109f648,0.07,review_manually,org_prefix_no_topic_match:espen
+AAP 2021 - Identification and Management of Eating Disorders in Children and Adolescents.pdf,30407131acf4e494e5b83fa2abe546de,0.89,skip_out_of_scope_topic,hard_exclude:child
+ACCF_AHA - Management of Heart Failure 2013.pdf,3b6024da1e67c9b17245cc98204cbbad,3.02,include,condition_match:heart fail
+ACCP nutritional management unacute and chronic pancreatitis.pdf,299e6236708ce3c61e71c576ef5dd214,0.29,skip_out_of_scope_topic,hard_exclude:pancrea
+ACC_AHA - Primary Prevention of Cardiovascular Disease 2019.pdf,bb510205df4b339db40ab922d20f2f2f,3.27,include,condition_match:cardiovascular
+ACC_AHA_HFSA - Focused Update for Management of Heart Failure 2017.pdf,185128483f816a28732c9d6808567a66,3.12,include,condition_match:heart fail
+ACG Clinical Guideline_Nutrition Therapy in the Adult.pdf,8c56ecd195928c49f74bb1252ba5671b,0.27,include,no_keyword_signal
+ACR - Gout.pdf,fcc91744d332c14d2ea8fab7a5b067d4,0.81,skip_out_of_scope_topic,hard_exclude:gout
+ACR - Juvenile Idiopathic Arthritis.pdf,aeeab553d7e5ecdb16a0e0f228622eef,0.34,skip_out_of_scope_topic,hard_exclude:arthrit
+ACR - Osteoarthritis.pdf,489f69770e39c58e767b72794e782d29,0.68,skip_out_of_scope_topic,hard_exclude:arthrit
+ADA - DM (2021).pdf,1fdddfca989baac454459dd62b5d83c9,25.06,include,no_keyword_signal
+ADA Position Paper 2011 - Eating Disorders.pdf,ad86f9e684d870b766f8ac6a89e6c189,0.29,skip_out_of_scope_topic,hard_exclude:eating disorder
+ADA Practice Paper - Nutrition Intervention in the Treatment of Eating Disorders.pdf,28df7537caf76686a1405be9592eecc1,0.55,skip_out_of_scope_topic,hard_exclude:eating disorder
+AHAACC - Lifestyle Management to Reduce Cardiovascular Risk 2014.pdf,0fa135efdf328df408b091ac6966326d,1.09,include,condition_match:cardiovascular
+AHA_ACC_TOS Guideline - Management of Overweight and Obesity in Adults 2013.pdf,869abf65bc29fb8c2a6110fb00517137,7.56,include,condition_match:obes
+AND - CKD (2013).pdf,6db4d6046a511c9efb93ab4be8252ffb,0.24,include,condition_match:ckd
+AND - Childhood Obesity.pdf,043d406bb3f64ea4e6c69c3da5b7668f,0.33,skip_out_of_scope_topic,hard_exclude:child
+AND - Short Bowel Syndrome.pdf,e663a90602ddac53d539c4f480bca661,0.21,skip_out_of_scope_topic,hard_exclude:bowel
+AND ASPEN Becker - Indicators Recommended for Paediatric Malnutrition (Undernutrition).pdf,14e82855e64265581d61ee8e345cc329,0.38,skip_out_of_scope_topic,hard_exclude:paediat
+AND EAL - Adult Weight Management 2014.pdf,8d847bcdee0fd16a0414105c55e22706,0.32,include,condition_match:weight
+AND EAL - Heart Failure 2008.pdf,03069119a81e506f523baa9252200fa6,0.29,include,condition_match:heart fail
+AND EAL - Hypertension 2015.pdf,0b4084dcc7ac21e2aeda41f854be7d8a,0.14,include,condition_match:hypertens
+AND EAL - Lipid Metabolism Disorders (CVD) 2011.pdf,b794e0055e1f250ac59a7cc3c309b3a3,0.51,include,condition_match:lipid
+AND EAL - Unintended Weight Loss in Older Adults 2009.pdf,48db375681ccca83f2e1578ce78d10be,0.27,include,condition_match:weight
+AND Evidence-Based Practice Guideline - Management of Heart Failure in Adults 2018.pdf,07638a78bf01c80bdc0a1338df2fbbc9,0.31,include,condition_match:heart fail
+AND HIV-AIDS 2010 Algorithms.pdf,f789d95e7e9bc24491c93b55698b1372,0.03,skip_out_of_scope_topic,hard_exclude:hiv
+AND HIV-AIDS 2010 Guideline Introduction and Executive Summary.pdf,436f25c264cadfa8c7e38cda3adcbd16,0.1,skip_out_of_scope_topic,hard_exclude:hiv
+AND HIV-AIDS 2010 Major Recommendations.pdf,8464fbb106e95ff883af669172b1405a,0.21,skip_out_of_scope_topic,hard_exclude:hiv
+AND Position Paper - Interventions for Treatment of Overweight and Obesity in Adults 2016.pdf,5cbcafb706c65bbb5c3c325c1c86bfa7,0.5,include,condition_match:obes
+ASPEN 2009 Enteral Nutrition Practice Recommendation.docx,f64b93e010acab9ea575e95af57447d5,0.38,review_manually,org_prefix_no_topic_match:aspen
+ASPEN 2009 Enteral Nutrition Practice Recommendation.pdf,02af9d9cd59df1eeb18ea93b6869a658,0.94,review_manually,org_prefix_no_topic_match:aspen
+ASPEN AND Malnutrition Diagnosis Guide.docx,88aff7b9be87643e62f0e31c9f4b7b80,0.01,review_manually,org_prefix_no_topic_match:aspen
+ASPEN AND Malnutrition Diagnosis Guide.pdf,8dc940a7a51e0cc0a3630a8a2f2e4edf,0.05,review_manually,org_prefix_no_topic_match:aspen
+ASPEN Approach to Enteral Feeding in the PICU 2009.pdf,45c18dd7a8d41a645db76656b2488dc2,0.42,review_manually,org_prefix_no_topic_match:aspen
+ASPEN Clinical Guidelines Nutrition Support of Children With Human Immunodeficiency Virus Infection 2009.pdf,5384287d1d9c1968d3f91924df98d651,0.11,skip_out_of_scope_topic,hard_exclude:child
+ASPEN Consensus Recommendations for Refeeding Syndrome(1).docx,b6bdb44a16ea1c0b8050e93b5a34d42c,0.09,review_manually,org_prefix_no_topic_match:aspen
+ASPEN Consensus Recommendations for Refeeding Syndrome.docx,b6bdb44a16ea1c0b8050e93b5a34d42c,0.09,skip_internal_dup,internal_duplicate_of:ASPEN Consensus Recommendations for Refeeding Syndrome(1).docx
+ASPEN Consensus Recommendations for Refeeding Syndrome.pdf,71ce7ea325fa5f764d2a5c2a6f1f7c9f,0.51,review_manually,org_prefix_no_topic_match:aspen
+ASPEN Guidelines for the Provision and Assessment of Nutrition Support Therapy in Pediatric Critically Ill Patient 2017.pdf,a3e0274f20a8fc75253a373a05dca56a,0.29,skip_out_of_scope_topic,hard_exclude:pediat
+ASPEN MNA_Geriatrics.pdf,b22344ad9abbb7d4a3c80572921bce56,0.14,review_manually,org_prefix_no_topic_match:aspen
+ASPEN Nutrient Deficencies and Oral Screening 2013.pdf,56626c2ceb8cc3bb594ccaee8172f0e2,0.33,review_manually,org_prefix_no_topic_match:aspen
+ASPEN-FELANPE - Nutrition Support of Enterocutaneous Fistula (Adults).pdf,d3fe943be9078e2fb952c818ef9838c1,0.43,review_manually,org_prefix_no_topic_match:aspen
+Adult Anticancer Treatment and in Hematopoietic Cell Transplantation.pdf,cc9f40373107be2866938953a8fd0064,0.18,skip_out_of_scope_topic,hard_exclude:cancer
+Adult Critically Ill SCCM ASPEN Provision and Assessment of Nutrition Support Therapy_.pdf,e87ec90a5f1984de4cf6b37c8b82e274,2.6,review_manually,org_prefix_no_topic_match:aspen
+Adult Renal Failure.pdf,e325435be3f87e29246628c22a2cddd2,0.31,include,condition_match:renal
+Algera J et al. 2019.pdf,598195b13c63c78df9fed5f9c194e11d,2.27,review_manually,no_keyword_signal
+American Academy of Pediatrics Summary of Food Allergy 2011.pdf,14235424c11687e32e89ab1cbb16f45e,0.2,skip_out_of_scope_topic,hard_exclude:pediat
+American Parkinson Disease Association.pdf,6d401a437d372f5e359d6a1fd8bdc086,5.5,skip_out_of_scope_topic,hard_exclude:parkinson
+Amino acids.pdf,a388163564c69d044bb57708aba5abfc,0.41,include,no_keyword_signal
+"Anthropometric and body composition measurement, Technical Error of Measurement, Biochemical measurement, 24-hr dietary recall, Food record, FFQ, International Physical Activity Questionnaire (IPAQ), Time and Motion, Total Daily Energy Expenditure.pdf",17165daed058f6d1ab6cbb8244988bad,2.01,include,no_keyword_signal
+Anthropometry equations.docx,2e59cb6eb8edea0f0caefb1e69fc0920,0.99,include,no_keyword_signal
+Arginine-enriched oral nutritional supplementation in the treatment ofpressure ulcers A literature review 2015.pdf,8308aa5e59413df9d3facc08639a1552,0.38,skip_out_of_scope_topic,hard_exclude:pressure ulcer
+BMI (Asia Pacific cut-off point).png,,0,skip_out_of_scope_ext,extension:.png
+BMI (WHO cut-off point).jpg,,0,skip_out_of_scope_ext,extension:.jpg
+BW for ECalculation.PNG,,0,skip_out_of_scope_ext,extension:.png
+Barrett JS et al. 2017.pdf,d7a495e61d56327d8ab02ba445c37b4c,0.16,review_manually,no_keyword_signal
+Basnayake C et al. 2018.pdf,6562f15a7a45a66be6b4e00381317d36,0.14,review_manually,no_keyword_signal
+Becker et al_Indicators recommended for Identification and documentation of pediatric malnutrition 2014.pdf,8f53181983b14358bb149df11ceaf968,0.35,skip_out_of_scope_topic,hard_exclude:pediat
+Bellini M et al. 2020.pdf,b2e86d6b7fea0b9379bd0075e6e61e42,0.83,review_manually,no_keyword_signal
+Biochemical data (Chemical Pathology Reference Range 2017).pdf,e50934fc632fca26cb0c230c7b110d58,0.18,include,no_keyword_signal
+Blood sugar profile.pdf,035b59280cc6fb76c131cf2074bf95d2,7.06,include,no_keyword_signal
+Bristol Stool Chart.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+Bristol stool chart + transition schedule for infants.pdf,8e4631fd18ad0fbaf1e5a918b125ca4c,6.78,skip_out_of_scope_topic,hard_exclude:infant
+British Dietetic Association Management of Parkinson_s.pdf,e95812d79e066cd16fd796cdae893109,0.49,skip_out_of_scope_topic,hard_exclude:parkinson
+Buku Anak Kurang Berat Badan.pdf,f4053c56653e083b8373903cb1142d47,5.93,review_manually,no_keyword_signal
+CDC BMI for age boy.pdf,2e8153098abb02a3c0fcda7d848e0911,0.06,review_manually,no_keyword_signal
+CDC BMI for age girl.pdf,b3d7f057bf16f59ba8e3f48cd68cfb32,0.06,review_manually,no_keyword_signal
+CMAJ - Obesity in Adults 2020.pdf,837c050e7b7549a30a6ce620d8960bf3,0.31,include,condition_match:obes
+COPD EN PN.pdf,f76b219f88c20e57b4719258dc7c5f90,0.16,skip_out_of_scope_topic,hard_exclude:copd
+COPD Introduction.pdf,d08435079915bab5b7f2e6064dd114b8,0.08,skip_out_of_scope_topic,hard_exclude:copd
+COPD Summary.pdf,a1cd2ad68e2e427a08f2fe3ba6d4bc81,0.03,skip_out_of_scope_topic,hard_exclude:copd
+CPG (2010) - Cancer Pain_.pdf,b7af842c258c958db0b77d0d0eb32a06,4.2,skip_out_of_scope_topic,hard_exclude:cancer
+CPG (2014)-Management of Childhood Asthma.pdf,c198a6741a8a2868662a2b5713765886,0.58,skip_out_of_scope_topic,hard_exclude:child
+CPG (2015) - Cervical Cancer (2nd Ed.),ca0eac7f71679801687f0b8718dff3ce,2.58,skip_out_of_scope_topic,hard_exclude:cancer
+CPG (2016) - Nasopharyngeal Carcinoma.pdf,7ce237bfade71ec19bc42ecf86cb403a,24.07,skip_out_of_scope_topic,hard_exclude:carcinoma
+CPG (2017) - Colorectal  Carcinoma_.pdf,6d24ed9df3adeefeed2d91a04ade6210,5.98,skip_out_of_scope_topic,hard_exclude:carcinoma
+CPG (2019) - Breast Cancer (3rd Ed.),b95558af3dd3fd331d419aa4ead8cb3a,4.65,skip_out_of_scope_topic,hard_exclude:cancer
+CPG - Diabetic Nephropathy.pdf,66d2bfde5a6dc1b9eb473df747637667,0.22,include,condition_match:nephro
+CPG - GDM.pdf,4587e6a10972f05493f7afe69235eb51,2.89,review_manually,org_prefix_no_topic_match:cpg
+CPG - Gout (2008).pdf,7cdd49f9ce55fefaebda2e4511f609fd,1.42,skip_out_of_scope_topic,hard_exclude:gout
+CPG - Osteoarthritis - 2nd Edition (2013).pdf,1f8724de78d606d06f938606c03f7d63,12.84,skip_out_of_scope_topic,hard_exclude:arthrit
+CPG - Osteoporosis - 2nd Edition (2015).pdf,1adc8b1faca7c309a13058e93ae9884f,1.14,review_manually,org_prefix_no_topic_match:cpg
+CPG - Rheumatoid Arthritis.pdf,f3ce99a8218fbfa9112405b4d8262b07,1.15,skip_out_of_scope_topic,hard_exclude:arthrit
+CPG - T1DM Children and Adolescents.pdf,4fbb772902876932dfde26fb74a8b236,2.46,skip_out_of_scope_topic,hard_exclude:child
+CPG MOH - CKD 2018.docx,092bde83dc2d30c9a01df05847e4e107,0.56,include,condition_match:ckd
+CPG MOH - CKD 2018.pdf,df81bc908652af75669e530823b13aa8,1.45,skip_cross_dup,exact_duplicate_of:CPG Management of Chronic Kidney  Disease Second Edition.pdf
+CPG MOH - Management of Dyslipidemia 2017.pdf,3bcbcddd9f9c62c544f69d9cae457719,1.13,skip_cross_dup,exact_duplicate_of:Management of Dyslipidaemia 2017 (5th Edition).pdf
+CPG MOH - Management of Hypertension 2018.pdf,5f2d0150ccf3ff1565ccf73aca7f09bc,1.92,review_edition,possible_newer_edition:management of hypertension
+CPG MOH - Management of Ischaemic Stroke 2012.pdf,efca6208fccea4be6d7ed6b4ff02ba3d,1.27,review_edition,possible_newer_edition:ischaemic stroke
+CPG MOH - Obesity 2004.pdf,7b42c5167c985eccf03b6914c6506ad2,0.69,include,condition_match:obes
+CPG MOH - Primary & Secondary Prevention of CVD 2017.pdf,9c849c49fe7c2a965ed9d9000549cca4,1.24,include,condition_match:cvd
+CPG Management of Acute Variceal Bleeding (2007).pdf,ff96ea3dca4cb6db973cf0bdb918bbb3,0.21,review_manually,org_prefix_no_topic_match:cpg
+CPG Management of Attention Deficit Hyperactivity Disorder in Children and Adolescents 2008.pdf,7ff8bdb8a1d5a18d481c2cfaea5aa15e,1.09,skip_out_of_scope_topic,hard_exclude:child
+CPG Management of Autism Spectrum Disorder in Children and Adolescents 2014.pdf,bb8a39b2ade49f23b8b87d7305806428,1.65,skip_out_of_scope_topic,hard_exclude:child
+CPG Management of Bipolar Disorder in Adults 2014.pdf,abdf3322d13b4e354e783813901b0afe,2.68,skip_out_of_scope_topic,hard_exclude:bipolar
+CPG Management of Chronic Hepatitis C in Adults.pdf,c47dc846d002bde4ddbaa419737fd1aa,0.62,skip_out_of_scope_topic,hard_exclude:hepat
+CPG Management of Dementia 2009.pdf,e54b15bf2af06eb5977ba1302d9215ab,5.3,skip_out_of_scope_topic,hard_exclude:dementia
+CPG Management of Gout_(Second Edition) 2021.pdf,6b858a33da325b35736fefead8bcb178,1.46,skip_out_of_scope_topic,hard_exclude:gout
+CPG Management of HIV Infection in Children 2008.pdf,2794a8fc3dd0ec95e471432d68e98786,3.31,skip_out_of_scope_topic,hard_exclude:child
+CPG Management of HIV Infection in Pregnant Women 2008.pdf,d4bb8dc9df684009ace95ab823bdd462,0.79,skip_out_of_scope_topic,hard_exclude:hiv
+CPG Management of Heart Failure 2019 (4th Edition).pdf,d5ead70f99d410ee248420fee4ed347b,3.87,skip_cross_dup,exact_duplicate_of:Management of Heart Failure  (4th Edition).pdf
+CPG Management of Ischaemic Stroke 2020 (3rd Edition).pdf,c7949ef98ca1dfdcfc1fa92aadf2b94b,2.59,review_edition,possible_newer_edition:ischaemic stroke
+CPG Management of Ischaemic Stroke 2020 (Quick Reference).pdf,1ecc22fd30813fcd8663c0766cf16471,1.14,include,possible_newer_edition:ischaemic stroke
+CPG Management of Major Depressive  Disorder (2nd Edition) 2019.pdf,d57faea1f15aff45cb295a19f642d7d1,0.7,skip_out_of_scope_topic,hard_exclude:depressive
+CPG Management of Multiple Sclerosis 2015.pdf,0ea80f8c9a419cffa03836ac7fba6739,2.49,include,org_prefix_no_topic_match:cpg
+CPG Management of Non-Variceal Upper GI Bleeding (2003).pdf,b1048ca4f517c4896ca13d260f1a38fe,1.78,review_manually,org_prefix_no_topic_match:cpg
+CPG Management of Obesity 2023 (2nd Edition).pdf,94d561673c9efb8da382ab849aec7fd2,3.91,include,possible_newer_edition:management of obesity
+CPG Management of Obesity 2023 (Quick Reference).pdf,c93541332701d3a6509643fa8db2ed8e,0.6,include,possible_newer_edition:management of obesity
+CPG Management of Schizophrenia in Adults 2009.pdf,a0663c2dc08d045f06c2feab0d417fba,4.39,skip_out_of_scope_topic,hard_exclude:schizophrenia
+CPG Osteoporosis 2022 (3rd edition).pdf,a1b188ec86a99879a0d660882b62a945,4.55,review_manually,org_prefix_no_topic_match:cpg
+Cachexia in chronic obstructive pulmonary disease (2016).pdf,e2a685b466b11e3ba7db2fb11c97a197,0.51,skip_out_of_scope_topic,hard_exclude:pulmonary
+"Calcium, phosphorus & magnesium.pdf",73189873cf262f6ad31fb7f853d8e40d,0.3,review_manually,no_keyword_signal
+Cancer NCP mind map.pdf,39e1c85dd55ab7ee3b9d1cf3f0bcb4a4,10.16,skip_out_of_scope_topic,hard_exclude:cancer
+Cancer-related Malnutrition and Sarcopenia (2020).pdf,390b8fdd7963b3c89297ff4c313d6939,3.73,skip_out_of_scope_topic,hard_exclude:cancer
+Capili B et al. 2016.pdf,23ad3dc4d099840cba8c98ef3838b863,0.1,review_manually,no_keyword_signal
+Carbohydrate Counting.pdf,1dea51d3b7caa0548814d84b90f8d61e,7.46,include,no_keyword_signal
+Carbohydrates.pdf,a555574ba574edc4ab81e712a8dc508a,0.27,include,no_keyword_signal
+Cardiology and Pneumology.pdf,6e4a90924541c758bd61d673800c60f1,0.14,include,no_keyword_signal
+Cederholm.pdf,869c35d65168d01ba973fb8adca9a19c,0.42,include,no_keyword_signal
+Central Venous Catheters.pdf,1f3ce2c7d9df6aabf0aefa6086d925a1,0.21,include,no_keyword_signal
+Cerebral Palsy (2 - 20yrs).pdf,3b92437932e03583fb83e64bb4033669,12.6,skip_out_of_scope_topic,hard_exclude:cerebral palsy
+Cerebral Palsy Growth Chart (Website Source).pdf,1ea9ed1ddbb7a3fff3f762a2d305cdf6,0.07,skip_out_of_scope_topic,hard_exclude:cerebral palsy
+Children and Adolescents_Standards of Medical Care in Diabetes 2020.pdf,37933469c1901ca2d72b30a775830667,0.82,skip_out_of_scope_topic,hard_exclude:child
+Chutkan R et al. 2012.pdf,fc3e74bdfb8d94ded77df26e7f6970c7,0.79,review_manually,no_keyword_signal
+Clinical Assessment Form_Revised 2017.pdf,6c3a053aa64f24a7a1e0a949fe223a20,0.09,review_manually,no_keyword_signal
+Clinical_Paediatric_Dietetics_2007 Shaw and Lawson.pdf,4e88d48ba8fdb0fb68d17b4fcc552ee5,3.29,skip_out_of_scope_topic,hard_exclude:paediat
+Cockerell K et al. 2012.pdf,ee9ff7011f9a551e0e6eeff9eb45cb01,0.32,review_manually,no_keyword_signal
+Collins PF et Al(2019) Nutrition support in COPD.pdf,78da982b6caf433914ffb9170106174d,0.19,skip_out_of_scope_topic,hard_exclude:copd
+Complications.pdf,760eef8240191920c198de96233c8ca5,0.54,review_manually,no_keyword_signal
+Copy of NS list (nutrition support) [updated 2020].xlsx,,0,skip_out_of_scope_ext,extension:.xlsx
+Cozma-Petruţ A et al. 2017.pdf,f19317a5bba5b737f8463d2beea592c8,1.95,review_manually,no_keyword_signal
+Critically Ill Obese.pdf,99e2a7c75463e7df0dc0f334c35db35e,0.27,include,condition_match:obes
+Current Nutrition Support.pdf,3806ddcbee00c3b091cc66222681ad0c,0.14,review_manually,no_keyword_signal
+Current Recommendations - A Structured Framework.pdf,95d1663cbd708026f4442adf4c84468b,1.72,review_manually,no_keyword_signal
+CysticFibrosis.pdf,0b37ac8bd4f1577f3b99ff8d3b88e384,2.28,review_manually,no_keyword_signal
+DIMS.pdf,1c9366b5441d7a8f29012f62f657f823,0.36,review_manually,no_keyword_signal
+DM for kids.pdf,b03167286403cc46c92bf501786cb251,1.57,skip_out_of_scope_topic,hard_exclude:kids
+Diabetes and its Effect on Bone and Fracture Healing.pdf,273230a1a8d66b397c49f6aaf42f7f04,0.55,include,condition_match:diabe
+"Diagnosing Pediatric Malnutrition-- Paradigm, Shifts of Etiology-Related Definitions and Appraisal of the Indicators.pdf",39f9f25aa7839b487a3e80d16c1d5ac2,1.35,skip_out_of_scope_topic,hard_exclude:pediat
+Dyslipidemia in Children and Adolescents- When and How to diagnose and treat.pdf,1a935e4a372b992ecc1fe283c86ef16e,0.41,skip_out_of_scope_topic,hard_exclude:child
+EAL - Celiac Disease Executive Summary (2009).pdf,4a9661f8ced6ad3a81763b8055f30d74,0.03,review_manually,org_prefix_no_topic_match:eal
+EAL - Celiac Disease Introduction (2009).pdf,be0f3c330d781c3910d51971d9520c8d,0.06,review_manually,org_prefix_no_topic_match:eal
+EAL - Celiac Disease Major Recommendations (2009).pdf,aad903cc16a997113b3e48c3894734b6,0.31,review_manually,org_prefix_no_topic_match:eal
+EAL Assessment of Nutritional Needs for Pressure Ulcers 2009.pdf,7b8df0e9c91e6c828ed7ec0bc1052ea5,0.1,skip_out_of_scope_topic,hard_exclude:pressure ulcer
+EAL CKD Electrolytes 2020.pdf,7a988d65749d770ed28985e215a5d88d,0.06,include,condition_match:ckd
+EAL CKD Macronutrients 2020.pdf,350f2ac0e71f9c04de254210d7f2598d,0.07,include,condition_match:ckd
+EAL Gestational Diabetes Mellitus 2016.pdf,224bdce672d6fda19d566ca933c1524f,0.12,include,condition_match:diabe
+EAL Type 1 and 2 Diabetes Mellitus 2015.pdf,88885fd8425f177ad90b728ecfaa8f5c,0.12,include,condition_match:diabe
+EAL_Fast Food Meal Frequency in Children and Teens.pdf,090d95cc11a7f088424d99cc838e9fc7,0.09,skip_out_of_scope_topic,hard_exclude:child
+EAL_Paediatric Weight Management_major recommendations.pdf,8bdd8f91d31dad98b3cfb254cca9a9f0,0.17,skip_out_of_scope_topic,hard_exclude:paediat
+EASL-CPG-nutrition-in-chronic-liver-disease.pdf,168b9b3e48cb560e9ea1a5db8a256142,1.68,skip_out_of_scope_topic,hard_exclude:liver
+EN ASPEN Safe Practice.pdf,f6ff06224292cbbcd76ac20ca542d9fa,1.87,review_manually,org_prefix_no_topic_match:aspen
+ENCardioPulm.pdf,f57455ff5df0cc9bf9d7a63ffa8a473d,0.14,include,no_keyword_signal
+ENEditorial.pdf,55b9cb81a75a1a3dcebb4a05913b367d,0.08,review_manually,no_keyword_signal
+ENEthics.pdf,73828aaf20195a7840d26d2fbfaf3209,0.11,review_manually,no_keyword_signal
+ENGastro.pdf,882b651b1bde30a7fa587450a2ae3cef,0.23,skip_out_of_scope_topic,hard_exclude:gastro
+ENGeneral.pdf,fd8586a1f0124c0bc930ba370a3bca28,0.14,include,no_keyword_signal
+ENGeriatrics.pdf,73548846715a47f86e365f6b197429fa,0.37,review_manually,no_keyword_signal
+ENHIV.pdf,a9b544482116274aa7aa41f54af4a1bc,0.18,skip_out_of_scope_topic,hard_exclude:hiv
+ENICU.pdf,071029c7fbde6b834157cb775a129061,0.22,review_manually,no_keyword_signal
+ENJourney.pdf,f62c1b2677e270ff1eb59d4052db3ef2,0.17,review_manually,no_keyword_signal
+ENKidney.pdf,ad2fcb112a4db659a1e1f4395377b332,0.24,include,condition_match:kidney
+ENLiver.pdf,d6098c9a206d27cbe75c5119eb07b70d,0.17,skip_out_of_scope_topic,hard_exclude:liver
+ENMethods.pdf,b1257195b38b6cd192507b4d6c8a6e69,0.14,review_manually,no_keyword_signal
+ENOncology.pdf,9b690bcc1de73236c7fb678069b2e306,0.24,skip_out_of_scope_topic,hard_exclude:oncol
+ENPancreas.pdf,20262852de808cffd7710286f55769fd,0.17,skip_out_of_scope_topic,hard_exclude:pancrea
+ENSurgery.pdf,a82e03b5942cc9c70c843c98630209fc,0.3,review_manually,no_keyword_signal
+EPUAP_NPIAP_PPPIA Prevention and Treatment of Pressure Ulcers_Injuries 2019.pdf,932645e04147005175c1f7850f68c3d0,0.67,skip_out_of_scope_topic,hard_exclude:pressure ulcer
+ER.PNG,,0,skip_out_of_scope_ext,extension:.png
+ERS (2014) - Nutritional assessment and therapy in COPD.pdf,0d23c8e003b53b58179656135ea3bd54,0.63,skip_out_of_scope_topic,hard_exclude:copd
+ESPEN (2016) - Cancer.pdf,5e979fecea05d258cacb95b2c34914b4,1.6,skip_out_of_scope_topic,hard_exclude:cancer
+ESPEN (2017) - Recommendations for cancer related malnutrition.pdf,51eb6dc700e48f0a3d32cda321b17e92,1.19,skip_out_of_scope_topic,hard_exclude:cancer
+ESPEN (2020) Clinical nutrition in liver disease.docx,6fe476837c32a46f13bc39579eb5e574,1.52,skip_out_of_scope_topic,hard_exclude:liver
+ESPEN (2020) Clinical nutrition in liver disease.pdf,b5b758fddfb6812c2071124414f60b7f,6.66,skip_out_of_scope_topic,hard_exclude:liver
+ESPEN (2021)-Hospitalised patients with Acute and Chronic kidney disease.pdf,2da8f2606c0252ee1dfe0e46e84be0f3,1.29,include,condition_match:kidney
+ESPEN - Acute Intestinal Failure.pdf,054050bc7da7c750ae67ae911ac46a24,0.88,review_manually,org_prefix_no_topic_match:espen
+ESPEN - Chronic Intestinal Failure in adults.pdf,cddca8a5636983d96f2766cd1dc4ffeb,1.45,review_manually,org_prefix_no_topic_match:espen
+ESPEN - Definition and classification.pdf,3cb0f89261ab9041bb6a8de35b4916c5,0.32,review_manually,org_prefix_no_topic_match:espen
+ESPEN - Inflammatory bowel disease (2017).pdf,fd13090eef6e29c69882e5b63cc1df8f,0.83,skip_out_of_scope_topic,hard_exclude:bowel
+ESPEN - Inflammatory bowel disease (2020).pdf,0e9b5388d8df2b9d88760145458c48aa,5.12,skip_out_of_scope_topic,hard_exclude:bowel
+ESPEN - PN Gastroenterology.pdf,1798a7c9edd2f91cc183715bd8f4f096,0.24,skip_out_of_scope_topic,hard_exclude:gastro
+ESPEN - Periop Colon ERAS.pdf,db5c5aaac75ecf7a63bc4b521c3bfa0a,0.32,review_manually,org_prefix_no_topic_match:espen
+ESPEN 2019 Guideline on Home Enteral Nutrition.pdf,1769828cd7c2da7b1f2381c441e0cf37,0.59,review_manually,org_prefix_no_topic_match:espen
+ESPEN Geriatrics.pdf,fa0e638b670d2ea5c48cd189fa38601c,1.54,review_manually,org_prefix_no_topic_match:espen
+ESPEN Guideline Clinical Nutrition in Neurology 2017.pdf,31299ed2e0b642d6476a7115da70e34e,1.29,review_manually,org_prefix_no_topic_match:espen
+ESPEN Guideline on Dementia 2015.pdf,8ab2e592708f2ad6654f1ee30d40aa8f,0.55,skip_out_of_scope_topic,hard_exclude:dementia
+ESPEN Liver.pdf,dd23bfd27da3b1bdefe5a00c60f39255,0.83,skip_out_of_scope_topic,hard_exclude:liver
+ESPEN endorsed recommendations-- Nutritional therapy in major burns.pdf,b8d82877627b171bea7ee8f9800146e4,0.21,review_manually,org_prefix_no_topic_match:espen
+ESPEN guideline_ Clinical nutrition in surgery.pdf,1fcd612da15890d1da0be6ce8abc3e99,0.94,review_manually,org_prefix_no_topic_match:espen
+ESPEN guidelines for nutrition in liver disease and transplantation.pdf,d72bf27d238662242dd40e72edc499a1,1.61,skip_out_of_scope_topic,hard_exclude:liver
+ESPEN-ESPGHAN-ECFS_guidelines_on_nutrition_care_for_infants_children_and_adults_with_cystic_fibrosis.pdf,660c20ce7f60d19dfe5878fb10a3c6cf,0.81,skip_out_of_scope_topic,hard_exclude:child
+ESPGHAN ESPEN ESPR CSPEN guidelines on pediatric parenteral.pdf,ef781a77701d03dc9fcdae9ac143eb87,0.17,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Amino-Acids.pdf,a388163564c69d044bb57708aba5abfc,0.41,skip_internal_dup,internal_duplicate_of:Amino acids.pdf
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Carbohydrates.pdf,a555574ba574edc4ab81e712a8dc508a,0.27,skip_internal_dup,internal_duplicate_of:Carbohydrates.pdf
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Complications.pdf,760eef8240191920c198de96233c8ca5,0.54,skip_internal_dup,internal_duplicate_of:Complications.pdf
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Energy.pdf,74d7a88aea66875cf4acd7e073198942,0.3,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Fluid-and-electrolytes.pdf,bbb6e046a9f7c5d1b95300c1411c71ef,0.43,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Iron-and-trace-minerals.pdf,63550a03508c12c578a9c5ce056b29ba,0.26,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Organisational-aspects.pdf,21c07e065a01ec2eb86ee94d117bebca,0.41,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Standard-versus-individualized-parenteral-nutrition.pdf,4df3bcc970a6ed3252f87b6d9acef693,0.3,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Venous-access.pdf,b825a0e5e01978a7d3eca15a5d2c9a0d,0.57,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR_CSPEN-guidelines-on-pediatric-parenteral-nutrition-Calcium-phosphorus-and-magnesium.pdf,73189873cf262f6ad31fb7f853d8e40d,0.3,skip_internal_dup,"internal_duplicate_of:Calcium, phosphorus & magnesium.pdf"
+ESPGHAN_ESPEN_ESPR_CSPEN-guidelines-on-pediatric-parenteral-nutrition-Home-Parenteral-Nutrition.pdf,38174cf079ee976a3bc3bd3017a4269b,0.33,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR_CSPEN-guidelines-on-pediatric-parenteral-nutrition-Lipids.pdf,d2c5f9144651b1fe0ab24eb091ca9716,0.54,skip_out_of_scope_topic,hard_exclude:pediat
+ESPGHAN_ESPEN_ESPR_CSPEN-guidelines-on-pediatric-parenteral-nutrition-Vitamins.pdf,e935fd9149341a3ba7a381f0e0d1d184,0.52,skip_out_of_scope_topic,hard_exclude:pediat
+ESPNIC Nutritional support for children 2020.pdf,1f15b8c01dd222dfb0bd34bad78c5901,0.65,skip_out_of_scope_topic,hard_exclude:child
+Edited Sample Menu_.pptx,,0,skip_out_of_scope_ext,extension:.pptx
+El Salhy M et al. 2015.pdf,5df03592b7fb320175b8a48be29ec354,1.36,review_manually,no_keyword_signal
+El-Salhy M et al. 2017.pdf,c0178c69be464646bbe73679eaa6382f,0.53,review_manually,no_keyword_signal
+Energy calculation for Paeds.pdf,6284f4df84b501769c72ac9df7e06095,0.78,review_manually,no_keyword_signal
+"Energy, protein and fluid requirement equations.docx",1ddd61750beaf53445f6cdc15a0bbd1a,0.02,review_manually,no_keyword_signal
+Energy.pdf,74d7a88aea66875cf4acd7e073198942,0.3,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Energy.pdf
+Enteral Feeding Barriers_Pesky Bowel Sounds & Gastric Residual Volumes 2019.pdf,bf6ed9d0af70b3e7cbbae9f2f13bfad3,0.71,skip_out_of_scope_topic,hard_exclude:bowel
+Enteral Feeding_Hydrating the Enterally-Fed Patient 2019.pdf,b999cf6596ecd4bcf6a18c804f038119,0.77,review_manually,no_keyword_signal
+Eradicate Barriers with Root Cause Analysis and Focused Intervention 2019.pdf,693228105244abc7d8f7dcbf37b8d393,0.61,review_manually,no_keyword_signal
+Estimated Energy Requirement for twin pregnancy.pdf,da2b6f2539868b69749ba978ccb82e4d,0.3,review_manually,no_keyword_signal
+Estimation of basal metabolic rate for Chinese ethnicity.pdf,3a89090971ea33323f7272506a234e09,0.88,include,no_keyword_signal
+Etiology Matrix (2020).pdf,13bdc76d958ecd7e4f835b85516882ea,0.34,review_manually,no_keyword_signal
+"Expert Committee Recommendations Regarding thePrevention, Assessment, and Treatment of Child andAdolescent Overweight and Obesity.pdf",e92584729e8180226a9c8335b531eb02,0.47,skip_out_of_scope_topic,hard_exclude:child
+FG Diabetic Nephropathy.pdf,66d2bfde5a6dc1b9eb473df747637667,0.22,skip_internal_dup,internal_duplicate_of:CPG - Diabetic Nephropathy.pdf
+FG Management of Chronic Kidney Disease in Adults.pdf,ac416b4355691fe5ac4f8c294e3382fa,4.1,include,condition_match:kidney
+FG Management of Type 1 Diabetes Mellitus in Children & Adolescents.pdf,b2d08c6522b9e4eebfb7e527b1e9660a,4.78,skip_out_of_scope_topic,hard_exclude:child
+FG Management of Type 2 Diabetes Mellitus (5th Edition).pdf,4a889a240e689c7cb315c2a04e54950a,13.04,include,condition_match:diabe
+FG Management of Type 2 Diabetes Mellitus (6th Edition).pdf,cc4ec4e8cc7a5533f9684e710ec0b57d,3.93,include,condition_match:diabe
+FTT Homan 2016.pdf,0c22457b181d4545987e072e9475551c,0.24,review_manually,no_keyword_signal
+Facilitating Behavior Change and Well-being to Improve Health Outcomes_Standards of Medical Care 2020.pdf,c81ada343ec24320b168ad78beee91a4,0.63,review_manually,no_keyword_signal
+Fluid & electrolytes.pdf,bbb6e046a9f7c5d1b95300c1411c71ef,0.43,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Fluid-and-electrolytes.pdf
+Food Frequency Questionnaire (FFQ).pdf,c2d085392a7243ae681b35572bedfdcb,3.92,review_manually,no_keyword_signal
+Food exchange List ( Msia).pdf,343aecd6b9760cc4ef3c2c68acdd5f19,0.33,include,no_keyword_signal
+Ford A et al. 2014.pdf,cfe1118f47419b8aedb96e34462c99bb,0.4,include,no_keyword_signal
+GDM_MNT and Lifestyle Interventions 2007.pdf,c0e9637b4fdce961bc7f2d56e8a139a9,0.07,include,org_prefix_no_topic_match:mnt
+GFR calculators (NIDDK).pdf,8ebf227a7db132f25b9166413b464c98,0.11,review_manually,no_keyword_signal
+GLIM for Diagnosis of Malnutrition.pdf,e547f3eaf8139de19ff8eb4c69085b11,0.2,review_manually,no_keyword_signal
+Garis Panduan Demonstrasi Masakan Makanan Bayi.pdf,1df915f0bc29ab3dcb97ddb8f3915abb,7.77,review_manually,no_keyword_signal
+Garis Panduan Pemberian Makanan Bayi dan Kanak-Kanak Kecil.pdf,fe0c09395ce422c6a2fd75af1f23d246,9.94,review_manually,no_keyword_signal
+Gastroenterology.pdf,1798a7c9edd2f91cc183715bd8f4f096,0.24,skip_internal_dup,internal_duplicate_of:ESPEN - PN Gastroenterology.pdf
+Geriatrics.pdf,c5ce2869bc6fb9078fd73a61dd2041d9,0.15,review_manually,no_keyword_signal
+Gibson PR et al. 2010.pdf,3847ea3f3916890b2cb4465e70a5acfe,0.28,skip_out_of_scope_topic,hard_exclude:ibs
+Glycemic Targets_Standars of Medical Care in Diabetes 2020.pdf,b1da5c553ecacc611f0618cb64d6ef6f,0.88,include,condition_match:diabe
+Guidelines for MNT in GDM_ Systematic Review & Critical Appraisal.pdf,73a44bfd2fa81590ddd8fe06b3e43197,0.91,review_manually,org_prefix_no_topic_match:mnt
+HPB-MOH Clinical Practice Guidelines - Obesity 2016.pdf,3a93a55c290368e1ca6e2d92e1b9a7ce,0.65,include,condition_match:obes
+HTJ DM 1200kcal.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ DM 1500kcal.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ DM 1800kcal.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ DM blank chinese (1).jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ DM blank chinese (2).jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ DM blank.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ Normal 1200kcal.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ Normal 1500kcal chinese (1).jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ Normal 1500kcal chinese (2).jpg,,0,skip_out_of_scope_ext,extension:.jpg
+HTJ Refeeding Syndrome.pdf,ae688978e7cd1275c356536722660101,0.89,review_manually,no_keyword_signal
+HTJ normal 1500kcal.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+Harper A et al. 2018.pdf,ceba8d201c3707d6fa333fdf879312c8,0.27,review_manually,no_keyword_signal
+Healthy Spoonfuls for Toddlers.pdf,b75955883265ae310c2829ccbaa1e7d6,10.4,review_manually,no_keyword_signal
+Hepatology.pdf,637f59dc90abdcb94146e98744422016,0.19,skip_out_of_scope_topic,hard_exclude:hepat
+High Output Ileostomies 2019.pdf,8ee4755a7937f6c62ab62c6b193bdf8d,0.96,skip_out_of_scope_topic,hard_exclude:ileostom
+High blood pressure in Children and adolescents.pdf,4f62ce9b6b4cefab03c9c3c7b5859729,0.59,skip_out_of_scope_topic,hard_exclude:child
+Home Parenteral Nutrition in adults.pdf,b3d348c9d46deddf9b4c01128cd05df3,0.23,review_manually,no_keyword_signal
+Home parenteral nutrition.pdf,38174cf079ee976a3bc3bd3017a4269b,0.33,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR_CSPEN-guidelines-on-pediatric-parenteral-nutrition-Home-Parenteral-Nutrition.pdf
+IBS NICE Guideline.pdf,6625523a488938ba5241e15bffae912b,0.13,skip_out_of_scope_topic,hard_exclude:ibs
+IDF-DaR Diabetes and Ramadan Practical Guidelines 2021.pdf,f7aaa1834532d9bb86f5d5f4a55a7819,11.57,include,condition_match:diabe
+Infant Young Child Feeding_WHO 2009.pdf,b3c1878a7a8bf760f919d959b6ef25e6,2.21,skip_out_of_scope_topic,hard_exclude:child
+Infant and young child feeding- 2020.pdf,4c930e5ddce127e7e8fd56543ba7bab2,0.19,skip_out_of_scope_topic,hard_exclude:child
+Infant and young child feeding-2009.pdf,064db0416c703be3784dea1a28405baa,2.24,skip_out_of_scope_topic,hard_exclude:child
+Infant and young child feeding-WHO.pdf,4c930e5ddce127e7e8fd56543ba7bab2,0.19,skip_internal_dup,internal_duplicate_of:Infant and young child feeding- 2020.pdf
+Intensive Care Obese.pdf,17d3424883c221d9d7f6df385590897e,0.23,include,condition_match:obes
+Intensive Care.pdf,c7720c7f551d29a72590e6acb71782d2,0.26,review_manually,no_keyword_signal
+Iron & trace minerals.pdf,63550a03508c12c578a9c5ce056b29ba,0.26,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Iron-and-trace-minerals.pdf
+Ishaque M et al. 2018.pdf,8eb274be06ce214c7352c507521d9f6e,1.18,review_manually,no_keyword_signal
+Jejunal Feeding_Dispelling Myths with Physiology 2019.pdf,595ffc1f67cfd46371fc38c6bc74c105,2.84,review_manually,no_keyword_signal
+Jensen.pdf,4360369d269163dd2805b7dd7f2cb9d8,0.68,review_manually,no_keyword_signal
+KDIGO - AKI (2012).docx,2dfd65b0a2e8611fe009c0791abc9a06,1.02,review_manually,no_keyword_signal
+KDIGO - AKI (2012).pdf,92b1322bb43384f51d0e37ce4144e8d7,1.57,include,no_keyword_signal
+KDIGO - CKD (2012).pdf,1c4265cad1740769be396ce8c858cb60,4.34,include,condition_match:ckd
+KDIGO - Diabetes in CKD (2020).pdf,664e7c7fce01dbbdb59a8f1c2154b72b,7.66,include,condition_match:ckd
+KDIGO CPG on Glomerular Diseases 2020.pdf,2f3ba360d3200816d934a95006917359,10.54,review_manually,org_prefix_no_topic_match:cpg
+KDOQI - CKD (2020).pdf,55df6137836a72c9287b866c5b981226,3.47,include,condition_match:ckd
+Lactose intolerance.pdf,31f0364c802cd70ef1727ad2388cfff6,0.92,review_manually,no_keyword_signal
+Lecture (KAN) - Food Allergies and Intolerance.pdf,db008686acf7be9cea3caf17f9222a43,1.34,skip_out_of_scope_topic,hard_exclude:lecture
+Lecture (KAN) - Nutrition Support.pdf,ab30ba8aa6b2cfa77e21eef56e4492a1,1.53,skip_out_of_scope_topic,hard_exclude:lecture
+Lecture (NSF) - Cancer_.pdf,ca6ad84a3539150b997fff68cb0294c3,2.59,skip_out_of_scope_topic,hard_exclude:cancer
+"Lecture (NSF) - Hepatic, Biliary  Pancreatic.pptx",,0,skip_out_of_scope_ext,extension:.pptx
+Lecture (OSH) - MNT Paeds Part 1.pdf,ed48e8355a7d3b7d1a738fc0cb75d9c3,6.55,skip_out_of_scope_topic,hard_exclude:lecture
+Lecture (OSH) - MNT Paeds part 2.pdf,26f65382dd5d4afbe57aed670be9588d,26.26,skip_out_of_scope_topic,hard_exclude:lecture
+Lecture (YWY) - Lower GIT disorders.pdf,1606cda595194bd4af2b9fc86cf0479f,3.41,skip_out_of_scope_topic,hard_exclude:lecture
+Lecture 6 MNT for GDM.pdf,99a7b4dea7efbaebef7c88e6e87b2329,1.48,skip_out_of_scope_topic,hard_exclude:lecture
+Lecture 9 MNT for Paediatrics 2.pdf,423bdbf47ecf3c207467a8cfecdb8f8a,26.4,skip_out_of_scope_topic,hard_exclude:paediat
+Lecture Upper GIT disorders (YWY).pdf,a302756b13a2ee67c5d0557336ebc760,3.34,skip_out_of_scope_topic,hard_exclude:lecture
+Lifestyle Weight-Loss Intervention Outcomes 1.pdf,b7dd342af6284b5419795ce39ae00aad,1.07,include,condition_match:weight
+Lipid profile.PNG,,0,skip_out_of_scope_ext,extension:.png
+Lipids.pdf,d2c5f9144651b1fe0ab24eb091ca9716,0.54,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR_CSPEN-guidelines-on-pediatric-parenteral-nutrition-Lipids.pdf
+Liver & Transplant.pdf,d72bf27d238662242dd40e72edc499a1,1.61,skip_internal_dup,internal_duplicate_of:ESPEN guidelines for nutrition in liver disease and transplantation.pdf
+Lomer - Advanced Nutrition and Dietetics in Gastroenterology.pdf,eb6c865aed027ff31fd4b59f6e0b613b,3.38,skip_out_of_scope_topic,hard_exclude:gastro
+Lyra A et al. 2016.pdf,c3f77a1b7cf1edbadb5c79c91e732437,1.09,review_manually,no_keyword_signal
+MDA - MNT Guidelines for Hyperlipidemia 2005.pdf,7880f285dbe347b4797197dca532fb3e,5.74,skip_cross_dup,exact_duplicate_of:MNT_hyperlipedemia.pdf
+MDA - MNT Guidelines for Hypertension 2005.pdf,045abafd9687635e2c74a0e6474a0edc,4.64,include,condition_match:hypertens
+MDES- Diabetes Edu Manual 2020.pdf,2e15fb93e7c0218e1162dab20ca1192d,2.91,skip_cross_dup,exact_duplicate_of:e-MDES Manual 2020.pdf
+MDG for Children and Adolescents (2014).pdf,68954270572196240d86b8a6339ad3bd,21.3,skip_out_of_scope_topic,hard_exclude:child
+MEMS MOH - Practical Guide to Inpatient Glycemic Care 2020.pdf,86fd797fd99bf8adf7da8533bb5e573c,1.24,include,condition_match:glycemic
+MIS.pdf,cfeb28744b4189a7d17d2a78116bc6c8,0.27,review_manually,no_keyword_signal
+MNT Guidelines T2DM 2013.pdf,6777318aa454a53f58f1867e65cea570,1.34,skip_cross_dup,exact_duplicate_of:MNT_for_DM2.pdf
+MNT Guidelines for Critically Ill Adults 2017.pdf,f92a00b5eaf828377119f992c23f60c7,0.88,review_manually,org_prefix_no_topic_match:mnt
+MNT MDA - Cancer.pdf,45ba2a02342aef9ab4b0ad20318fabb0,1.17,skip_out_of_scope_topic,hard_exclude:cancer
+MNT for HIV Diseases Lecture.pdf,594ff5ce1eaaaff60258219bf30f4cb0,1.15,skip_out_of_scope_topic,hard_exclude:hiv
+"MNT for Hypermetabolism, Infection, Trauma (Part 1).pdf",e5b90ffcf52a9819fef80130588de02d,1.95,review_manually,org_prefix_no_topic_match:mnt
+"MNT for Hypermetabolism, Infection, Trauma (Part 2).pdf",01909de8899d0a31591cccc6a6a68db1,1.3,review_manually,org_prefix_no_topic_match:mnt
+MNT for Neurologic Disorders Lecture.pdf,4472aeb55bdbfdde63ad643f64d56be3,1.25,skip_out_of_scope_topic,hard_exclude:lecture
+MNT for nutrition support in Critically ill pt (2005) .pdf,893d043fe0fcaa44e1a860127284f326,7.14,review_manually,org_prefix_no_topic_match:mnt
+MOH - Health Education and Communication Tools_Reduce Salt Intake in Malaysia 2018.pdf,fae0f655bcccc868343cef5730ef7ed8,3.05,review_manually,no_keyword_signal
+MOH CPG Singapore - Stroke and TIA 2009.pdf,e39ef27db7bc67eb104398b989204daf,0.76,include,org_prefix_no_topic_match:cpg
+MOH Manual Diet Hospital (2016).pdf,c2ca174ff8bbf755ccdba6f93a7abd90,4.41,review_manually,no_keyword_signal
+MOH Wound Care Manual 2014.pdf,d77cfbd2530f7b6df1be8906ead49954,24.81,skip_out_of_scope_topic,hard_exclude:wound
+MOH-MPA (2019)-Paediatric Protocols for Malaysian Hospitals (4th Ed.).pdf,fa6acf0f614b4a377873ed8d487a8859,8.1,skip_out_of_scope_topic,hard_exclude:paediat
+MOH. Management of GDM.pdf,1cc05bbdee16fc7a5d372c6177455766,1.87,review_manually,no_keyword_signal
+MOH2016_Manual Diet Hospital (1).pdf,c2ca174ff8bbf755ccdba6f93a7abd90,4.41,skip_internal_dup,internal_duplicate_of:MOH Manual Diet Hospital (2016).pdf
+MST_MOH.pdf,c48c763f35b5bd192de457daa13dc5f1,0.04,review_manually,no_keyword_signal
+MSUD guideline.pdf,56a3754ed2b7fde8ceed015a8ffde038,0.33,review_manually,no_keyword_signal
+Magge S et al. 2012.pdf,4e1970b705f2dc81a37e325e12398182,2.67,review_manually,no_keyword_signal
+Maier 2015 Rate of Pregnancy Weight Gain.pdf,5bbf8d63993a9f4627aa2b6230d59f26,0.59,include,condition_match:weight
+Majeed M et al. 2015.pdf,32c2a3fd76575bab6185adc373e78893,1.16,include,no_keyword_signal
+Malaysia Dietary Guideline 2020.pdf,93b4768ae860470f2ce069f52f5f0bef,36.82,review_edition,possible_newer_edition:malaysia dietary guideline
+Malaysia Dietary Guidelines (2010).pdf,3f4f6c6cf642bbe73019e6a89bc83f49,65.52,review_edition,possible_newer_edition:malaysia dietary guideline
+Malaysian Allergy Prevention.pdf,ddbd3d7f63c5821dcbca2defb7d12871,0.47,include,no_keyword_signal
+Malaysian Food Pyramid 2020.pdf,b625d9ac13792dfdcb9fb9c5c1644541,13.44,review_manually,no_keyword_signal
+Malnutrition Screening Tool.pdf,eba964d0c157faaa26178e2106a422b0,0.14,review_manually,no_keyword_signal
+Malnutrition Universal Screening Tool (MUST).pdf,68e360b846d3d313a065ab5ef7fefa1a,0.54,review_manually,no_keyword_signal
+Management of Diabetes in Pregnancy_Standards of Medical Care in Diabetes 2020.pdf,9850135c1fc7f41c1f5205f0e72f4924,0.54,include,condition_match:diabe
+Management of acute intestinal failure-A position paper from the European Society for Clinical Nutrition and Metabolism (ESPEN) Special Interesr Group.pdf,054050bc7da7c750ae67ae911ac46a24,0.88,skip_internal_dup,internal_duplicate_of:ESPEN - Acute Intestinal Failure.pdf
+Managing Diabetes on Basal Bolus Regime (multiple injection).pdf,68b34b9c03c883b2bf153ab350d59dbe,0.18,include,condition_match:diabe
+Managing Malnutrition in COPD (2020).pdf,cc708891cf5cd5fa5d3383c4622a0fdd,3.86,skip_out_of_scope_topic,hard_exclude:copd
+Manual of Clinical Nutrition (2013).pdf,8459220aaab09436c4513a62a3e2ada6,5.17,include,no_keyword_signal
+Marsh A et al. 2016.pdf,a1b6d8d794bd3f5e57943ef096dd04c7,1.19,review_manually,no_keyword_signal
+Mazzawi T et al. 2017.pdf,83794a8ef1a9be2105c51174fd65d56e,0.63,review_manually,no_keyword_signal
+Mc Kenzie Y et al. 2012.pdf,29c84249e9c269e0a344524b57acae08,0.28,review_manually,no_keyword_signal
+McKenzie Y et al. 2016.pdf,ef61443a3daf798fcfea3c66fa225d1a,0.36,review_manually,no_keyword_signal
+McRorie J et al. 2015.pdf,45fed364dbbf4fe8de7d5beebc6028dc,0.47,review_manually,no_keyword_signal
+Mearin F et al. 2012.pdf,c1a9a80b0af4a49b76e92b420d3b66a2,0.43,review_manually,no_keyword_signal
+MedScape - Renal Dysfunction in Cirrhosis.pdf,b6f20348ffda14d766c73afb9bbe8044,0.28,skip_out_of_scope_topic,hard_exclude:cirrhosis
+Medscape - Renal Dysfunction in Cirrhosis.pdf,b6f20348ffda14d766c73afb9bbe8044,0.28,skip_internal_dup,internal_duplicate_of:MedScape - Renal Dysfunction in Cirrhosis.pdf
+Mini CEX.pdf,054ad34e7a4b5b206eee68df98c31a8c,0.31,review_manually,no_keyword_signal
+MoH CPG Parkinson_s Disease.pdf,2dba95de803c3e0fc15d394b5fbddb8d,1.91,skip_out_of_scope_topic,hard_exclude:parkinson
+Moayyedi P et al. 2019.pdf,1a1b9790362c33e7b05818116287f5ab,3.62,review_manually,no_keyword_signal
+Moayyedi P et al.2014.pdf,239c8ef60d20d18dd236483f8d043600,0.19,review_manually,no_keyword_signal
+Modification of Normal Diet_ Consistency & Texture.pdf,6dd70da7ac2e16df4e0d7175aef30ad2,1.39,review_manually,no_keyword_signal
+NA Matrix (2019).pdf,b8f99c05da99674fb064155d20d30fdc,0.85,review_manually,no_keyword_signal
+NCP Mind Map - Adult Weight Management.pdf,4184ba656293d00a6380addc972829e1,9.71,include,condition_match:weight
+NCP Mind Map - Hypertension.pdf,43b73e5eeabbc1e58313da0646cd9174,10.82,include,condition_match:hypertens
+NCP sheet.pdf,e2db0d0fd59f0c32ac3ee63ae4576573,0.11,include,no_keyword_signal
+NCPT Nutrition Assessment and Monitoring and Evaluation Term Sheet.pdf,1fc429591b599f6029910f3151a1872f,0.9,include,no_keyword_signal
+NCPT Nutrition Diagnosis Term Sheet.pdf,e7749f6892ee1d3292f57707c08377af,0.3,include,no_keyword_signal
+NCPT Nutrition Intervention Term Sheet.pdf,c7400b554f549d9beb0816c556c6cb48,0.45,include,no_keyword_signal
+ND Etiology Matrix (2017).pdf,911280501694fe9f68db9439c0c35eeb,0.18,review_manually,no_keyword_signal
+ND Etiology Matrix (2019).pdf,bb980aebb54e9ed81fb4b95d5d540423,0.4,review_manually,no_keyword_signal
+NEJM - CKD (2017).pdf,af3f526b2a3bcba628bc29de2cb58321,3.56,include,condition_match:ckd
+NFPE Stepwise Approach.pdf,358220cdae2dd1a1d731b42f32e75586,2.12,review_manually,no_keyword_signal
+NFPF Anthro Zinc Green Corkins 2016.pdf,90bf8e42dcf63dc7ddd1f32c4f208c42,0.65,review_manually,no_keyword_signal
+NICE (2020) - Managing Malnutrition in COPD.pdf,0bb7c0a16dd43c4b92a111ace30d4757,5.5,skip_out_of_scope_topic,hard_exclude:copd
+NICE Guideline.pdf,32d7ef206e3292fc6264af4cb9b77467,1.85,review_manually,no_keyword_signal
+Nephrotic syndrome in childhood.pdf,6804d192ae031e71b178a1cd8b6eb093,1.15,skip_out_of_scope_topic,hard_exclude:child
+Nobutani K et al. 2016.pdf,faf222e22d1792f9b1611ee09fa6ceab,0.63,review_manually,no_keyword_signal
+Non-surgical oncology.pdf,76ac6bd67d12675087dd78c6b0492b87,0.21,skip_out_of_scope_topic,hard_exclude:oncol
+Nutrition Assessment Matrix (2020).pdf,d5633cfa84a3d6535d3d599668179f81,0.81,review_manually,no_keyword_signal
+Nutrition Intervention for children with special health care needs.docx,b6af1641cd730bf9eff39b4a3d9a0530,1.28,skip_out_of_scope_topic,hard_exclude:child
+Nutrition Intervention for children with special health care needs.pdf,211b76c89f43f17ba9f96c024f3e5f9a,8.48,skip_out_of_scope_topic,hard_exclude:child
+Nutrition Support.pdf,9d02504e204d6e0a5a40873e2e820fcd,0.1,review_manually,no_keyword_signal
+Nutrition Therapy for Adults With Diabetes or Prediabetes- A Consensus Report.pdf,f618bf619a571210ce8c822077198103,0.81,include,condition_match:diabe
+Nutrition for Patients with Upper Gastrointestinal Disorders.pdf,03dd419305ed1a78a818d22bd3bf83ab,1.48,skip_out_of_scope_topic,hard_exclude:gastro
+Nutrition guideline for overweight children.pdf,65aeacb7076c7a8d88c1d14ae10e8840,1.84,skip_out_of_scope_topic,hard_exclude:child
+Nutrition in Stoma Patients 2011.pdf,5c0c08c98e395a70af83ebfad9395b3e,0.48,skip_out_of_scope_topic,hard_exclude:stoma
+NutritionAssessmentandNutritionMonitoringandEvaluationTerminologySheet (2020).pdf,27d1fbb95b9b057c61b1cd6f94418c97,1.04,include,no_keyword_signal
+NutritionDiagnosisTerminologySheet (2020).pdf,2349721a7147e1c50a2ccc4436b9b395,0.21,include,no_keyword_signal
+NutritionInterventionTerminologySheet (2020).pdf,c34ab61c590518ad8f42cde376f7fcb7,0.38,review_manually,no_keyword_signal
+Nutritional Considerations in Pediatric Pancreatitis.pdf,3b7654fd0dfe33d0dbd62dbfd070c18c,0.14,skip_out_of_scope_topic,hard_exclude:pediat
+Nutritional Guidelines For Children With Special Needs From Birth to 18YO 2018.pdf,9648f8b887280f5ae429b9a997c37fc8,61.7,skip_out_of_scope_topic,hard_exclude:child
+Nutritional Recommendations for Individuals with Diabetes - Endotext - NCBI Bookshelf.pdf,efd1e49c4f5173512411ad980bcb43f2,0.81,include,condition_match:diabe
+Nutritional Risk Screening (NRS 2002).pdf,ceb128b66c85b0898b1110975644ecf0,0.06,review_manually,no_keyword_signal
+ONS Product List_2021_Revised.xlsx,,0,skip_out_of_scope_ext,extension:.xlsx
+Organisational aspect.pdf,21c07e065a01ec2eb86ee94d117bebca,0.41,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Organisational-aspects.pdf
+Oxford Handbook of Nutrition and Dietetics_3rd (2020).pdf,39ad88e27882c114f823ae7b50f4cedf,23.08,include,no_keyword_signal
+PES Statement Cheat-Sheet For International Nutrition and Dietetic Terminology (IDNT).pdf,a4eebefeb3cae91e71cc0a7c322f7ead,0.15,review_manually,no_keyword_signal
+PEW Criteria.jpg,,0,skip_out_of_scope_ext,extension:.jpg
+POS-Diet Enteral Nutrition Support.pdf,9fb725c5e6ae8ca14c570fb320e0f78a,2.94,review_manually,no_keyword_signal
+POS-Diet Failure To Thrive.pdf,f8ef65ffd4cf0c28176761a826e071c4,9.92,review_manually,no_keyword_signal
+POS-Diet GDM.pdf,621a960985d8c75c452886d59980452b,5.05,review_manually,no_keyword_signal
+POS-Diet Individu Umum.pdf,fd8bfd71cb3c9d6a3ea95ea3c6bb6dac,3.08,include,no_keyword_signal
+POS-Diet Konsultasi Individu DM.pdf,274e5a9de5c65c65965622078c993bc9,8.38,include,no_keyword_signal
+POS-Diet Pemakanan Berkumpulan.pdf,2a1e2e758aa7f89dad333f291e80fc2a,2.37,include,no_keyword_signal
+POS-Diet Penurunan Berat Badan.pdf,ade096e676ac2c2e947a424636f4a04c,4.35,include,no_keyword_signal
+POS-Diet Pesakit Kanser.pdf,e931dc450fe0f7914411034589636b4e,4.37,skip_out_of_scope_topic,hard_exclude:kanser
+POS-Konsultasi Diet Individu Hipertensi.pdf,a5a9e8713ea4818ccd1f09de300940c2,18.91,include,condition_match:hipertensi
+PPO-Perkhidmatan Dietetik.pdf,af26b3b91ac441a9b7794d1ce088b23e,3.48,review_manually,no_keyword_signal
+Paediatrics NCP mind map.pdf,6b948a6e44e4c421673bf2e8373a1858,11.21,skip_out_of_scope_topic,hard_exclude:paediat
+Paediatrics- Critically Ill and Catch up growth equations.docx,064ead5b30b82b75d9c21e84b49346b5,1.68,skip_out_of_scope_topic,hard_exclude:paediat
+Paeds-PneumoniaRespiratoryTractInfections.pdf,6332316482247bfb37c73ec664681b63,0.09,skip_out_of_scope_topic,hard_exclude:respiratory
+Pancreas.pdf,c307b7ed3fa805fcc6410905d7531815,0.17,skip_out_of_scope_topic,hard_exclude:pancrea
+Pancreatitis Acute & Chronic.pdf,e851c2e3f0add670a85008090654678b,1.27,skip_out_of_scope_topic,hard_exclude:pancrea
+Patient Feedback Form.pdf,2dad7f2ddcaa5818711d77aec94f4220,0.01,review_manually,no_keyword_signal
+Patient Information leaflet Management of Type 2 Diabetes Mellitus.pdf,27cf37c1dfc3aff2606c5750cae4bfda,0.18,include,condition_match:diabe
+Pediatric Critically Ill SCCM ASPEN.pdf,a535b088038e216e73970e9418d47bc9,0.29,skip_out_of_scope_topic,hard_exclude:pediat
+Perioperative nutrition_ Recommendations from the ESPEN expert group _ Elsevier Enhanced Reader.docx,65305cd74095164ac76ff501c15cf95d,0.27,skip_out_of_scope_topic,hard_exclude:perioperative
+Perioperative nutrition_ Recommendations from the ESPEN expert group _ Elsevier Enhanced Reader.pdf,2f89df014fefb997b4605444741bda79,12.19,skip_out_of_scope_topic,hard_exclude:perioperative
+Pineton de Chambrun G et al. 2015.pdf,ddf930afda258a5356e2e1e85e18eb5e,0.81,review_manually,no_keyword_signal
+Portincasa P et al. 2017.pdf,310d00491ea3233cbda2dd4002b8a065,0.71,review_manually,no_keyword_signal
+Present status and perspectives.pdf,b06c216759e6d88e17252247093cc6e8,0.13,review_manually,no_keyword_signal
+Professionalism assessment form.pdf,cc5f05cf2f5a35ae71c74b1f1a1d9f3d,0.07,review_manually,no_keyword_signal
+Pulmonary Guidelines.pdf,97f480e1d664e4a68a928db344121a0e,0.22,skip_out_of_scope_topic,hard_exclude:pulmonary
+PusatJagaanGarisPanduan.pdf,81ea50facfb97236901c1bdca28afd56,3.44,review_manually,no_keyword_signal
+QR - Breast Cancer (Third Edition).pdf,80c6621fac8cec98d5666762156106a5,0.74,skip_out_of_scope_topic,hard_exclude:cancer
+QR - Cancer Pain.pdf,b0766ac4541907ce9c48cf95a5266a18,2.9,skip_out_of_scope_topic,hard_exclude:cancer
+QR - Cervical Cancer (Second Edition).pdf,b3fb8bfa2951af15ac81b9ec99963819,1.02,skip_out_of_scope_topic,hard_exclude:cancer
+QR - Colorectal Carcinoma.pdf,8b5dde313d8d03e317f91c9bcff12b91,2.9,skip_out_of_scope_topic,hard_exclude:carcinoma
+QR - Nasopharyngeal Carcinoma.pdf,6e5f12eb68817383058563cefaaa2c11,2.73,skip_out_of_scope_topic,hard_exclude:carcinoma
+QR Management of Austism Spectrum Disorder in Children and Adolescents.pdf,6b2ad74f68a89635d032b5fcab580f25,0.67,skip_out_of_scope_topic,hard_exclude:child
+QR Management of Bipolar Disorder in Adults.pdf,dd8bd0043a9cee223c5fb4b0024af84f,1.22,skip_out_of_scope_topic,hard_exclude:bipolar
+QR Management of Chronic Kidney Disease in Adults (Second Edition 2018).pdf,d7e96226d76bec25b5451b195ba60baa,2.11,include,condition_match:kidney
+QR Management of Dementia.pdf,fefeeaa7548f6c27ea3fe261f4329616,1.67,skip_out_of_scope_topic,hard_exclude:dementia
+QR Management of Major Depressive  Disorder (2nd Edition).pdf,a48d28586f4a5c10dbcda6d794610db7,1.63,skip_out_of_scope_topic,hard_exclude:depressive
+QR Management of Schizophrenia in Adults.pdf,5da636db5e1fc9d0db3b894d212449d0,3.86,skip_out_of_scope_topic,hard_exclude:schizophrenia
+Quick Review_T2DM 6th 2020.pdf,86c946452fbdfa911c3d9329cbc293df,0.5,include,condition_match:t2dm
+RCP-Supporting people who have eating and drinking difficulties_March 2021.pdf,126a16ed2eef9f778cf6038e83bfe46f,1.75,review_manually,no_keyword_signal
+RNI Malaysia 2017.docx,b9a66312041be1347116b054e6b11294,0.69,include,no_keyword_signal
+RNI Malaysia 2017.pdf,35370f085ffac80de23707ec6dda3cca,4.75,skip_cross_dup,exact_duplicate_of:RNI 2017.pdf
+References and Resources for IBS.docx,b619da3c0ee9c64e60a227e8d65f9140,0.02,skip_out_of_scope_topic,hard_exclude:ibs
+Renal Nutrition Guidelines_ Bridging the Practice Gap.pdf,64eee17d3328f993671081e3525f0f03,6.7,include,condition_match:renal
+Ross_Multidisciplinary Treatment of Pediatric Obesity Nutrition Evaluation and Management.pdf,13e499bb64cffe8200ab4a423330366b,0.1,skip_out_of_scope_topic,hard_exclude:pediat
+SACN_Influence of maternal fetal and child nutrition on the development of chronic disease in later life_2011.pdf,dad5ce048de4e9e0cdaf319207b840a5,3.51,skip_out_of_scope_topic,hard_exclude:child
+SGA Canadian Malnutrition Task Force.pdf,bb45e162422f4389b2ce42891d00e593,0.07,review_manually,no_keyword_signal
+SGA_Detsky.pdf,7cb03f2e950c5d6932380054e3e06854,0.1,review_manually,no_keyword_signal
+SGA_MOH.pdf,9bceb97953ffbdae01b001ea9c38eb24,0.14,include,no_keyword_signal
+STAMP Step by step guide.pdf,73e198f7ccdffff0de627b3ab091bb31,0.26,review_manually,no_keyword_signal
+Schultz-Impaired leptin gene expression and release in cultured preadipocytes isolated from individuals born w low birth weight_2014.pdf,e62f05163a275a5c436987b28df8cdde,1.32,include,condition_match:weight
+Schumann D et al. 2018.pdf,40550392ae08bf10d97e8e7e421bb520,1.24,review_manually,no_keyword_signal
+Short Bowel Syndrome - Gastrointestinal Disorders - MSD Manual Professional Edition.pdf,13dab7407e58cb398927552e378009de,0.09,skip_out_of_scope_topic,hard_exclude:gastro
+Shortcut Links.docx,52d1e7a0f2ea61f577b94d1c02b9afc6,0.01,review_manually,no_keyword_signal
+Singapore CPG Management of Food Allergy 2007.pdf,16c18f956cf11446207454dee2c4f4cb,4.46,review_manually,org_prefix_no_topic_match:cpg
+Singhal 2017-Tube Feeding In Children.pdf,75afad3639d545516b56b40bc3f9d25b,0.59,skip_out_of_scope_topic,hard_exclude:child
+SmofKabiven TPN 2020.jpeg,,0,skip_out_of_scope_ext,extension:.jpeg
+Spiller R et al. 2015.pdf,81d50c492b1a06518d3bdba92deda32f,0.53,review_manually,no_keyword_signal
+Standard vs Individualised PN.pdf,4df3bcc970a6ed3252f87b6d9acef693,0.3,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Standard-versus-individualized-parenteral-nutrition.pdf
+Surgery.pdf,297fa6b302fb52fcce606a83c74d3fbb,0.19,review_manually,no_keyword_signal
+Suzie Ferrie energy requirement.pdf,6774d3ec5efa6b9027b29395247ff28f,0.1,include,no_keyword_signal
+Suzie Ferrie protein requirement.pdf,7dcec8cde7bcaf082c73df4a846d6b59,0.44,include,no_keyword_signal
+T2DM NCP mind map.pdf,04f3463ae0d2000e1be5b2eb4b62d93c,10.61,include,condition_match:t2dm
+TaskaMenu.pdf,0aa64455254875195779506b443758f9,1.49,review_manually,no_keyword_signal
+Thalassemia.pdf,f0b5ba80e6aabb618c042363f110ca40,1.68,skip_out_of_scope_topic,hard_exclude:thalassem
+The Role of Nutrition for Pressure Ulcer Management 2015.pdf,c5a2459e7da4f29f0d288a81d1d06774,1.84,skip_out_of_scope_topic,hard_exclude:pressure ulcer
+The effects of blood glucose control upon fracture.pdf,1ca8794aad35e8fec445812b0d74f022,0.85,review_manually,no_keyword_signal
+The-7-point-scale-SGA-form.png,,0,skip_out_of_scope_ext,extension:.png
+Thijssen A et al. 2016.pdf,213e42fe7f2f7e24286f46b12dc3c348,0.19,review_manually,no_keyword_signal
+Tongue Cancer Post-Chemo_M (B2).pdf,bbb27510aa4a06edde61cc9a61ce96c6,2.84,skip_out_of_scope_topic,hard_exclude:cancer
+Transplantation notes_2019.pdf,2f9745d3528e6a59a1a2307bd0e5f88d,1.06,skip_out_of_scope_topic,hard_exclude:transplant
+Tuck C et al. 2017.pdf,914e2633a938d498581ba740e492c4d1,0.21,include,no_keyword_signal
+UJIAN PATOLOGI & Ref. Ranges.xls,,0,include,extension:.xls
+UOAA Eating with an Ostomy 2020.pdf,679fbc2e1803fc10e7e3052e0d8ec17c,2.09,skip_out_of_scope_topic,hard_exclude:ostomy
+UpToDate - Gout.pdf,20f47e2a52f1ab0cc4c2fa154973a2a9,0.37,skip_out_of_scope_topic,hard_exclude:gout
+UpToDate - Inflammatory bowel disease_.pdf,148747ae764a10ec5fafe0f461191e84,0.34,skip_out_of_scope_topic,hard_exclude:bowel
+UpToDate - Obesity in Adults_Dietary Therapy 2020.pdf,18883dc3a911a470c16225720d94b678,5.25,include,condition_match:obes
+UpToDate - Short bowel syndrome in adults.pdf,0d305c7ab03a6818d33d859d75ee2967,0.2,skip_out_of_scope_topic,hard_exclude:bowel
+UptoDate - CKD Management of Children.pdf,8720ddf28b6785020f8090fc39c78cbf,10.42,skip_out_of_scope_topic,hard_exclude:child
+UptoDate-Twin pregnancy nutritional recommendations.pdf,0e1797d15ad515c6ef6dae06e3f0bac2,0.04,review_manually,no_keyword_signal
+Venous access.pdf,b825a0e5e01978a7d3eca15a5d2c9a0d,0.57,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR-guidelines-on-pediatric-parenteral-nutrition-Venous-access.pdf
+Vitamins.pdf,e935fd9149341a3ba7a381f0e0d1d184,0.52,skip_internal_dup,internal_duplicate_of:ESPGHAN_ESPEN_ESPR_CSPEN-guidelines-on-pediatric-parenteral-nutrition-Vitamins.pdf
+WHO - Physical Activity and Sedentary Behaviour.pdf,27e7c01d51dde86e0aefded6f7de28e1,3.85,include,no_keyword_signal
+WHO Sugars intake for Adults and Children 2015.pdf,9f010fb1292ec9247453742beac74765,0.55,skip_cross_dup,exact_duplicate_of:WHO-Sugars intake for adults and children.pdf
+WJG - Cirrhosis + obesity.pdf,dddd9fe1749d894aa7952d479c01de47,2.04,skip_out_of_scope_topic,hard_exclude:cirrhosis
+Waist circumference and waist-hip ratio and body fat cut-off point.docx,19f9068e5f396049ed41a79dbbdbc685,0.01,include,no_keyword_signal
+WargaEmasPanduanMakanan.pdf,4b480e8de550a9c151fd40f7bc45b149,1.08,review_manually,no_keyword_signal
+Weight Gain During Pregnancy- Reexamining the Guidelines.pdf,50aafe267d7bb348720b60d6f0818f6b,6.51,include,condition_match:weight
+Wong R et al. 2014.pdf,300b240cba154878a1c2be0bbe8cf76b,0.37,review_manually,no_keyword_signal
+Zhang Y et al. 2019.pdf,8b78bae70cd14e3de5e91f0118e8d950,0.31,review_manually,no_keyword_signal
+[Franz 2015] Weight Loss Interventions & Outcomes - T2DM.pdf,9863e9126fff77d1153339c548ffef6a,0.35,include,condition_match:t2dm
+[Franz 2017] AND Systematic Review MNT Effectiveness_T1_T2DM.pdf,928b789ebfa3230cc434fa4e573eb581,0.46,include,condition_match:t2dm
+infographic-breastfeeding.pdf,f479b42c065ce02c279cdc266fea4fd3,0.68,review_manually,no_keyword_signal
+mehta_defining pediatric malnutrition 2013.pdf,7652dd8c5991e2aa066e9ab1556dc7ad,0.68,skip_out_of_scope_topic,hard_exclude:pediat
+module_c_interpreting_indicators.pdf,4db1b9c38a2e6b3713b7cf51d5e1ad82,0.85,review_manually,no_keyword_signal

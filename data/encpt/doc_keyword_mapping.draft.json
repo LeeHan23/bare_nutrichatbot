@@ -1,0 +1,237 @@
+{
+  "version": "1.0-draft",
+  "based_on": "LLM-drafted (scripts/draft_keyword_metadata.py) — NOT reviewed, do not merge as-is",
+  "languages": [
+    "en",
+    "ms"
+  ],
+  "documents": {
+    "29_Pos_MerokokAdalahHaram_Web.pdf": {
+      "keywords": [
+        "merokok adalah haram",
+        "smoking cessation",
+        "hukum rokok",
+        "tobacco use disorder",
+        "nas Al-Quran"
+      ],
+      "topic_summary": "The document discusses the religious prohibition of smoking based on Islamic teachings.",
+      "primary_topics": [
+        "berhenti merokok",
+        "tobacco use disorder"
+      ],
+      "language": "ms"
+    },
+    "American Heart Association-2021 Dietary Guidance to Improve Cardiovascular Health.pdf": {
+      "keywords": [
+        "cardiovascular health",
+        "processed meats",
+        "healthy dietary patterns",
+        "saturated fat",
+        "trans fat",
+        "added sugar",
+        "salt"
+      ],
+      "topic_summary": "The document provides dietary guidance from the American Heart Association aimed at improving cardiovascular health through healthy eating habits.",
+      "primary_topics": [
+        "CVD prevention",
+        "heart-healthy diet",
+        "nutrition"
+      ],
+      "language": "en"
+    },
+    "Buku MDG 2020 - Senaman.pdf": {
+      "keywords": [
+        "strengthening exercises",
+        "weight gain",
+        "appetite stimulation",
+        "body composition assessment",
+        "negative body image",
+        "dieting"
+      ],
+      "topic_summary": "The document discusses physical activity, its impact on appetite and weight management, as well as the importance of body composition assessment in achieving ideal body image.",
+      "primary_topics": [
+        "physical activity",
+        "weight management",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "CPG Management of Diabetic Foot  (Second Edition).pdf": {
+      "keywords": [
+        "diabetic foot",
+        "screening",
+        "vascular assessment",
+        "peripheral neuropathy",
+        "ABI"
+      ],
+      "topic_summary": "The document covers the management of diabetic foot, including screening methods and vascular assessments.",
+      "primary_topics": [
+        "diabetes management",
+        "vascular assessment"
+      ],
+      "language": "en"
+    },
+    "KKM-The National Strategic Plan For Mental Health 2020-2025.pdf": {
+      "keywords": [
+        "mental health",
+        "suicide prevention",
+        "disaster psychology",
+        "non-communicable diseases",
+        "public health",
+        "Mental Health promotion"
+      ],
+      "topic_summary": "The document covers strategic planning for mental health in Malaysia, focusing on suicide prevention, psychological issues post-disasters, and promoting mental well-being.",
+      "primary_topics": [
+        "mental health",
+        "suicide prevention"
+      ],
+      "language": "en"
+    },
+    "Kemurungan_Apa_yang_anda_perlu_tahu.pdf": {
+      "keywords": [
+        "depression",
+        "kemurungan",
+        "symptoms",
+        "tanda-tanda",
+        "causes",
+        "punca",
+        "risk factors",
+        "faktor risiko",
+        "treatment",
+        "rawatan"
+      ],
+      "topic_summary": "The document covers the symptoms, causes, risk factors, and treatment of depression.",
+      "primary_topics": [
+        "depression",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "Kesan_Awal_Elak_Penderitaan_Kemurungan.pdf": {
+      "keywords": [
+        "kemurungan",
+        "gangguan tidur",
+        "sedih",
+        "hilang minat",
+        "mudah marah"
+      ],
+      "topic_summary": "The document discusses symptoms and signs of depression, including sleep disorders, loss of interest, irritability, and sadness.",
+      "primary_topics": [
+        "depression",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "LE8_How_To_Manage_Blood_Pressure.pdf": {
+      "keywords": [
+        "blood pressure",
+        "hypertension management",
+        "DASH diet",
+        "exercise prescription",
+        "weight management"
+      ],
+      "topic_summary": "The document covers how to manage blood pressure through lifestyle changes, including exercise, weight management, and dietary adjustments.",
+      "primary_topics": [
+        "blood pressure",
+        "hypertension management",
+        "healthy eating",
+        "exercise"
+      ],
+      "language": "en"
+    },
+    "LE8_How_to_Manage_Weight.pdf": {
+      "keywords": [
+        "weight management",
+        "BMI",
+        "calories",
+        "protein breakfast",
+        "fiber intake"
+      ],
+      "topic_summary": "The document provides tips and strategies for maintaining a healthy weight, including dietary advice and understanding calorie intake.",
+      "primary_topics": [
+        "BMI",
+        "healthy eating",
+        "weight management"
+      ],
+      "language": "en"
+    },
+    "Norton 2010.pdf": {
+      "keywords": [
+        "moderate physical activity",
+        "physical activity guidelines",
+        "health benefits",
+        "accelerometer counts",
+        "daily energy expenditure"
+      ],
+      "topic_summary": "The document discusses the role of moderate physical activity in health promotion and its impact on daily energy expenditure, based on accelerometer data.",
+      "primary_topics": [
+        "cardiovascular health",
+        "exercise prescription",
+        "healthy lifestyle"
+      ],
+      "language": "en"
+    },
+    "Panduan_Menangani_Stress.pdf": {
+      "keywords": [
+        "stress management",
+        "mental health",
+        "exercise",
+        "relaxation techniques",
+        "stres",
+        "kesihatan mental"
+      ],
+      "topic_summary": "The document covers various methods for managing stress and improving mental health through activities, relaxation techniques, and exercise.",
+      "primary_topics": [
+        "mental health",
+        "stress"
+      ],
+      "language": "ms"
+    },
+    "Tanda-tanda_penyakit_mental.pdf": {
+      "keywords": [
+        "mental health",
+        "treatment",
+        "daily life",
+        "support",
+        "stigma"
+      ],
+      "topic_summary": "The document discusses mental health conditions, their treatment, and the importance of societal support.",
+      "primary_topics": [
+        "anxiety",
+        "depression",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "Tangani_Stress_dengan_urutan_leher_dan_bahu.pdf": {
+      "keywords": [
+        "menangani stres",
+        "urutan leher dan bahu",
+        "kawalan penyakit",
+        "kesihatan mental",
+        "stres"
+      ],
+      "topic_summary": "Dokumen ini membahas teknik-teknik untuk mengurangkan stres dengan fokus pada urutan leher dan bahu.",
+      "primary_topics": [
+        "stress",
+        "mental health"
+      ],
+      "language": "ms"
+    },
+    "WHO-Guideline for the pharmacological treatment of hypertension in adults.pdf": {
+      "keywords": [
+        "hypertension management",
+        "nonphysician professionals",
+        "pharmacological treatment",
+        "long-acting dihydropyridine CCBs",
+        "fixed-dose combination"
+      ],
+      "topic_summary": "The document provides WHO guidelines on the pharmacological treatment of hypertension in adults, including recommendations for follow-up care and the involvement of nonphysician healthcare providers.",
+      "primary_topics": [
+        "hypertension management",
+        "pharmacological treatment"
+      ],
+      "language": "en"
+    }
+  }
+}
