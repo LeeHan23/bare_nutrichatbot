@@ -37,6 +37,17 @@ GROUPED_COLUMNS = [
 ]
 
 
+def _min_sec(v):
+    """The workbook column is "Video Duration (min:sec)", but the author typed
+    e.g. 2:08 into an hh:mm-formatted cell, so openpyxl returns time(2, 8).
+    str() of that gave "02:08:00", which the chatbot read as 2 hours 8 minutes."""
+    if v is None:
+        return None
+    if hasattr(v, "hour"):
+        return f"{v.hour}:{v.minute:02d}"
+    return str(v)
+
+
 def build(workbook_path: str) -> list[dict]:
     wb = openpyxl.load_workbook(workbook_path, data_only=True)
     ws = wb["Ex Intervention Tag"]
@@ -77,7 +88,7 @@ def build(workbook_path: str) -> list[dict]:
             "body_focus": values.get("Body Focus"),
             "suitable_for": values.get("Suitable For / Purpose"),
             "youtube_link": values.get("YouTube Link"),
-            "video_duration": str(video_duration) if video_duration is not None else None,
+            "video_duration": _min_sec(video_duration),
         })
 
     return records

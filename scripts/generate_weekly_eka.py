@@ -1063,7 +1063,7 @@ def _generate_exercise(niche: dict, chunks: str, guidance: str) -> dict:
         return {"catalog_highlights": [], "note": "no catalog entries available for this level"}
 
     catalog_text = "\n".join(
-        f"- {c['title']} ({c['type']}, {c['intensity_tier']} intensity, {c['body_focus']}, {c['video_duration']})"
+        f"- {c['title']} ({c['type']}, {c['intensity_tier']} intensity, {c['body_focus']}, video {c['video_duration']} min:sec)"
         for c in catalog
     )
 

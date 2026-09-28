@@ -194,7 +194,9 @@ COMPONENT_SCOPE = {
     "physical_activity": {
         "in_scope": (
             "Non-structured lay encouragement around everyday movement — walking more, reducing "
-            "sitting time, general safety principles for staying active with a heart condition — "
+            "sitting time, general daily step-count guidance for adults (e.g. building gradually "
+            "toward 7,000–10,000 steps a day), general safety principles for staying active with a "
+            "heart condition — "
             "grounded in the retrieved physical activity guideline content (e.g. Malaysian Physical "
             "Activity Guideline, Buku MDG 2020 Senaman, Life's Essential 8 activity sheet). This is "
             "broader lifestyle framing, not exercise programming."
@@ -266,6 +268,41 @@ def uncovered_modules(profile: dict | None) -> list[str]:
     ]
 
 
+# Modules where patients quote their own numbers. The out_of_scope text
+# already forbids interpreting them, but the model still did it when the
+# patient stated a value (2026-09-28 eval case 159: "Your LDL of 4.2 is
+# higher than recommended… should be below 2.6"), so spell out the move.
+# Also covers numbers in the profile notes: case 157 said "your current LDL
+# is higher than ideal" from patient 4's notes ("LDL 4.8 mmol/L"), and
+# case 158 gave an unprompted personal target ("for someone with diabetes
+# like you… below 150 mg/dL").
+_OWN_RESULT_COMPONENTS = {"blood_pressure", "lipid", "diabetes", "weight"}
+_OWN_RESULT_RULE = (
+    "Never give a target number or range framed for this patient (a BMI, weight, calorie or "
+    "calorie-deficit, cholesterol, triglyceride, glucose or blood pressure target — e.g. 'for "
+    "someone like you, keep triglycerides below 150'); personal targets are set by their care "
+    "team. If the "
+    "patient states their own reading or result (a blood pressure, LDL, cholesterol, glucose, "
+    "HbA1c, weight or BMI number), or one appears in their profile or notes, do not say whether "
+    "it is normal, high, low, controlled or okay for them; if they stated it, say their doctor "
+    "or care team will interpret it against their personal targets. Then give one general "
+    "lifestyle tip."
+)
+
+
+# Applies to every module. Eval cases 148/151/171 (2026-09-28): asked
+# "is it safe for me" / "how much am I allowed" / "how long do I have", the
+# model answered from the level profile and invented "your care team has
+# recommended only light activity".
+_CLEARANCE_RULE = (
+    "If the patient asks whether something is safe for them, how much they are allowed to do, "
+    "or about their own outlook or prognosis, do not decide it yourself: say plainly that their "
+    "doctor or care team has to clear or answer that for them. Never claim their care team has "
+    "already told them something unless it is written in their profile. You may then add one "
+    "general, low-risk suggestion."
+)
+
+
 def component_scope_block(component: str | None) -> str:
     """Render the prompt block for a component's scope boundary.
 
@@ -276,7 +313,11 @@ def component_scope_block(component: str | None) -> str:
         return ""
     scope = COMPONENT_SCOPE.get(component)
     if scope:
-        return f"In scope: {scope['in_scope']}\nOut of scope: {scope['out_of_scope']}"
+        block = f"In scope: {scope['in_scope']}\nOut of scope: {scope['out_of_scope']}"
+        if component in _OWN_RESULT_COMPONENTS:
+            block += f"\nOwn results: {_OWN_RESULT_RULE}"
+        block += f"\nSafety and clearance: {_CLEARANCE_RULE}"
+        return block
     label = COMPONENT_LABELS.get(component, component)
     return _NO_CONTENT_GUARD.format(label=label)
 

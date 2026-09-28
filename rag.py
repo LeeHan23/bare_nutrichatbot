@@ -56,7 +56,7 @@ def _build_exercise_catalog_block(profile: dict | None) -> str:
         return ""
     return "\n".join(
         f"- {e['title']} ({e['type']}) — {e['intensity_tier']} intensity, "
-        f"{e['body_focus']}, {e['video_duration']}"
+        f"{e['body_focus']}, video {e['video_duration']} (min:sec)"
         for e in exercises
     )
 

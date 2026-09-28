@@ -211,9 +211,12 @@ def detect_query_topics(query: str) -> Set[str]:
 # working Nutrition retrieval down to zero chunks — the one regression this
 # feature must not cause. Detection defaults to None (no filter, current
 # behavior) whenever it isn't confident.
-# ponytail: keyword heuristic, will misclassify some phrasings — acceptable
-# because 9/10 components have zero content today (a miss just means the
-# guard doesn't fire, same as before this feature existed). Upgrade path:
+# (2026-09-28: every component now has grounded chunks, so the zero-chunk
+# risk above no longer applies; condition words stay unmapped anyway, since
+# dietary questions about them still belong to nutrition.)
+# ponytail: keyword heuristic, will misclassify some phrasings — a miss just
+# means the scope block doesn't fire and the question is answered as
+# nutrition, same as before this feature existed. Upgrade path:
 # an LLM intent-classification pass, if misses on a populated component
 # prove costly in eval.
 COMPONENT_HINTS = {
@@ -275,6 +278,32 @@ COMPONENT_HINTS = {
     "what is heart failure":         "foundations",
     "what causes heart disease":     "foundations",
     "apa itu penyakit jantung":      "foundations",
+
+    # Blood pressure / Lipid / Diabetes / Weight (added 2026-09-28). Only
+    # definitional or reading/result phrasings, never the bare condition
+    # word, so "what can I eat for my blood pressure" still routes to
+    # nutrition. Safe now: every one of these components has grounded
+    # chunks since the 2026-09-07 document drop (>=500 each).
+    "what is blood pressure":        "blood_pressure",
+    "check my blood pressure":       "blood_pressure",
+    "systolic":                      "blood_pressure",
+    "diastolic":                     "blood_pressure",
+    "apa itu tekanan darah":         "blood_pressure",
+    "what is ldl":                   "lipid",
+    "what is hdl":                   "lipid",
+    "what are triglycerides":        "lipid",
+    "lipid panel":                   "lipid",
+    "lipid profile":                 "lipid",
+    "apa itu kolesterol":            "lipid",
+    "hba1c":                         "diabetes",
+    "what is prediabetes":           "diabetes",
+    "insulin dose":                  "diabetes",
+    "apa itu kencing manis":         "diabetes",
+    "what is bmi":                   "weight",
+    "my bmi":                        "weight",
+    "waist circumference":           "weight",
+    "weight loss injection":         "weight",
+    "apa itu bmi":                   "weight",
 }
 
 
