@@ -11,4 +11,8 @@ ingress:
     service: http://localhost:8000
   - hostname: docs-api.computationalrd.com
     service: http://localhost:8100
+  - hostname: mimic-api.computationalrd.com
+    service: http://localhost:8001
+  - hostname: eval.computationalrd.com
+    service: http://localhost:8200
   - service: http_status:404

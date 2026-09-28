@@ -55,17 +55,6 @@ class ApiClient(Base):
     )
 
 
-# --- Admin User Model (invite-only login, shared across nutribot/docs-api/eval) ---
-class AdminUser(Base):
-    __tablename__ = "admin_users"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    hashed_token = Column(String, unique=True, index=True)
-    created_at = Column(DateTime, nullable=False)
-    revoked = Column(Boolean, default=False)
-    last_used_at = Column(DateTime, nullable=True)
-
-
 # --- NEW: Document Metadata Model ---
 class DocumentMetadata(Base):
     __tablename__ = "document_metadata"
@@ -245,6 +234,8 @@ def get_client_by_key(db_session, api_key: str) -> ApiClient | None:
     Finds the client by checking the provided API key against all hashed keys.
     This is intentionally slow to protect against timing attacks.
     """
+    if not api_key:
+        return None
     clients = db_session.query(ApiClient).all()
     for client in clients:
         if check_password_hash(client.hashed_api_key, api_key):
@@ -257,46 +248,6 @@ def get_all_api_clients(db_session):
     Returns a list of all API clients.
     """
     return db_session.query(ApiClient).all()
-
-
-# --- Admin User Management Functions (invite-only login) ---
-def add_admin_user(db_session, name: str):
-    """Mint a new admin invite. Returns (AdminUser, raw_token) — raw_token is
-    shown/printed exactly once, same convention as add_api_client."""
-    from datetime import datetime
-
-    raw_token = secrets.token_hex(32)
-    admin = AdminUser(
-        name=name,
-        hashed_token=generate_password_hash(raw_token),
-        created_at=datetime.utcnow(),
-        revoked=False,
-    )
-    db_session.add(admin)
-    db_session.commit()
-    db_session.refresh(admin)
-    return admin, raw_token
-
-
-def get_admin_by_token(db_session, raw_token: str) -> "AdminUser | None":
-    """Finds the admin by checking the token against all hashed tokens
-    (same slow-but-timing-safe pattern as get_client_by_key). Revoked
-    admins never match."""
-    from datetime import datetime
-
-    if not raw_token:
-        return None
-    admins = db_session.query(AdminUser).filter(AdminUser.revoked == False).all()
-    for admin in admins:
-        if check_password_hash(admin.hashed_token, raw_token):
-            admin.last_used_at = datetime.utcnow()
-            db_session.commit()
-            return admin
-    return None
-
-
-def get_all_admin_users(db_session):
-    return db_session.query(AdminUser).order_by(AdminUser.created_at).all()
 
 
 # --- NEW: Document Management Functions ---

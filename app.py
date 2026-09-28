@@ -404,6 +404,12 @@ async function runRaw() {
 # Admin router (no authentication required - uses password in the form)
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 
+# Team sign-in hub (sign in with an existing X-API-Key to reach EKA review,
+# judge calibration, and the chatbot without re-entering a key each time)
+from team_router import router as team_router
+
+app.include_router(team_router, prefix="/team", tags=["Team"])
+
 # Client portal router (session-based authentication)
 from client_portal_router import router as portal_router
 

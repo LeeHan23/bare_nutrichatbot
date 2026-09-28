@@ -11,6 +11,11 @@ Total Duration are already present on every row.
 Re-run (full overwrite) whenever the client resends the sheet:
 
     python scripts/build_exercise_video_lookup.py "Exercise Video Intensity.xlsx"
+
+Note: this is a full overwrite. `id` and `approved` (added by
+scripts/migrate_exercise_catalog_fields.py for the docs-api Exercise Catalog
+review tab) are NOT carried over -- re-run that migration after this script,
+and re-review anything a teammate had edited/unapproved before the resend.
 """
 import argparse
 import json

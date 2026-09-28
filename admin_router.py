@@ -314,7 +314,6 @@ async def create_api_key(
     Create a new API key for a B2B client.
     Protected by admin password.
     """
-    # Verify admin password
     if password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid admin password")
     

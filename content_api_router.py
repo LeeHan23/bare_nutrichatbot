@@ -23,11 +23,11 @@ import os
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 
 import database as db
-from dependencies import get_db, get_api_client, is_admin_session
+from dependencies import get_db, get_api_client
 
 router = APIRouter()
 
@@ -236,19 +236,17 @@ def patient_feed(
 @router.post("/materials/{material_id}/approve")
 def approve_material(
     material_id: int,
-    request: Request,
-    x_admin_password: str = Header("", alias="X-Admin-Password"),
+    x_admin_password: str = Header(..., alias="X-Admin-Password"),
     database: Session = Depends(get_db),
     client = Depends(get_api_client),
 ):
     """
     Mark a content material as approved (is_active=True).
 
-    Requires X-Admin-Password header (or an active invite-login session)
-    in addition to X-API-Key. Once approved, the material appears in
-    weekly-feed responses.
+    Requires X-Admin-Password header in addition to X-API-Key.
+    Once approved, the material appears in weekly-feed responses.
     """
-    if x_admin_password != ADMIN_PASSWORD and not is_admin_session(request, database):
+    if x_admin_password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid admin password")
 
     mat = database.query(db.ContentMaterial).filter(db.ContentMaterial.id == material_id).first()
@@ -274,13 +272,12 @@ def approve_material(
 @router.post("/materials/{material_id}/unapprove")
 def unapprove_material(
     material_id: int,
-    request: Request,
-    x_admin_password: str = Header("", alias="X-Admin-Password"),
+    x_admin_password: str = Header(..., alias="X-Admin-Password"),
     database: Session = Depends(get_db),
     client = Depends(get_api_client),
 ):
     """Revoke approval for a content material (sets is_active=False)."""
-    if x_admin_password != ADMIN_PASSWORD and not is_admin_session(request, database):
+    if x_admin_password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid admin password")
 
     mat = database.query(db.ContentMaterial).filter(db.ContentMaterial.id == material_id).first()

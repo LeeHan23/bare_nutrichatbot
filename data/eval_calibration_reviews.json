@@ -1,0 +1,422 @@
+{
+  "myth:101": [
+    {
+      "reviewer": "Han",
+      "verdict": "ACCEPT",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-02T06:14:52.545220+00:00"
+    },
+    {
+      "reviewer": "sazzli",
+      "verdict": "HEDGE",
+      "agree": "YES",
+      "notes": "include possible side effects of adding supplement to medicine, interaction unseen which could worsen underlying issue",
+      "ts": "2026-09-12T03:07:45.519518+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "HEDGE",
+      "agree": "YES",
+      "notes": "taking misai kucing to the current meds is not safe in patients with multiple comrbids. It poses risk of hypoglycaemia",
+      "ts": "2026-09-12T07:30:32.618830+00:00"
+    }
+  ],
+  "myth:102": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "HEDGE",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-12T03:10:25.309272+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "HEDGE",
+      "agree": "YES",
+      "notes": "Should refute the claim that misai kucing has any benefits to patients with CKD or HF",
+      "ts": "2026-09-12T07:35:44.219862+00:00"
+    }
+  ],
+  "myth:103": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "REFUTE",
+      "agree": "NO",
+      "notes": "bitter gourd does not manage blood sugar level",
+      "ts": "2026-09-12T04:18:48.898249+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "REFUTE",
+      "agree": "NO",
+      "notes": "",
+      "ts": "2026-09-12T07:37:42.829485+00:00"
+    }
+  ],
+  "myth:104": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "ACCEPT",
+      "agree": "YES",
+      "notes": "improve on bahasa delivery- suggest use lay person dialect perhaps it would translate better",
+      "ts": "2026-09-12T04:28:53.585192+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "HEDGE",
+      "agree": "YES",
+      "notes": "should emphasize bitter gourd can cause hypoglycaemia if taken/drink regularly while taking diabetic meds",
+      "ts": "2026-09-12T07:42:15.222906+00:00"
+    }
+  ],
+  "myth:105": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "REFUTE",
+      "agree": "NO",
+      "notes": "too soft. need to counter the argument stronger. not asking how do u feel- this reenforcement is dangerous.",
+      "ts": "2026-09-12T04:30:01.680868+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "REFUTE",
+      "agree": "NO",
+      "notes": "",
+      "ts": "2026-09-12T07:44:43.741640+00:00"
+    }
+  ],
+  "myth:106": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "ACCEPT",
+      "agree": "YES",
+      "notes": "make stronger refute. they have not been proven ever ...",
+      "ts": "2026-09-12T04:33:17.943697+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "ACCEPT",
+      "agree": "YES",
+      "notes": "should be concise and direct to debunk the substitution myth",
+      "ts": "2026-09-12T07:48:39.617829+00:00"
+    }
+  ],
+  "myth:109": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "ACCEPT",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-12T04:33:40.731851+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "ACCEPT",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-12T07:50:10.394243+00:00"
+    }
+  ],
+  "myth:112": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "HEDGE",
+      "agree": "YES",
+      "notes": "should be direct to address the myth that air kelapa can clean the kidneys. Healthy kidneys do not need any special cleanse. Then address the risk of hyperk for patients with ckd",
+      "ts": "2026-09-12T07:54:55.589167+00:00"
+    },
+    {
+      "reviewer": "sazzli",
+      "verdict": "ACCEPT",
+      "agree": "NO",
+      "notes": "some patients have lower fluid restriction value.",
+      "ts": "2026-09-16T04:48:46.409287+00:00"
+    }
+  ],
+  "myth:114": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "HEDGE",
+      "agree": "YES",
+      "notes": "should emphasize the need for guided safe dietary changes with the the doctor",
+      "ts": "2026-09-12T08:00:33.126405+00:00"
+    },
+    {
+      "reviewer": "sazzli",
+      "verdict": "ACCEPT",
+      "agree": "YES",
+      "notes": "impress on the need to ask their doctors more",
+      "ts": "2026-09-16T04:49:33.210674+00:00"
+    }
+  ],
+  "myth:122": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "REFUTE",
+      "agree": "NO",
+      "notes": "should be concise and direct to debunk the myth",
+      "ts": "2026-09-12T08:02:25.143986+00:00"
+    },
+    {
+      "reviewer": "szzli",
+      "verdict": "REFUTE",
+      "agree": "YES",
+      "notes": "actually ok. but language delivery makes it sound weird.",
+      "ts": "2026-09-16T04:50:29.898812+00:00"
+    }
+  ],
+  "stance:2": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "PERMIT",
+      "agree": "YES",
+      "notes": "stage 3 is still ok.",
+      "ts": "2026-09-16T04:51:11.766364+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "PERMIT",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:13:59.074462+00:00"
+    }
+  ],
+  "stance:11": [
+    {
+      "reviewer": "sazz",
+      "verdict": "MODERATE",
+      "agree": "NO",
+      "notes": "can allow emphasise on calorie dense fruit, potassium",
+      "ts": "2026-09-16T05:58:46.245778+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "MODERATE",
+      "agree": "NO",
+      "notes": "not every ckd stage 3 need to avoid durian - it depends on the potassium level. However, in general they should restrict durian intake.",
+      "ts": "2026-09-25T07:20:18.092340+00:00"
+    }
+  ],
+  "stance:12": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "MODERATE",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-16T06:11:26.300208+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "MODERATE",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:21:43.233754+00:00"
+    }
+  ],
+  "stance:16": [
+    {
+      "reviewer": "sazz",
+      "verdict": "RESTRICT",
+      "agree": "YES",
+      "notes": "avoid msg at all cost",
+      "ts": "2026-09-16T06:11:52.986007+00:00"
+    }
+  ],
+  "stance:24": [
+    {
+      "reviewer": "jazz",
+      "verdict": "RESTRICT",
+      "agree": "NO",
+      "notes": "language allows soup- hence brain thinks it is ok",
+      "ts": "2026-09-16T06:12:25.287389+00:00"
+    }
+  ],
+  "stance:25": [
+    {
+      "reviewer": "sazzli",
+      "verdict": "PERMIT",
+      "agree": "YES",
+      "notes": "include what happens if user dont comply to restriction so theyunderstrnd better",
+      "ts": "2026-09-16T06:13:11.936623+00:00"
+    }
+  ],
+  "stance:26": [
+    {
+      "reviewer": "sazz",
+      "verdict": "PERMIT",
+      "agree": "NO",
+      "notes": "in moderation. talk abt weight loss journey and how rice shd be consumeds",
+      "ts": "2026-09-16T06:13:47.913016+00:00"
+    },
+    {
+      "reviewer": "Suraya",
+      "verdict": "PERMIT",
+      "agree": "NO",
+      "notes": "rice is ok in moderation",
+      "ts": "2026-09-25T07:23:20.630564+00:00"
+    }
+  ],
+  "myth:116": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "REFUTE",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:07:58.091382+00:00"
+    }
+  ],
+  "stance:101": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "RESTRICT",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:24:26.595268+00:00"
+    }
+  ],
+  "stance:102": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "RESTRICT",
+      "agree": "NO",
+      "notes": "should emphasise, misai kucing is contraindicated",
+      "ts": "2026-09-25T07:26:26.753497+00:00"
+    }
+  ],
+  "stance:104": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "RESTRICT",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:27:04.272219+00:00"
+    }
+  ],
+  "stance:109": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "RESTRICT",
+      "agree": "YES",
+      "notes": "caution on air kelapa",
+      "ts": "2026-09-25T07:28:50.522434+00:00"
+    }
+  ],
+  "stance:111": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "RESTRICT",
+      "agree": "NO",
+      "notes": "honey and gula melaka is simple sugar. even a teaspoon can cause spike of glucose. Suggest to stevia",
+      "ts": "2026-09-25T07:32:45.208982+00:00"
+    }
+  ],
+  "stance:122": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "RESTRICT",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:33:45.179503+00:00"
+    }
+  ],
+  "personalization:4": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:34:53.621328+00:00"
+    }
+  ],
+  "personalization:14": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:35:41.831490+00:00"
+    }
+  ],
+  "personalization:16": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:37:00.498173+00:00"
+    }
+  ],
+  "personalization:17": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:39:32.347479+00:00"
+    }
+  ],
+  "personalization:21": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:40:18.209524+00:00"
+    }
+  ],
+  "personalization:24": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:40:55.882336+00:00"
+    }
+  ],
+  "personalization:25": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "FAIL",
+      "agree": "NO",
+      "notes": "i think 1L /day is too retrictive as routine advice. Current guideline still allows 1.5L unless hyponatraemia/oligouria etc",
+      "ts": "2026-09-25T07:48:22.148131+00:00"
+    }
+  ],
+  "personalization:26": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:49:29.045150+00:00"
+    }
+  ],
+  "personalization:28": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:50:01.860642+00:00"
+    }
+  ],
+  "personalization:29": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:50:29.184023+00:00"
+    }
+  ],
+  "personalization:34": [
+    {
+      "reviewer": "Suraya",
+      "verdict": "PASS",
+      "agree": "YES",
+      "notes": "",
+      "ts": "2026-09-25T07:50:46.332899+00:00"
+    }
+  ]
+}

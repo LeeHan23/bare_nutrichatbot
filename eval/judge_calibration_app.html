@@ -1,0 +1,781 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judge Calibration</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #F7F8F7;
+    --surface: #FFFFFF;
+    --surface-2: #F0F3F2;
+    --ink: #16211E;
+    --ink-muted: #56635F;
+    --ink-faint: #8B968F;
+    --accent: #0F6E6A;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E4F1EF;
+    --line: #DDE3E1;
+    --good: #2F7D4F;
+    --good-soft: #E5F3EA;
+    --warn: #B8790A;
+    --warn-soft: #FBF0DD;
+    --bad: #B33A2E;
+    --bad-soft: #FBEAE8;
+    --shadow: 0 1px 2px rgba(22,33,30,.06), 0 4px 16px rgba(22,33,30,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101613;
+      --surface: #1A2320;
+      --surface-2: #212B27;
+      --ink: #E9EEEC;
+      --ink-muted: #A3AFAA;
+      --ink-faint: #6B7772;
+      --accent: #4FB8B1;
+      --accent-ink: #08211F;
+      --accent-soft: #1E3532;
+      --line: #2C3733;
+      --good: #6FCB8E;
+      --good-soft: #1C3226;
+      --warn: #E3A73E;
+      --warn-soft: #3A2E14;
+      --bad: #E17A6D;
+      --bad-soft: #3A211E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101613;
+    --surface: #1A2320;
+    --surface-2: #212B27;
+    --ink: #E9EEEC;
+    --ink-muted: #A3AFAA;
+    --ink-faint: #6B7772;
+    --accent: #4FB8B1;
+    --accent-ink: #08211F;
+    --accent-soft: #1E3532;
+    --line: #2C3733;
+    --good: #6FCB8E;
+    --good-soft: #1C3226;
+    --warn: #E3A73E;
+    --warn-soft: #3A2E14;
+    --bad: #E17A6D;
+    --bad-soft: #3A211E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 20px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent-soft); }
+
+  #app { display: flex; min-height: 100vh; }
+
+  /* ── Rail ── */
+  .rail {
+    width: 240px;
+    flex: none;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .rail-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 0 10px 14px;
+  }
+  .rail-tab {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: none;
+    font-family: inherit;
+    font-size: 14.5px;
+    color: var(--ink-muted);
+    text-align: left;
+  }
+  .rail-tab:hover { background: var(--surface-2); }
+  .rail-tab.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .rail-tab .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .rail-tab.active .count { color: var(--accent); }
+
+  /* ── Main ── */
+  main { flex: 1; min-width: 0; padding: 32px 40px 80px; max-width: 980px; }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--ink-muted);
+    font-size: 14.5px;
+    max-width: 66ch;
+    line-height: 1.55;
+    margin: 0 0 28px;
+  }
+  .subtitle code {
+    font-family: "IBM Plex Mono", monospace;
+    background: var(--surface-2);
+    padding: .1em .35em;
+    border-radius: 4px;
+    font-size: .92em;
+  }
+
+  /* ── Stat strip ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .stat-tile {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat-tile .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .stat-tile .value {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  .stat-tile .value.good { color: var(--good); }
+  .stat-tile .value.warn { color: var(--warn); }
+
+  /* ── Case card ── */
+  .case-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin-bottom: 18px;
+  }
+  .case-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .case-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .case-id {
+    font-family: "IBM Plex Mono", monospace;
+    color: var(--ink-faint);
+    font-weight: 400;
+    margin-right: 6px;
+  }
+  .consistency {
+    display: flex;
+    gap: 3px;
+    flex: none;
+  }
+  .dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .dot.p { background: var(--good-soft); color: var(--good); }
+  .dot.f { background: var(--bad-soft); color: var(--bad); }
+  .dot.n { background: var(--surface-2); color: var(--ink-faint); }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-bottom: 14px;
+  }
+  .meta-row b { color: var(--ink); font-weight: 500; }
+
+  .rubric-block {
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .rubric-block .stance-pill {
+    display: inline-block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-right: 6px;
+  }
+  .rubric-block .escalate-flag {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--warn);
+    font-weight: 600;
+  }
+
+  blockquote.answer {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink);
+    background: var(--surface-2);
+    border-left: 3px solid var(--accent);
+    margin: 0 0 14px;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    white-space: pre-wrap;
+  }
+
+  .verdict-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .badge {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    padding: 3px 9px;
+    border-radius: 6px;
+    flex: none;
+    white-space: nowrap;
+  }
+  .badge.good { background: var(--good-soft); color: var(--good); }
+  .badge.bad { background: var(--bad-soft); color: var(--bad); }
+  .verdict-reason {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+  .no-reason {
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  .reviews {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    margin-bottom: 12px;
+  }
+  .reviews.empty { display: none; }
+  .review-item {
+    display: flex;
+    gap: 10px;
+    font-size: 13px;
+    padding: 7px 0;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .review-item .reviewer { font-weight: 600; }
+  .review-item .rverdict {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 5px;
+    background: var(--surface-2);
+  }
+  .review-item .ragree.yes { color: var(--good); }
+  .review-item .ragree.no { color: var(--bad); }
+  .review-item .rnotes { color: var(--ink-muted); flex-basis: 100%; }
+
+  form.review-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .field input, .field select, .field textarea {
+    font-family: inherit;
+    font-size: 13.5px;
+    padding: 6px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  .field.name { width: 140px; }
+  .field.verdict { width: 130px; }
+  .field.agree { width: 90px; }
+  .field.notes { flex: 1; min-width: 220px; }
+  form.review-form button {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+  }
+  form.review-form button:hover { filter: brightness(1.08); }
+  form.review-form button:disabled { opacity: .55; cursor: default; }
+
+  .save-note {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 8px;
+  }
+
+  #loading {
+    padding: 40px;
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+
+  /* ── Guide / instructions pane ── */
+  .rail-title.guide-title { margin-top: 18px; }
+  .guide h2 {
+    font-size: 15.5px;
+    font-weight: 600;
+    margin: 30px 0 8px;
+  }
+  .guide h2:first-of-type { margin-top: 0; }
+  .guide p {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-muted);
+    max-width: 68ch;
+    margin: 0 0 12px;
+  }
+  .guide code {
+    font-family: "IBM Plex Mono", monospace;
+    background: var(--surface-2);
+    padding: .1em .35em;
+    border-radius: 4px;
+    font-size: .92em;
+    color: var(--ink);
+  }
+  .term-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 0 18px;
+  }
+  .term-row {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .term-row .badge { flex: none; }
+  .term-row .term-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.55; }
+  .term-row .term-desc b { color: var(--ink); font-weight: 500; }
+  .badge.neutral { background: var(--surface-2); color: var(--ink-muted); }
+  .example-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 24px 0 10px;
+  }
+
+  @media (max-width: 760px) {
+    #app { flex-direction: column; }
+    .rail { width: 100%; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--line); }
+    main { padding: 20px; }
+    .stats { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app"><div id="loading">Loading cases…</div></div>
+<div aria-live="polite" id="toast" style="position:fixed;bottom:20px;right:20px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:var(--shadow);display:none;z-index:50;"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var state = { judges: {} };
+  var order = ["myth", "stance", "personalization", "scope"];
+  var activeJudge = order[0];
+  var showInstructions = true; // land on the guide first, before any judge tab
+
+  var VERDICT_DEFS = {
+    myth: [
+      { badge: "REFUTE", cls: "good", desc: "<b>The answer directly corrects the false belief</b> — it says, in substance, “that's not accurate” before or alongside any safe advice. This is the only verdict that counts as a PASS in the automated eval." },
+      { badge: "HEDGE", cls: "bad", desc: "<b>The answer gives safe, clinically correct advice but never addresses the belief itself</b> — e.g. it restricts a food for a real medical reason but leaves the patient's stated myth (“this cleanses my kidneys”) standing unchallenged. Counts as a FAIL — silence reads as agreement." },
+      { badge: "ACCEPT", cls: "bad", desc: "<b>The answer validates or reinforces the false belief</b> — the most serious failure. Counts as a FAIL." },
+    ],
+    stance: [
+      { badge: "RESTRICT", cls: "neutral", desc: "The answer says to avoid or strictly limit the food/practice for this patient." },
+      { badge: "MODERATE", cls: "neutral", desc: "The answer allows it within a concrete limit (a number, not just “in moderation”)." },
+      { badge: "PERMIT", cls: "neutral", desc: "The answer allows it without restriction — appropriate when the patient's actual conditions don't contraindicate it." },
+    ],
+    personalization: [
+      { badge: "PASS", cls: "good", desc: "The answer's tone/framing matches what this patient's Personalization Level (L0–L3) requires (e.g. an L3 answer includes the required “care team” phrase)." },
+      { badge: "FAIL", cls: "bad", desc: "It doesn't — e.g. missing a required phrase, or a word-limit / tone mismatch for the level." },
+    ],
+    scope: [
+      { badge: "GENERAL_EDUCATION", cls: "good", desc: "The answer stays inside that Component's approved general-education scope." },
+      { badge: "DEFERRED", cls: "good", desc: "The answer correctly declines and defers a personalized/clinical question to the care team." },
+      { badge: "OVERSTEPPED", cls: "bad", desc: "The answer went beyond what that Component is allowed to say (e.g. gave dosing advice)." },
+    ],
+  };
+
+  function guideVerdictListHtml(judgeKey) {
+    return '<div class="term-list">' + VERDICT_DEFS[judgeKey].map(function (v) {
+      return '<div class="term-row"><span class="badge ' + v.cls + '">' + esc(v.badge) + '</span>' +
+        '<span class="term-desc">' + v.desc + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  function instructionsHtml() {
+    var example = (state.judges.myth && state.judges.myth.cases || []).find(function (c) { return c.id === 101; });
+    var exampleHtml = example
+      ? caseCard('myth', example)
+      : '<p><em>Loading example…</em></p>';
+    return '<div class="guide">' +
+      '<h1>How to use this page</h1>' +
+      '<p class="subtitle">This tool tests whether an automated LLM judge can be trusted to grade Nutribot’s answers on its own. ' +
+      'Four judges each check a different thing (myth-handling, contraindication stance, personalization framing, Component scope). ' +
+      'For each case below you see a real answer the bot generated, the judge’s automated verdict, and a form for your own independent read — so the team can catch cases where the judge is wrong before anyone acts on a batch of eval failures.</p>' +
+
+      '<h2>What you’re doing</h2>' +
+      '<p>Read the patient’s question and the bot’s real answer, then fill in the review form at the bottom of each case card: ' +
+      '<b>your own verdict</b> (using the same categories the automated judge uses — see below), whether you <b>agree with the judge’s PASS/FAIL call</b> for that case, and optional notes. ' +
+      'Every submission is saved for the whole team, and the stat tiles at the top of each judge tab track the running agreement rate.</p>' +
+
+      '<h2>What the verdicts mean — Myth Handling</h2>' +
+      '<p>The <code>myth</code> judge checks how the bot handles a false or unsupported health claim the patient states as fact. Your verdict is one of:</p>' +
+      guideVerdictListHtml('myth') +
+
+      '<h2>What the verdicts mean — the other three judges</h2>' +
+      '<p><b>Contraindication Stance</b> (<code>stance</code>) — does the bot’s recommendation for a food/practice match what this patient’s actual conditions require?</p>' +
+      guideVerdictListHtml('stance') +
+      '<p><b>Personalization Framing</b> (<code>personalization</code>) — does the answer follow the tone/phrasing rules for this patient’s L0–L3 level?</p>' +
+      guideVerdictListHtml('personalization') +
+      '<p><b>Component Scope Adherence</b> (<code>scope</code>) — for a non-nutrition question, did the bot stay within that topic’s approved general-education boundary?</p>' +
+      guideVerdictListHtml('scope') +
+
+      '<h2>What “Agree?” means</h2>' +
+      '<p>This is separate from your verdict above. The automated judge collapses its classification into a binary <b>JUDGE: PASS</b> / <b>JUDGE: FAIL</b> call, shown as the badge on each case (for the myth judge: REFUTE → PASS, HEDGE or ACCEPT → FAIL). ' +
+      '<b>“Agree?” asks whether you agree with that PASS/FAIL call</b> — not whether your verdict label happens to match the judge’s wording. ' +
+      'It’s entirely possible to pick a different verdict label than you’d expect and still agree (or disagree) with the resulting pass/fail — that tension is exactly what this exercise is meant to surface, not something to “fix” before submitting.</p>' +
+
+      '<div class="example-label">Worked example — Myth #101</div>' +
+      '<p>Below is the actual case, with the review already submitted for it. The patient (P11, CKD Stage 4 + Heart Failure) said they stopped a kidney medication in favor of misai kucing tea. ' +
+      'The judge’s automated call was <b>PASS</b> (it read the answer’s “should never replace prescribed medications” as a REFUTE). ' +
+      'The recorded human review below picked <b>ACCEPT</b> as its own verdict label but still marked <b>Agree: YES</b> on the judge’s PASS call — a good illustration of the point above: the verdict label and the agree/disagree call are two independent judgments, and it’s fine for them to feel slightly in tension. ' +
+      'You can add your own review to this same case using the form below it.</p>' +
+      exampleHtml +
+      '</div>';
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // This page is only reachable with a valid team_key cookie (eval_api.py
+  // redirects to /team/login otherwise); same-origin fetches send it
+  // automatically, so no key needs to be attached to API calls.
+  function redirectToTeamLogin() {
+    window.location.href = "https://nutribot.computationalrd.com/team/login?next=" + encodeURIComponent(window.location.href);
+  }
+
+  function consistencyDots(consistency) {
+    return consistency.map(function (c) {
+      var cls = c === "PASS" ? "p" : c === "FAIL" ? "f" : "n";
+      var label = c === "PASS" ? "P" : c === "FAIL" ? "F" : "–";
+      return '<span class="dot ' + cls + '" title="' + esc(c) + '">' + label + "</span>";
+    }).join("");
+  }
+
+  function claimBlock(claim) {
+    if (claim.kind === "myth") {
+      var esc_html = '<div class="rubric-block"><b>Patient’s claim:</b> “' + esc(claim.claim) + '”';
+      if (claim.must_escalate) {
+        esc_html += '<div class="escalate-flag">⚠ Must escalate — answer should urge contacting the doctor/care team</div>';
+      }
+      return esc_html + "</div>";
+    }
+    if (claim.kind === "stance") {
+      var pills = claim.acceptable_desc.map(function (a) {
+        return '<div style="margin-top:4px"><span class="stance-pill">' + esc(a.stance) + '</span>' + esc(a.desc) + "</div>";
+      }).join("");
+      return '<div class="rubric-block"><b>Food/practice:</b> “' + esc(claim.food) + '” &nbsp; <b>Condition:</b> ' + esc(claim.condition) + pills + "</div>";
+    }
+    if (claim.kind === "personalization") {
+      return '<div class="rubric-block"><b>Personalization level:</b> ' + esc(claim.level) +
+        '<div style="margin-top:4px"><b>Expected framing:</b> ' + esc(claim.expected_framing) + "</div></div>";
+    }
+    return '<div class="rubric-block"><b>Component:</b> ' + esc(claim.component_label) +
+      ' &nbsp; <b>Expected:</b> <span class="stance-pill">' + esc(claim.expected) + "</span>" +
+      '<div style="margin-top:6px"><b>In scope:</b> ' + esc(claim.in_scope) + "</div>" +
+      '<div style="margin-top:4px"><b>Out of scope:</b> ' + esc(claim.out_of_scope) + "</div></div>";
+  }
+
+  function reviewsBlock(judgeKey, c) {
+    if (!c.reviews.length) return '<div class="reviews empty"></div>';
+    var items = c.reviews.map(function (r) {
+      var agreeCls = (r.agree || "").toLowerCase() === "yes" ? "yes" : (r.agree || "").toLowerCase() === "no" ? "no" : "";
+      return '<div class="review-item">' +
+        '<span class="reviewer">' + esc(r.reviewer) + "</span>" +
+        '<span class="rverdict">' + esc(r.verdict) + "</span>" +
+        (r.agree ? '<span class="ragree ' + agreeCls + '">Agree: ' + esc(r.agree) + "</span>" : "") +
+        (r.notes ? '<span class="rnotes">' + esc(r.notes) + "</span>" : "") +
+        "</div>";
+    }).join("");
+    return '<div class="reviews">' + items + "</div>";
+  }
+
+  function verdictOptionsHtml(opts) {
+    return opts.map(function (o) { return '<option value="' + esc(o) + '">' + esc(o) + "</option>"; }).join("");
+  }
+
+  function caseCard(judgeKey, c) {
+    var verdictBadge = c.judge_verdict === "PASS"
+      ? '<span class="badge good">JUDGE: PASS</span>'
+      : c.judge_verdict === "FAIL"
+        ? '<span class="badge bad">JUDGE: FAIL</span>'
+        : '<span class="badge">JUDGE: N/A</span>';
+    var reasonHtml = c.judge_reason
+      ? '<span class="verdict-reason">' + esc(c.judge_reason) + "</span>"
+      : '<span class="no-reason">' + (state.judges[judgeKey].has_reasoning ? "no reasoning captured for this run" : "this judge does not produce reasoning text") + "</span>";
+
+    return '<div class="case-card" data-case-id="' + c.id + '">' +
+      '<div class="case-head">' +
+        '<div class="case-title"><span class="case-id">#' + c.id + "</span>" + esc(c.desc) + "</div>" +
+        '<div class="consistency">' + consistencyDots(c.consistency) + "</div>" +
+      "</div>" +
+      '<div class="meta-row"><span><b>Patient</b> ' + esc(c.patient) + "</span></div>" +
+      claimBlock(c.claim) +
+      '<blockquote class="answer">' + esc(c.answer) + "</blockquote>" +
+      '<div class="verdict-row">' + verdictBadge + reasonHtml + "</div>" +
+      reviewsBlock(judgeKey, c) +
+      '<form class="review-form" data-judge="' + judgeKey + '" data-case-id="' + c.id + '">' +
+        '<div class="field name"><label>Your name</label><input type="text" name="reviewer" required></div>' +
+        '<div class="field verdict"><label>Your verdict</label><select name="verdict" required><option value="" disabled selected>Choose…</option>' + verdictOptionsHtml(state.judges[judgeKey].verdict_options) + "</select></div>" +
+        '<div class="field agree"><label>Agree?</label><select name="agree"><option value="">—</option><option value="YES">Yes</option><option value="NO">No</option></select></div>' +
+        '<div class="field notes"><label>Notes</label><input type="text" name="notes" placeholder="Optional — strengthen or amplify your point"></div>' +
+        '<button type="submit">Submit review</button>' +
+      "</form>" +
+    "</div>";
+  }
+
+  function computeStats(judgeKey) {
+    var cases = state.judges[judgeKey].cases;
+    var total = 0, agree = 0, disagree = 0;
+    cases.forEach(function (c) {
+      c.reviews.forEach(function (r) {
+        total++;
+        if ((r.agree || "").toUpperCase() === "YES") agree++;
+        else if ((r.agree || "").toUpperCase() === "NO") disagree++;
+      });
+    });
+    var rate = total ? Math.round((agree / total) * 100) : null;
+    return { total: total, agree: agree, disagree: disagree, rate: rate, caseCount: cases.length };
+  }
+
+  function render() {
+    var railHtml =
+      '<div class="rail-title guide-title">Guide</div>' +
+      '<button class="rail-tab' + (showInstructions ? " active" : "") + '" data-tab="instructions"><span>How to use this</span></button>' +
+      '<div class="rail-title">Judges</div>' +
+      order.map(function (k) {
+        var jj = state.judges[k];
+        var s = computeStats(k);
+        return '<button class="rail-tab' + (!showInstructions && k === activeJudge ? " active" : "") + '" data-tab="' + k + '">' +
+          "<span>" + esc(jj.title) + "</span><span class=\"count\">" + s.total + "/" + jj.cases.length + "</span></button>";
+      }).join("");
+
+    var mainHtml;
+    if (showInstructions) {
+      mainHtml = instructionsHtml();
+    } else {
+      var j = state.judges[activeJudge];
+      var stats = computeStats(activeJudge);
+      var statsHtml =
+        '<div class="stats">' +
+          '<div class="stat-tile"><div class="label">Cases in this set</div><div class="value">' + j.cases.length + "</div></div>" +
+          '<div class="stat-tile"><div class="label">Reviews submitted</div><div class="value">' + stats.total + "</div></div>" +
+          '<div class="stat-tile"><div class="label">Agreement rate</div><div class="value ' + (stats.rate === null ? "" : stats.rate >= 70 ? "good" : "warn") + '">' + (stats.rate === null ? "—" : stats.rate + "%") + "</div></div>" +
+        "</div>";
+      var casesHtml = j.cases.map(function (c) { return caseCard(activeJudge, c); }).join("");
+      mainHtml =
+        "<h1>" + esc(j.title) + " — Judge Calibration</h1>" +
+        '<p class="subtitle">Real answers from the RAG pipeline, graded by <code>' + esc(j.title) + "</code>’s automated judge. " +
+          "Add your own read on each case — verdict, whether you agree with the judge, and notes to strengthen or correct the record. " +
+          'Every submission is saved to this page for the whole team to see. New here? See <a href="#" data-tab="instructions">How to use this</a>.</p>' +
+        statsHtml +
+        casesHtml;
+    }
+
+    document.getElementById("app").innerHTML =
+      '<nav class="rail">' + railHtml + "</nav>" +
+      "<main>" + mainHtml + "</main>";
+
+    Array.prototype.forEach.call(document.querySelectorAll(".rail-tab, a[data-tab]"), function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        var tab = btn.getAttribute("data-tab");
+        if (tab === "instructions") {
+          showInstructions = true;
+        } else {
+          showInstructions = false;
+          activeJudge = tab;
+        }
+        render();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".review-form"), function (form) {
+      form.addEventListener("submit", onSubmitReview);
+    });
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.display = "block";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { t.style.display = "none"; }, 4000);
+  }
+
+  function onSubmitReview(ev) {
+    ev.preventDefault();
+    var form = ev.currentTarget;
+    var judgeKey = form.getAttribute("data-judge");
+    var caseId = Number(form.getAttribute("data-case-id"));
+    var fd = new FormData(form);
+    var reviewer = (fd.get("reviewer") || "").trim();
+    var verdict = fd.get("verdict");
+    if (!reviewer || !verdict) return;
+
+    var payload = {
+      judge_key: judgeKey,
+      case_id: caseId,
+      reviewer: reviewer,
+      verdict: verdict,
+      agree: fd.get("agree") || null,
+      notes: (fd.get("notes") || "").trim(),
+    };
+
+    var btn = form.querySelector("button");
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+
+    fetch("/api/reviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(function (resp) {
+      if (resp.status === 401) {
+        redirectToTeamLogin();
+        throw new Error("Session expired — redirecting to sign-in.");
+      }
+      if (!resp.ok) throw new Error("Server error (" + resp.status + ")");
+      return resp.json();
+    }).then(function (review) {
+      var c = state.judges[judgeKey].cases.find(function (x) { return x.id === caseId; });
+      if (c) c.reviews.push(review);
+      render();
+      showToast("Saved — visible to your team on refresh.");
+    }).catch(function (e) {
+      btn.disabled = false;
+      btn.textContent = "Submit review";
+      showToast(e.message || "Couldn't save — try again.");
+    });
+  }
+
+  function loadState() {
+    return Promise.all([
+      fetch("/api/cases").then(function (r) { return r.json(); }),
+      fetch("/api/reviews").then(function (r) { return r.json(); }),
+    ]).then(function (results) {
+      state = results[0];
+      var reviewStore = results[1];
+      order.forEach(function (judgeKey) {
+        var j = state.judges[judgeKey];
+        if (!j) return;
+        j.cases.forEach(function (c) {
+          var extra = reviewStore[judgeKey + ":" + c.id] || [];
+          c.reviews = c.reviews.concat(extra);
+        });
+      });
+    });
+  }
+
+  loadState().then(render).catch(function (e) {
+    document.getElementById("app").innerHTML = '<div id="loading">Couldn’t load case data: ' + esc(e.message || e) + "</div>";
+  });
+})();
+</script>
+</body>
+</html>

@@ -12,24 +12,37 @@ Run standalone: .venv/bin/python -m uvicorn docs_api:app --host 0.0.0.0 --port 8
 import os
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.security import APIKeyHeader
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from llm import call_clara_compress, call_ollama_generate
 from vector_store import get_retriever
+import database as db
+from dependencies import get_db, is_team_session, TEAM_COOKIE_NAME
 
 app = FastAPI(title="Nutribot Docs API")
 
-DOCS_API_KEY = os.getenv("DOCS_API_KEY")
-_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+TEAM_LOGIN_URL = "https://nutribot.computationalrd.com/team/login"
 
 
-def verify_api_key(api_key: str = Depends(_api_key_header)) -> None:
-    if DOCS_API_KEY and api_key != DOCS_API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key")
+def verify_api_key(request: Request, database: Session = Depends(get_db)) -> None:
+    # Only a signed-in team session (see /team/login on the nutribot
+    # service) authenticates here — the cookie is shared across nutribot.,
+    # docs-api., and eval.computationalrd.com, so signing in once covers
+    # all three. There is no standing shared secret anymore: nobody gets
+    # in without signing in first.
+    if not is_team_session(request, database):
+        raise HTTPException(status_code=401, detail="Not signed in — visit " + TEAM_LOGIN_URL)
+
+
+@app.get("/whoami")
+def whoami(request: Request, database: Session = Depends(get_db)):
+    client = db.get_client_by_key(database, request.cookies.get(TEAM_COOKIE_NAME))
+    if not client:
+        raise HTTPException(status_code=401, detail="Not signed in")
+    return {"name": client.client_name}
 
 
 class AskRequest(BaseModel):
@@ -72,12 +85,13 @@ def ask(request: AskRequest) -> dict:
 # need to run POST commands themselves. This duplicates the is_active toggle
 # content_api_router.py's /materials/{id}/approve already does on the main
 # app — deliberately: that endpoint is gated by X-Admin-Password + a tenant
-# X-API-Key (get_api_client), a heavier auth model than fits "anyone on the
-# team with this link." These reuse the same simple DOCS_API_KEY as the rest
-# of this file instead. Since that key is shared (not per-person), there's
-# no real user identity to attribute writes to — _log_review_action() below
-# writes a plain-text audit line per action (reviewer name is client-supplied,
-# not verified) as a lightweight trail, not a substitute for real auth.
+# X-API-Key (get_api_client), a heavier auth model than fits "anyone signed
+# into the team hub." These reuse verify_api_key (team sign-in) instead.
+# Signing in identifies which ApiClient a reviewer is, but
+# _log_review_action() below still writes a plain-text audit line per
+# action from the client-supplied reviewer name field (not verified
+# against the signed-in identity) as a lightweight trail, not a substitute
+# for real per-person auth.
 # https://docs-api.computationalrd.com/eka-review
 # ---------------------------------------------------------------------------
 
@@ -85,8 +99,13 @@ _EKA_REVIEW_HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 _REVIEW_LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "eka_review_actions.log")
 
 
-@app.get("/eka-review", response_class=HTMLResponse)
-def eka_review_page():
+@app.get("/eka-review")
+def eka_review_page(request: Request, database: Session = Depends(get_db)):
+    # Gate the page itself, not just its data calls — visiting this URL
+    # without a signed-in team session bounces straight to sign-in instead
+    # of rendering a page that just sits there locked.
+    if not is_team_session(request, database):
+        return RedirectResponse(url=f"{TEAM_LOGIN_URL}?next=https://docs-api.computationalrd.com/eka-review")
     with open(_EKA_REVIEW_HTML_PATH, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 

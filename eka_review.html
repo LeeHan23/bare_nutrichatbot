@@ -204,7 +204,7 @@
     <p class="lede" id="pageLede">This week's Exercise / Knowledge / Activity drafts, generated every Monday 06:00 and shown here live from the database — nothing is delivered to a patient until a human approves it.</p>
     <div class="callout" id="pageCallout">
       <span class="dot"></span>
-      <div>Approve, unapprove, or edit any item right here — anyone with the page link and the API key can. Nothing reaches a patient until an item is approved. There's no per-person login behind this key, so each action is logged with whatever name is entered below (not verified) for a lightweight audit trail. Items are removed from this page automatically 30 days after generation — but always archived first (content, approval status, and every note) to an Excel file under materials/, so nothing is lost when a week rolls off.</div>
+      <div>Approve, unapprove, or edit any item right here — anyone signed in at the <a href="https://nutribot.computationalrd.com/team">team hub</a> can. Nothing reaches a patient until an item is approved. Sign-in identifies who you are to the system, but each action is still logged with whatever name is entered below (not cross-checked against your sign-in) for a lightweight audit trail. Items are removed from this page automatically 30 days after generation — but always archived first (content, approval status, and every note) to an Excel file under materials/, so nothing is lost when a week rolls off.</div>
     </div>
     <div class="seg" id="pageTabs">
       <button id="pageTabEka" aria-pressed="true">Weekly EKA</button>
@@ -296,6 +296,9 @@
   var CAT_COLORS = { Exercise: "var(--cat-exercise)", Knowledge: "var(--cat-knowledge)", Activity: "var(--cat-activity)" };
   var KEY_STORAGE = "eka_review_api_key";
   var REVIEWER_STORAGE = "eka_review_reviewer_name";
+  // Set true when a valid admin_token cookie is found (see /admin/login on
+  // the nutribot service) — lets the manual key gate be skipped entirely.
+  var cookieAuthed = false;
 
   // ISO week 35, 2026 (Mon 24/8-Sun 30/8) is relabeled "Week 1" on this page
   // — the underlying week_number stored in the DB stays the real ISO week
@@ -393,6 +396,10 @@
     if (errMsg) { err.textContent = errMsg; err.style.display = "block"; } else { err.style.display = "none"; }
   }
   function hideGate() { document.getElementById("gate").classList.add("hidden"); }
+  // There's no standing shared key anymore (team sign-in only) — a 401 here
+  // means the session cookie is missing/expired, not a wrong key, so send
+  // the whole page back through sign-in instead of re-prompting for a key.
+  function redirectToTeamLogin() { window.location.href = "https://nutribot.computationalrd.com/team/login?next=" + encodeURIComponent(window.location.href); }
 
   document.getElementById("gateSubmit").addEventListener("click", submitKey);
   document.getElementById("gateKey").addEventListener("keydown", function (e) { if (e.key === "Enter") submitKey(); });
@@ -418,7 +425,7 @@
       headers: { "X-API-Key": getKey(), "Content-Type": "application/json" },
       body: JSON.stringify(body || {}),
     }).then(function (res) {
-      if (res.status === 401) { localStorage.removeItem(KEY_STORAGE); showGate("Invalid key — try again."); throw new Error("unauthorized"); }
+      if (res.status === 401) { redirectToTeamLogin(); throw new Error("unauthorized"); }
       if (!res.ok) return res.json().then(function (e) { throw new Error(e.detail || ("HTTP " + res.status)); }).catch(function (e) { throw e instanceof Error ? e : new Error("HTTP " + res.status); });
       return res.json();
     });
@@ -441,12 +448,12 @@
   // ---------- Data loading ----------
   function loadData() {
     var key = getKey();
-    if (!key) { showGate(); return; }
+    if (!key && !cookieAuthed) { redirectToTeamLogin(); return; }
     document.getElementById("grid").innerHTML = '<div class="loading-state">Loading…</div>';
     var qs = state.includeExpired ? "?include_expired=true" : "";
     fetch("/eka-review/data" + qs, { headers: { "X-API-Key": key } })
       .then(function (res) {
-        if (res.status === 401) { localStorage.removeItem(KEY_STORAGE); showGate("Invalid key — try again."); throw new Error("unauthorized"); }
+        if (res.status === 401) { redirectToTeamLogin(); throw new Error("unauthorized"); }
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();
       })
@@ -1058,11 +1065,11 @@
 
   function loadExerciseCatalog() {
     var key = getKey();
-    if (!key) { showGate(); return; }
+    if (!key && !cookieAuthed) { redirectToTeamLogin(); return; }
     document.getElementById("exGrid").innerHTML = '<div class="loading-state">Loading…</div>';
     fetch("/eka-review/exercise-catalog", { headers: { "X-API-Key": key } })
       .then(function (res) {
-        if (res.status === 401) { localStorage.removeItem(KEY_STORAGE); showGate("Invalid key — try again."); throw new Error("unauthorized"); }
+        if (res.status === 401) { redirectToTeamLogin(); throw new Error("unauthorized"); }
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();
       })
@@ -1362,8 +1369,14 @@
 
   buildCategorySeg();
   buildLevelSeg();
-  var saved = getKey();
-  if (saved) loadData(); else showGate();
+  fetch("/whoami", { credentials: "include" })
+    .then(function (r) { return r.ok; })
+    .catch(function () { return false; })
+    .then(function (ok) {
+      cookieAuthed = ok;
+      var saved = getKey();
+      if (saved || cookieAuthed) loadData(); else redirectToTeamLogin();
+    });
 })();
 </script>
 </body>
