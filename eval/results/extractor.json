@@ -20,7 +20,7 @@
           "palm oil"
         ]
       },
-      "elapsed_s": 5.6
+      "elapsed_s": 5.7
     },
     {
       "id": 2,
@@ -36,7 +36,7 @@
           "olive oil"
         ]
       },
-      "elapsed_s": 1.5
+      "elapsed_s": 2.2
     },
     {
       "id": 3,
@@ -53,7 +53,7 @@
           "ghee"
         ]
       },
-      "elapsed_s": 1.6
+      "elapsed_s": 1.5
     },
     {
       "id": 4,
@@ -93,7 +93,7 @@
       "result": {
         "medication_compliance": "good"
       },
-      "elapsed_s": 1.1
+      "elapsed_s": 1.2
     },
     {
       "id": 7,
@@ -112,7 +112,7 @@
         ],
         "activity_intensity": "moderate"
       },
-      "elapsed_s": 1.9
+      "elapsed_s": 2.0
     },
     {
       "id": 8,
@@ -145,7 +145,7 @@
           "tree nuts"
         ]
       },
-      "elapsed_s": 1.6
+      "elapsed_s": 1.9
     },
     {
       "id": 10,
@@ -158,7 +158,7 @@
       "result": {
         "tobacco_status": "Current smoker"
       },
-      "elapsed_s": 1.6
+      "elapsed_s": 1.1
     },
     {
       "id": 11,
@@ -187,7 +187,7 @@
           "vitamin D"
         ]
       },
-      "elapsed_s": 1.3
+      "elapsed_s": 1.2
     },
     {
       "id": 13,
@@ -204,7 +204,7 @@
           "coconut milk"
         ]
       },
-      "elapsed_s": 1.4
+      "elapsed_s": 1.5
     },
     {
       "id": 14,
@@ -246,7 +246,7 @@
       "result": {
         "tobacco_status": "Never smoked"
       },
-      "elapsed_s": 1.1
+      "elapsed_s": 1.2
     },
     {
       "id": 17,
@@ -291,7 +291,7 @@
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 0.9
+      "elapsed_s": 0.8
     },
     {
       "id": 20,
@@ -302,7 +302,7 @@
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 0.9
+      "elapsed_s": 0.8
     }
   ]
 }

@@ -5,7 +5,7 @@ Python source. This is a generated snapshot of `eval/test_rag.py` (60 cases)
 and `eval/test_extractor.py` (20 cases) as of 2026-08-07 — **regenerate this
 doc after adding/editing cases**, it is not read by either suite.
 
-No pass/fail results here — see `eval/results/EVAL_REPORT.md` and
+No pass/fail results here — see `docs/archive/EVAL_REPORT.md` and
 `eval/results/rag.json` / `extractor.json` for that.
 
 ---
