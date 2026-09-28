@@ -169,9 +169,39 @@ routes to `component=medication`, retrieves 0 chunks, and (even after the
 explicitly `out_of_scope`) the model defers to the doctor instead of
 answering.
 
+**2026-09-28:** routing phrases added for `blood_pressure`, `lipid`,
+`diabetes` and `weight`, which had none. They are definitional or
+reading/result phrasings only ("what is blood pressure", "systolic",
+"what is LDL", "lipid panel", "HbA1c", "insulin dose", "what is BMI",
+"my BMI", "waist circumference", plus BM "apa itu …" forms). The bare
+condition words are still unmapped, so dietary questions about these
+conditions stay with nutrition. The zero-chunk risk above no longer applies:
+every component has grounded chunks since the 2026-09-07 drop (225 for
+medication up to 5,099 for foundations). An offline check over all 110 eval
+questions confirmed no existing case changed route. `eval/test_rag.py` now
+fails any scope case whose question doesn't route to its intended module,
+so a routing gap shows up as a failure rather than a silent pass.
+
 This is a `# ponytail:`-marked heuristic ceiling in `vector_store.py` —
 upgrade path is an LLM intent-classification pass if misses on a populated
 component prove costly in eval.
+
+## EKA personalization tagging (added 2026-09-12)
+
+Weekly EKA rows carry `content_materials.personalization_level` (L0–L3)
+and `onboarding_stage` (OB1–OB3). Columns come from
+`scripts/migrate_eka_personalization_columns.py`; legacy rows are
+backfilled by `scripts/backfill_legacy_eka_levels.py`. The generator expands
+each item into L and OB variants using `taxonomy.eka_constraints_prompt_block`
+(Role, Tone and `*_style` fields from the RulesPolicyTables tabs). The
+patient feed filters on `database.get_effective_personalization_level()` /
+`get_effective_onboarding_stage()`, which fall back to the My Heart Coach
+staging DB (`myheart_db.py`) when no dietitian value is set.
+
+**Known gap:** the generator groups content by 13 condition groups, not by
+Component slug, and never sets `ContentMaterial.component`. Weight, tobacco,
+medication and physical activity have no EKA group yet. Planned in
+[ROADMAP.md](ROADMAP.md) Phase 2 (K1).
 
 ## Still open — do not guess at these
 
@@ -205,8 +235,6 @@ component prove costly in eval.
    time the client resends the workbook — no automation, no webhook. The
    workbook only had 1 Approved row as of 2026-08-12; revisit once real
    delivery cadence (email vs. shared drive vs. an eventual API) is clear.
-6. **`image_url` / `exercise_video` frontend rendering.** Neither is
-   actually consumed by any frontend today (`app.py`, `website_chat_router.py`,
-   `whatsapp_router.py`, `patient_app.html` — confirmed via grep). The API
-   response carries the field correctly; wiring a UI to render it is
-   separate, unstarted work.
+6. **`image_url` frontend rendering.** Still not consumed by any frontend.
+   *(`exercise_video` is resolved: `patient_app.html:442` renders it as a
+   "▶ Watch" link, wired in commit d5eff38 and fixed in 7f8cbf2.)*

@@ -1,3 +1,5 @@
+> **Archived 2026-09-28. Superseded by `eval/results/*_history.jsonl` + `eval/build_results_summary_tables.py`.** Historical 2026-07-28 snapshot, still cited as evidence by older docs.
+
 # Eval Report — 2026-07-28
 
 Full RAG + extractor suite run against current `HEAD` (commit `304b5c8`, the

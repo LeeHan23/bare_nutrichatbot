@@ -3,12 +3,14 @@
 Three separate APIs, depending on what the calling application needs:
 
 1. **Patient Chat API** — personalized nutrition advice tied to a patient profile (conditions, medications, restrictions). Public, hosted.
-2. **Docs API** — plain document-grounded nutrition Q&A, no patient data, no mock database involved. Standalone service (`docs_api.py`), not yet publicly hosted.
+2. **Docs API** — plain document-grounded nutrition Q&A, no patient data, no mock database involved. Standalone service (`docs_api.py`), hosted at `docs-api.computationalrd.com`. **Team sign-in only since 2026-09-17** (see §2 Headers).
 3. **Weekly EKA Content API** — fetch/approve the Exercise/Knowledge/Activity content library. Mounted on the Patient Chat API host under `/content`.
 
 All three are plain REST + JSON — no SDK needed.
 
-**Keys below are placeholders** (`<NUTRIBOT_API_KEY>` / `<DOCS_API_KEY>`) — get the real values from `.env` (`NUTRIBOT_API_KEY`, `DOCS_API_KEY`), never commit or paste the real key into this file.
+**Keys below are placeholders** (`<NUTRIBOT_API_KEY>` / `<YOUR_API_KEY>`) — get the real value from `.env` (`NUTRIBOT_API_KEY`), never commit or paste the real key into this file.
+
+**Patient registration** (`POST /patient/register` on the Patient Chat API host, `X-API-Key` required): body `{"name": "...", "ic_number": "..."}` creates a minimal patient record for a first-time visitor and returns its `patient_id`. A duplicate IC returns `409`, and the caller should use `/patient/login` instead. Login never auto-creates a patient.
 
 ---
 
@@ -101,10 +103,16 @@ POST https://docs-api.computationalrd.com/ask
 
 ```
 Content-Type: application/json
-X-API-Key: <DOCS_API_KEY>
+Cookie: team_key=<YOUR_API_KEY>
 ```
 
-Required as of 2026-07-23 — requests without a valid `X-API-Key` get `401 Invalid or missing X-API-Key`.
+**Changed 2026-09-17:** the shared `DOCS_API_KEY` header check was removed.
+Every `docs_api.py` endpoint, `/ask` included, now requires a signed-in team
+session: the `team_key` cookie set by `https://nutribot.computationalrd.com/team/login`
+(scoped to `.computationalrd.com`). Without it you get `401 Not signed in`.
+A browser signed in at the team hub works as-is. A script has to POST its
+API key to `/team/login` first and reuse the cookie, or send
+`Cookie: team_key=<key>` directly. `GET /whoami` returns the signed-in name.
 
 ### Request body
 
@@ -129,7 +137,7 @@ Required as of 2026-07-23 — requests without a valid `X-API-Key` get `401 Inva
 ```bash
 curl -X POST https://docs-api.computationalrd.com/ask \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: <DOCS_API_KEY>" \
+  -H "Cookie: team_key=<YOUR_API_KEY>" \
   -d '{"question":"What foods should someone with high blood pressure avoid?"}'
 ```
 
@@ -140,7 +148,7 @@ import requests
 
 resp = requests.post(
     "https://docs-api.computationalrd.com/ask",
-    headers={"X-API-Key": "<DOCS_API_KEY>"},
+    cookies={"team_key": "<YOUR_API_KEY>"},
     json={"question": "What foods should someone with high blood pressure avoid?"},
     timeout=100,
 )
@@ -210,4 +218,4 @@ curl -X POST "https://nutribot.computationalrd.com/content/materials/123/approve
 
 ### Reviewer UI (separate host, not the client-facing API above)
 
-For the internal review workflow (not for client integration), `https://docs-api.computationalrd.com/eka-review` is a browser page backed by its own `X-API-Key`-gated endpoints (`GET /eka-review/data`, `POST /eka-review/materials/{id}/approve`, `.../unapprove`, `.../content`) on `docs_api.py` — reads/writes the same `content_materials` table, meant for the dietitian team to review generated drafts, not for downstream apps.
+For the internal review workflow (not for client integration), `https://docs-api.computationalrd.com/eka-review` is a browser page (team sign-in required, and it redirects to `/team/login` otherwise; it also has an Exercise Catalog tab and reviewer notes) backed by team-cookie-gated endpoints (`GET /eka-review/data`, `POST /eka-review/materials/{id}/approve`, `.../unapprove`, `.../content`) on `docs_api.py` — reads/writes the same `content_materials` table, meant for the dietitian team to review generated drafts, not for downstream apps.

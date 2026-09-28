@@ -10,6 +10,18 @@ A first run of this exact pipeline already happened, on 2026-08-11 — undocumen
 
 **Likely cause**: the training data was `data_focus_v2` (45 targeted examples) + `data_uniform_100` (100 generic examples) — background examples outnumber the targeted stance-correction examples ~2:1. The result was a systematic softening (more PERMIT-first framing) across the board, the opposite of the intended firmer RESTRICT calibration — consistent with the generic majority diluting the targeted minority signal rather than the model failing to learn at all.
 
+> **Status 2026-09-28:** attempt #2 has **still not been run** (it needs
+> Mac Studio GPU time) and is scheduled in [docs/ROADMAP.md](../docs/ROADMAP.md)
+> Phase 1. Housekeeping: the scripts in `finetune/*.py`
+> (`generate_training_data.py`, `generate_embedding_training_data.py`,
+> `finetune_embeddings.py`, `export_pairs_csv.py`) are untracked in git and
+> need committing. `data/finetune_myth_focus/` (22 train + 3 val, ShareGPT
+> `conversations` format, generated 2026-09-12) is a myth-focused batch using
+> the multi-module "coordinating persona" system prompt. No runbook step
+> uses it yet. Also, training prompts come from `chain_factory`, whose
+> persona differs from live `rag._build_qwen_prompt`. ROADMAP V5 aligns both
+> to one house-voice block before any further training data is generated.
+
 ## Attempt #2 data — ready (generated 2026-08-18)
 
 Regenerated with the exact same 3 target combos as attempt #1 (banana+CKD3, acar+HTN, instant/processed-food+Pre-HTN — the only variable changed is the ratio, to isolate cause and effect), same `--focus-weight 15`, but `--count` cut from 100 to 45 for a clean 50/50 focus/background split instead of attempt #1's ~31/69:
@@ -26,7 +38,7 @@ Output: `finetune/data_focus_v3/` (81 train + 9 val, ShareGPT format, 45 of 90 f
 
 ## Runbook (ready to execute, 2026-08-18)
 
-Run this on the **Mac Studio** (M3 Ultra), not the RTX 3050 — `mlx-lm` needs Apple Silicon. Steps marked **(RTX 3050)** happen back on this repo's usual box instead.
+Run this on the **Mac Studio** (M3 Ultra), not the Han Server — `mlx-lm` needs Apple Silicon. Steps marked **(Han Server)** happen back on this repo's usual box instead.
 
 **0. Get the data onto the Mac Studio.** The Mac Studio's existing clone (`/Users/bing/Desktop/clara_lyh/clara-nutri/`) is CLaRa-inference-only, not this repo — you need `finetune/data_mlx/` from `bare_NutriChatbot`, which is now committed (`origin/main`, commit `95de211`). Either clone the full repo somewhere convenient, or just pull that one directory:
 ```bash
@@ -89,7 +101,7 @@ ollama create nutribot-qwen-lora -f Modelfile
 ollama run nutribot-qwen-lora "test prompt"   # confirm it loads and generates before the eval gate
 ```
 
-**7. Run the eval gate — (RTX 3050), not the Mac Studio.** `eval/test_rag.py` needs this repo's Postgres/patient data, which only lives on the RTX 3050; it reaches the Mac Studio's Ollama over the existing tunnel. Once the `nutribot-qwen-lora` tag exists (step 6), tell the RTX-3050 session (or run it yourself there) to point at it and re-run the gate — see "Gating promotion" below for the exact commands. **Only flip `OLLAMA_MODEL` in `.env` on a `PROMOTE` verdict.**
+**7. Run the eval gate — (Han Server), not the Mac Studio.** `eval/test_rag.py` needs this repo's Postgres/patient data, which only lives on the Han Server; it reaches the Mac Studio's Ollama over the existing tunnel. Once the `nutribot-qwen-lora` tag exists (step 6), tell the Han Server session (or run it yourself there) to point at it and re-run the gate — see "Gating promotion" below for the exact commands. **Only flip `OLLAMA_MODEL` in `.env` on a `PROMOTE` verdict.**
 
 **Scope reminder**: this dataset is nutrition-only (single-disease ADIME persona), predating the 2026-08-12/14 multi-component taxonomy work. A successful run here improves the original dietetics persona only — it does not touch the 9 non-nutrition components, which have no training data yet.
 

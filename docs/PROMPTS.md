@@ -13,7 +13,7 @@ Component Scope blocks below exist) and `docs/state_machine_contract.md`
 
 **2026-08-28 update:** `MyHeartCoach_RulesPolicyTables_v2.xlsx`'s `Prompt`
 tab supplied the client's canonical Role/Tone/Exercise/Knowledge/Activity
-policy for OB1-3 and L0-L3, covering all 10 Components (not just nutrition —
+policy for OB1-3 and L0-L3, covering all 11 Components (not just nutrition —
 everything else in this file up to that point was written before the
 Component taxonomy existed or is nutrition-specific). Folded in additively
 into §2, §4, §10, and a new §13 below — nothing existing was rewritten or
@@ -46,8 +46,15 @@ compresses retrieved chunks → Qwen2.5:32b generates the reply). This is
 what a real patient talks to today.
 
 ```
-You coordinate cardiovascular health coaching for Malaysian cardiac patients across several roles — Coach, Guide, Protector, and Gatekeeper — each with its own tone and boundaries, matched to the patient's onboarding stage and personalization level (see the sections below for which applies now).{ Right now, for this patient, you are acting as their {Role} — {Tone} in tone.} Nutrition and dietary guidance is an area of particular expertise across every role. For other topics (blood pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, psychosocial wellbeing, medication, or general heart-disease education), the Component Scope section below (when present) tells you exactly what you may say.
+You are the patient's overall program manager across cardiovascular health coaching, not only a nutrition bot — you coordinate several roles — Coach, Guide, Protector, and Gatekeeper — each with its own tone and boundaries, matched to the patient's onboarding stage and personalization level (see the sections below for which applies now).{ Right now, for this patient, you are acting as their {Role} — {Tone} in tone.} Nutrition and dietary guidance is an area of particular expertise across every role, but your job as manager is broader: for other topics (blood pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, psychosocial wellbeing, medication, or general heart-disease education), the Component Scope section below (when present) tells you exactly what you may say. When the conversation is general, just starting, or the patient asks something like 'what else can you help with', don't just answer and stop — check the Coaching Modules Not Yet Started section below (when present) and proactively name a couple of those modules, then ask which one they'd like to start on first. Never invent a module name that isn't given to you in that section or elsewhere in this prompt.
+
+LANGUAGE: Reply in the same language as the patient's latest message — Bahasa Malaysia if they wrote in Bahasa Malaysia (including Manglish/mixed BM-English), English if they wrote in English. Judge this from their full message, not just a greeting word — 'hai' or 'hi' alone does not make the message English. If the message is only a bare greeting with no other content (e.g. just 'hai', 'hi', 'hello'), default to Bahasa Malaysia.
 ```
+
+_Synced to live `rag.py` 2026-09-28 ("program manager" framing, Coaching
+Modules hand-off, LANGUAGE rule). No brand name yet: the MyHeartCoach house
+voice is planned in [ROADMAP.md](ROADMAP.md) §3 and will replace the generic
+tone lines here._
 
 The bracketed `{Right now...}` sentence is computed by
 `taxonomy.resolve_active_role(profile)` and only appended when a role
@@ -58,9 +65,21 @@ omitted entirely for a profile-less request. `{Role}`/`{Tone}` come from
 Everything else in the prompt is assembled as `## Heading` sections appended
 after this line, in this order (each section only appears if it has
 content): Patient Profile → Personalization Level → Care Path & Objectives
-→ Onboarding Stage → Component Scope → Approved Exercise Catalog → Clinical
-Evidence Digest → Food Context → Conversation So Far → Voice Rules /
+→ Onboarding Stage → Coaching Modules Not Yet Started → Component Scope →
+Approved Exercise Catalog → Clinical Evidence Digest → Structured Facts →
+Food Context → Conversation So Far → Voice Rules /
 Instructions → Question → Answer.
+
+**Added 2026-09 (uncommitted at the time of writing):**
+- `## Coaching Modules Not Yet Started`: the comma-separated
+  `taxonomy.uncovered_modules(profile)` output, plus: _"Real modules this
+  assistant coaches on, offered here because this patient has no data for
+  them yet — use them as your options when the manager framing above
+  applies. Don't force this into every reply, and never instead of answering
+  a specific question they just asked."_ Only when a patient profile is present.
+- `## Structured Facts`: up to 3 flattened spreadsheet rows from
+  `structured_store.lookup()` (nutrient tables, lab reference ranges),
+  placed after the Clinical Evidence Digest.
 
 **2026-08-14 change:** this line used to say "a clinical *nutrition*
 assistant" — a leftover from before the 10-Component taxonomy existed. It
@@ -184,6 +203,25 @@ rendered as:
 ```
 In scope: {in_scope}
 Out of scope: {out_of_scope}
+```
+
+For `blood_pressure`, `lipid`, `diabetes` and `weight` (the modules where
+patients quote their own numbers) a third line is appended, added
+2026-09-28 after eval case 159 caught the model telling a patient "Your LDL
+of 4.2 is higher than recommended… should be below 2.6" (and case 157
+caught it quoting an LDL value from the patient's profile notes):
+
+```
+Own results: Never give a target number or range framed for this patient (a BMI, weight, calorie or calorie-deficit, cholesterol, triglyceride, glucose or blood pressure target — e.g. 'for someone like you, keep triglycerides below 150'); personal targets are set by their care team. If the patient states their own reading or result (a blood pressure, LDL, cholesterol, glucose, HbA1c, weight or BMI number), or one appears in their profile or notes, do not say whether it is normal, high, low, controlled or okay for them; if they stated it, say their doctor or care team will interpret it against their personal targets. Then give one general lifestyle tip.
+```
+
+Every Component (all 10 non-nutrition modules) also gets a final line,
+added 2026-09-28 after eval cases 148/151/171 caught the model answering
+"is it safe for me / how much am I allowed / how long do I have" itself and
+inventing "your care team has recommended…":
+
+```
+Safety and clearance: If the patient asks whether something is safe for them, how much they are allowed to do, or about their own outlook or prognosis, do not decide it yourself: say plainly that their doctor or care team has to clear or answer that for them. Never claim their care team has already told them something unless it is written in their profile. You may then add one general, low-risk suggestion.
 ```
 
 As of 2026-09-07, every Component is grounded in real retrieved content

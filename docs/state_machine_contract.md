@@ -80,10 +80,21 @@ The flow, as of the fix:
 
 This is a read-time fallback, not a write to `Patient.clinical_risk_tier` — the screening table and the `Patient` column stay independent; nothing copies data between them at write time.
 
+## Patient self-registration (2026-09-16)
+
+`POST /patient/register` (`app.py`, name + IC) creates a minimal local
+`Patient` row for a first-time visitor, so they get a `patient_id`.
+`/patient/login` never auto-creates, and a duplicate IC returns 409.
+Registration writes nothing to the My Heart Coach DB. A self-registered
+patient picks up `personalization_level` / `onboarding_stage` through the
+same read-time staging-DB fallback as everyone else (join on phone/IC), and
+until a match exists they have neither. Tests: `test_patient_register.py`,
+`test_personalization_fallback.py`.
+
 ## Still open
 
 1. **No write path for `care_path` / `objective_ids` / `difficulty_ceiling` — and, per the 2026-08-18 schema exploration above, it's now unclear these will ever map 1:1 onto anything in the real My Heart Coach DB.** The interim patient-self-service picker (`app.py`, added 2026-08-12) remains the only way these fields get set today. Whether `goals` (the real schema's closest analog) should eventually drive these, and how, needs the My Heart Coach team's input, not a guess from this side.
 2. **`personalization_level` relationship**: `clinical_risk_tier` (hand-set or MHR-screening-derived) remains a fallback signal only where `personalization_level` is null. **As of 2026-08-18**, `personalization_level` itself now has its own further fallback — the My Heart Coach staging DB's `users.risk_level` (same L0-L3 enum) — checked only when `personalization_level` is unset (see "Real staging DB" above). Priority order, most to least authoritative: dietitian-set `personalization_level` → My Heart Coach `users.risk_level` → (separately) `clinical_risk_tier`, hand-set or MHR-screening-derived.
 3. **`onboarding_stage` (OB1–OB3)** — updated 2026-08-12, see `docs/component_taxonomy_contract.md`. Still owned by an external solution (never written by this repo): `Patient.onboarding_stage` + `rag._build_onboarding_block()`. **2026-09-16**: now has the same kind of staging-DB read-time fallback as `personalization_level` (see "Real staging DB" above) when unset — `database.get_effective_onboarding_stage()`. This repo still does not gate or progress the stage on its own, only renders what it means once told (hand-set or staging-DB-derived).
 
-**2026-08-28**: `MyHeartCoach_RulesPolicyTables_v2.xlsx`'s `Prompt` tab supplied the client's canonical Role/Tone/Exercise/Knowledge/Activity policy for each OB1-3 stage and L0-L3 level (covering all 10 MyHeartCoach components, not just nutrition). Folded in additively — nothing existing was removed: `taxonomy.ONBOARDING_STAGE_LABELS`'s OB1-3 entries and `taxonomy.PERSONALIZATION_LEVEL_PROFILE` (new, L0-L3) carry this detail; `rag._build_qwen_prompt()`, the CLaRa-primary path, `agent.py`'s agent-tools path, and `eval/live_pipeline_smoke_test.py`'s standalone copy all render it alongside the pre-existing dietary-specific L0-L3 instructions. `scripts/generate_weekly_eka.py`'s `_PERSONALIZATION_GUIDANCE` got the same L0-L3 detail — while fixing it, found that constant had never actually been wired into any of its three generation prompts (dead code); it's now injected alongside `_SAFETY_GUARDRAILS`.
+**2026-08-28**: `MyHeartCoach_RulesPolicyTables_v2.xlsx`'s `Prompt` tab supplied the client's canonical Role/Tone/Exercise/Knowledge/Activity policy for each OB1-3 stage and L0-L3 level (covering all MyHeartCoach components, 10 at the time and 11 since 2026-09-07, not just nutrition). Folded in additively — nothing existing was removed: `taxonomy.ONBOARDING_STAGE_LABELS`'s OB1-3 entries and `taxonomy.PERSONALIZATION_LEVEL_PROFILE` (new, L0-L3) carry this detail; `rag._build_qwen_prompt()`, the CLaRa-primary path, `agent.py`'s agent-tools path, and `eval/live_pipeline_smoke_test.py`'s standalone copy all render it alongside the pre-existing dietary-specific L0-L3 instructions. `scripts/generate_weekly_eka.py`'s `_PERSONALIZATION_GUIDANCE` got the same L0-L3 detail — while fixing it, found that constant had never actually been wired into any of its three generation prompts (dead code); it's now injected alongside `_SAFETY_GUARDRAILS`.

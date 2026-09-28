@@ -1,6 +1,6 @@
 # Session Report — 2026-07-20 to 2026-07-21
 
-Machine: `han233` (local dev box, RTX 5060 Ti, not the RTX 3050 production server referenced in `CLAUDE.md`)
+Machine: `han233` (local dev box, RTX 5060 Ti, not the Han Server production server referenced in `CLAUDE.md`)
 
 This report covers work done across two sessions: (1) standing up a full working deployment of the bot on this machine and cutting the public domain over to it, (2) setting up and running the clinical evaluation suite, investigating its failures, and applying fixes, and (3) a second full eval run after those fixes were committed and deployed (Part 6). It's meant to be readable on its own — where something is still open or needs a decision, that's called out explicitly rather than implied.
 
@@ -10,7 +10,7 @@ This report covers work done across two sessions: (1) standing up a full working
 
 ### Why
 
-`CLAUDE.md` documents the public bot as served by the RTX 3050 server (`100.101.247.5`), which was down (`nutribot.computationalrd.com` → Cloudflare `530`). This machine is a separate local clone of the repo, not the RTX 3050. The user asked to make this machine the new origin.
+`CLAUDE.md` documents the public bot as served by the Han Server server (`100.101.247.5`), which was down (`nutribot.computationalrd.com` → Cloudflare `530`). This machine is a separate local clone of the repo, not the Han Server. The user asked to make this machine the new origin.
 
 ### What was found broken/missing, and how it was resolved
 
@@ -25,16 +25,16 @@ This report covers work done across two sessions: (1) standing up a full working
 | Stale `data/file_tracker.json` falsely marked all 60 source PDFs as already ingested, even on this brand-new empty DB (carried over from wherever this folder was copied from) | Moved aside to `data/file_tracker.json.stale_bak`; ingestion re-ran clean |
 | `ml_dtypes` had no `float4_e2m1fn` attribute — broke every single PDF during ingestion | `pip install ml_dtypes>=0.5`, which pulled in `numpy 2.5.1` |
 | `numpy 2.5.1` broke `numba` ("Numba needs NumPy 2.4 or less") | Pinned `numpy` to `2.4.6` — the sweet spot where `ml_dtypes 0.5.4` and `numba 0.66.0` both work |
-| No source PDFs at the `.env` default path (`BASE_DOCS_DIR=/mnt/ssd/documents_to_ingest`, an RTX-3050-only path) | User pointed to the actual location: `/home/han/Desktop/projects/documents_clean` (60 PDFs, passed explicitly via env var at ingestion time — `.env` itself was left as-is) |
-| No LoRA embedding adapter on this machine (`EMBEDDING_ADAPTER_PATH=~/models/embedding_lora` doesn't exist here) | Not fixed — `embeddings.py` gracefully falls back to the base `BAAI/bge-m3` model on CPU. **Known gap**: retrieval quality may differ slightly from the RTX 3050's fine-tuned embeddings. |
-| DNS for `nutribot.computationalrd.com` already pointed at the RTX 3050's separate tunnel | `cloudflared tunnel route dns --overwrite-dns ead75dae-7d79-415f-887f-2dbd398570f5 nutribot.computationalrd.com` (this machine's own tunnel, `local-machine`) |
+| No source PDFs at the `.env` default path (`BASE_DOCS_DIR=/mnt/ssd/documents_to_ingest`, an han-server-only path) | User pointed to the actual location: `/home/han/Desktop/projects/documents_clean` (60 PDFs, passed explicitly via env var at ingestion time — `.env` itself was left as-is) |
+| No LoRA embedding adapter on this machine (`EMBEDDING_ADAPTER_PATH=~/models/embedding_lora` doesn't exist here) | Not fixed — `embeddings.py` gracefully falls back to the base `BAAI/bge-m3` model on CPU. **Known gap**: retrieval quality may differ slightly from the Han Server's fine-tuned embeddings. |
+| DNS for `nutribot.computationalrd.com` already pointed at the Han Server's separate tunnel | `cloudflared tunnel route dns --overwrite-dns ead75dae-7d79-415f-887f-2dbd398570f5 nutribot.computationalrd.com` (this machine's own tunnel, `local-machine`) |
 | `/etc/cloudflared/config.yml` (root-owned, serves `computationalrd.com`/`www` portfolio on :8501) had no ingress rule for the bot | Added `nutribot.computationalrd.com → http://localhost:8000`; user ran the sudo-gated edit + `systemctl restart cloudflared` |
 
 ### Patient ID renumbering (important — read this before touching patient data again)
 
 `seed_patients.py` uses Postgres auto-increment, so on this fresh DB the 8 mock patients landed at IDs **2–9** in insertion order. But every reference to these patients elsewhere — `eval/test_rag.py`'s 36 test cases, `CLAUDE.md`'s patient table, the documented smoke-test curl commands — assumes the **original IDs: 1, 2, 3, 4, 5, 10, 11, 12**.
 
-Rather than patch `eval/test_rag.py` (which would silently break on any *other* environment where IDs are already correct, e.g. a real re-seed of the RTX 3050), the DB was renumbered directly, inside a transaction, with the two `patient_id` foreign keys (`chat_messages`, `content_delivery_log`) temporarily dropped and restored:
+Rather than patch `eval/test_rag.py` (which would silently break on any *other* environment where IDs are already correct, e.g. a real re-seed of the Han Server), the DB was renumbered directly, inside a transaction, with the two `patient_id` foreign keys (`chat_messages`, `content_delivery_log`) temporarily dropped and restored:
 
 ```
 Ahmad Fadzillah:  2 → 1
@@ -55,16 +55,16 @@ Current state (verified): patient IDs on this machine now match the documented s
 
 - `nutribot.computationalrd.com/docs` → `200`
 - Full pipeline smoke test (patient 3/CKD+HTN, "What should I eat for breakfast?") → correct clinical answer referencing potassium/phosphorus/sodium restrictions
-- Ingestion: **24,818 chunks** from 60 source PDFs (RTX 3050 baseline was 24,268 — close, expected given a slightly different doc set)
+- Ingestion: **24,818 chunks** from 60 source PDFs (Han Server baseline was 24,268 — close, expected given a slightly different doc set)
 - App running as a bare `uvicorn` process (not the `docker-compose.yml` `nutribot` service — simpler given `.env` already points straight at the Mac Studio's CLaRa/Ollama tunnels, no need for the `agentgateway`/OpenAI-proxy container path)
 - Portfolio site (`computationalrd.com`) unaffected by the cloudflared config change
 
 ### Open items from Part 1
 
-1. **If the RTX 3050 ever comes back online, it will NOT automatically reclaim the domain.** DNS now points here until someone runs `cloudflared tunnel route dns --overwrite-dns <rtx-3050-tunnel-id> nutribot.computationalrd.com` to switch it back.
-2. No LoRA embedding adapter locally — retrieval uses base `BAAI/bge-m3`. Copy `~/models/embedding_lora` here if retrieval-quality parity with the RTX 3050 matters.
+1. **If the Han Server ever comes back online, it will NOT automatically reclaim the domain.** DNS now points here until someone runs `cloudflared tunnel route dns --overwrite-dns <han-server-tunnel-id> nutribot.computationalrd.com` to switch it back.
+2. No LoRA embedding adapter locally — retrieval uses base `BAAI/bge-m3`. Copy `~/models/embedding_lora` here if retrieval-quality parity with the Han Server matters.
 3. Siti Hajar (patient 12) content mismatch between `seed_patients.py` and `eval/test_rag.py` cases 28/29 (see above) — needs a decision.
-4. `.env`'s `BASE_DOCS_DIR` still points at the RTX-3050-only path (`/mnt/ssd/documents_to_ingest`); harmless unless someone re-runs `build_base_db.py` without passing `BASE_DOCS_DIR` explicitly.
+4. `.env`'s `BASE_DOCS_DIR` still points at the han-server-only path (`/mnt/ssd/documents_to_ingest`); harmless unless someone re-runs `build_base_db.py` without passing `BASE_DOCS_DIR` explicitly.
 
 ---
 
@@ -279,7 +279,7 @@ session — root cause (prompt vs. schema) unknown.
 
 ### Resolved from Part 1's open items
 
-Item 1 ("if the RTX 3050 ever comes back online, it will NOT automatically
+Item 1 ("if the Han Server ever comes back online, it will NOT automatically
 reclaim the domain") is now moot: per `CLAUDE.md`, that box has been
 reimaged/replaced outright (new IP `100.100.203.34`, hostname `han233`,
 single ext4 drive) — it can't "come back online" in the form this warning
@@ -354,7 +354,7 @@ content failures), **Extractor: 20/20 passed** (up from 17/20). Full detail:
 | `data/file_tracker.json` | Moved to `data/file_tracker.json.stale_bak` (stale, carried over from wherever this repo was copied from) |
 | DB (patients table) | Renumbered 8 mock patients to match documented IDs (1,2,3,4,5,10,11,12) |
 | `/etc/cloudflared/config.yml` (system, not repo) | Added `nutribot.computationalrd.com → localhost:8000` ingress rule |
-| Cloudflare DNS (external, not repo) | `nutribot.computationalrd.com` CNAME repointed from RTX 3050's tunnel to this machine's `local-machine` tunnel |
+| Cloudflare DNS (external, not repo) | `nutribot.computationalrd.com` CNAME repointed from Han Server's tunnel to this machine's `local-machine` tunnel |
 
 ---
 
@@ -366,17 +366,17 @@ content failures), **Extractor: 20/20 passed** (up from 17/20). Full detail:
 4. **Four full runs are now done** (Part 3: 26/34, Part 6: 25/34, Part 7 pre-fix: 25/34, Part 7 post-fix: **30/34**). The post-fix run's 4 remaining failures are exclusively personalization-judge caution-framing misses (cases 14/16/17/29) — the same `temperature=0.5` sampling noise documented since Part 5. Zero remaining contraindication or extractor failures.
 5. ~~Root-cause the extractor gap~~ — **fixed 2026-07-24**: `extractor_food_allergies` wired up end-to-end in `extractor.py`; extractor suite now 20/20.
 6. ~~Consider whether `personalization_check`'s literal-keyword approach is the right long-term design~~ — **done 2026-07-24**: moved to an LLM judge (`judge_personalization`), mirroring `judge_stance`.
-7. **Decide whether to copy the LoRA embedding adapter to this machine** for retrieval-quality parity with the RTX 3050 (currently running on base `BAAI/bge-m3`). Still open.
+7. **Decide whether to copy the LoRA embedding adapter to this machine** for retrieval-quality parity with the Han Server (currently running on base `BAAI/bge-m3`). Still open.
 8. **Decide whether to cut production over to `docker compose up`** (the Docker Compose stack is built and verified working) or keep it as a proven-but-unused deployment option alongside the current bare-`.venv` + systemd setup. Still open.
 9. **Still open from `CLAUDE.md`**: real WhatsApp provider credentials (`CLAUDE.md` pending item 5 — `TWILIO_*` or `META_*` env vars still unset). The nightly eval cron (item 10) was installed 2026-07-24 — confirmed in `crontab -l`.
-10. ~~New, residual, low-priority: cases 14/16/17 personalization-only failures~~ — **investigated 2026-07-28/29**: individual re-runs confirmed 5 of that run's 9 failures were pure sampling noise (all passed on re-run), but 3 were reproducible root causes, now fixed in `rag.py`/`eval/test_rag.py`: L1 answers gave qualitative moderation language ("keep an eye on portion") without a concrete number, L3 answers implied care-team oversight without the literal phrase, and the L0 breakfast keyword check demanded 2 of 6 terms from a terse, word-budgeted answer. RAG suite improved 25/34 → **31/34**, the best result across all five full runs this session. Remaining 3 failures (all personalization) are two food-*category* (not single-dish) L1 questions still lacking a concrete number, plus one judge misclassification on case 34 — **confirmed 2026-07-29** via 3 standalone re-runs (all passed, each with a clear weekly frequency limit) as ordinary judge noise on a single draw, not a systematic BM-language blind spot. See `docs/eval_and_roadmap.md` Part D and `eval/results/EVAL_REPORT.md` for full detail.
+10. ~~New, residual, low-priority: cases 14/16/17 personalization-only failures~~ — **investigated 2026-07-28/29**: individual re-runs confirmed 5 of that run's 9 failures were pure sampling noise (all passed on re-run), but 3 were reproducible root causes, now fixed in `rag.py`/`eval/test_rag.py`: L1 answers gave qualitative moderation language ("keep an eye on portion") without a concrete number, L3 answers implied care-team oversight without the literal phrase, and the L0 breakfast keyword check demanded 2 of 6 terms from a terse, word-budgeted answer. RAG suite improved 25/34 → **31/34**, the best result across all five full runs this session. Remaining 3 failures (all personalization) are two food-*category* (not single-dish) L1 questions still lacking a concrete number, plus one judge misclassification on case 34 — **confirmed 2026-07-29** via 3 standalone re-runs (all passed, each with a clear weekly frequency limit) as ordinary judge noise on a single draw, not a systematic BM-language blind spot. See `docs/eval_and_roadmap.md` Part D and `docs/archive/EVAL_REPORT.md` for full detail.
 11. **New**: a standalone questions catalog, `eval/QUESTIONS.md`, now lists every question in both suites for reference without reading Python source.
 12. ~~Weekly full-suite cron~~ — **done 2026-07-29**: `crontab -l` now runs the full RAG + extractor suites every Sunday 4am, logged via `scripts/eval_history.py`, closing the staleness gap items 4/10 above kept hitting.
 13. ~~DeepEval `G-Eval` migration~~ — **done 2026-07-29**: `judge_stance()`/`judge_personalization()` in `eval/test_rag.py` now run on DeepEval's `GEval` metric (native `OllamaModel`, same judge model/host as before). Verified: 31/34 on a full run, exactly matching the pre-migration baseline, with richer natural-language failure reasons as a bonus. See `docs/eval_and_roadmap.md` Part D.
 14. ~~Retrieval-quality visibility logging~~ — **done 2026-07-29, and it found a real bug**: `vector_store.py` now persists per-query retrieval stats to `logs/retrieval_quality.jsonl`. Within the first 4 logged queries it showed `boost_ratio: 0.0` on every single one — root cause traced to `scripts/enrich_v1_with_keywords.py` hardcoding the old machine's path, silently broken since the 2026-07-23 hardware migration, leaving `base_knowledge`'s 24,818 chunks with zero `doc_topics`/`doc_keywords` metadata the whole time (`TopicBoostedRetriever` boosting nothing, invisible until now). Fixed the script's path resolution and re-ran it (user-approved) — restored metadata on 12,617/24,818 chunks; the same test query now shows `boost_ratio: 1.0`. `CLAUDE.md`'s "Document / Knowledge Base" section corrected to reflect actual coverage. See `docs/eval_and_roadmap.md` Part D for full detail.
 15. ~~Expand `doc_keyword_mapping.json` to full coverage~~ — **done 2026-07-29**: identified the 21 previously-unmapped documents via direct DB query, content-sampled each from the live DB to write accurate topic/keyword entries (not filename-guessed), deliberately avoided over-broad tagging for narrow-condition docs (PAH, IE) that would wrongly surface for common BP/CVD questions. Re-ran enrichment (user-approved) — **100% coverage, 24,818/24,818 chunks**. Smoke-run `boost_ratio` now 0.4–1.0 across the board (was 0.0 before any of this session's enrichment work). `CLAUDE.md` and `docs/eval_and_roadmap.md` Part D updated with final numbers.
 
-~~If the RTX 3050 comes back online, remember DNS won't auto-revert~~ — **resolved as of Part 7**: that machine has been reimaged/replaced outright, so this scenario no longer applies in its original form.
+~~If the Han Server comes back online, remember DNS won't auto-revert~~ — **resolved as of Part 7**: that machine has been reimaged/replaced outright, so this scenario no longer applies in its original form.
 
 ---
 
@@ -493,7 +493,7 @@ An interactive version of this exact worked example — with a live toggle acros
 
 ---
 
-## Next steps (current, as of Part 8 / 2026-08-03)
+## Next steps as of Part 8 / 2026-08-03 (superseded 2026-09-28 by [docs/ROADMAP.md](docs/ROADMAP.md))
 
 Everything from Parts 1–7 is resolved (see the note at the end of Part 7).
 What's actually still open:
@@ -512,13 +512,34 @@ What's actually still open:
    `Patient.id`.** The assumed convention (`str(Patient.id)`) is a guess — confirm
    with whoever owns the NADI screening intake once real data starts flowing.
 4. **LoRA embedding adapter not present on this machine** — retrieval runs on
-   base `BAAI/bge-m3` instead of the RTX 3050's fine-tuned adapter. Copy
+   base `BAAI/bge-m3` instead of the Han Server's fine-tuned adapter. Copy
    `~/models/embedding_lora` over if retrieval-quality parity matters.
 5. **Docker Compose stack is built and verified but not the live deployment.**
    Production still runs bare-`.venv` + systemd. Decide whether to cut over.
 6. **WhatsApp provider credentials still unset** (`TWILIO_*` or `META_*` in
    `.env`, per `CLAUDE.md` pending item 5). Integration code is complete and
    tested — this is purely a credentials + webhook-registration step.
-7. **`.env`'s `BASE_DOCS_DIR` still points at the old RTX-3050-only path**
+7. **`.env`'s `BASE_DOCS_DIR` still points at the old han-server-only path**
    (`/mnt/ssd/documents_to_ingest`). Harmless unless `build_base_db.py` is
    re-run without passing `BASE_DOCS_DIR` explicitly.
+
+---
+
+## Part 9 — Catch-up pointer (2026-09-28)
+
+This report was session-by-session through 2026-08-03. Work since then:
+- The 11-module taxonomy, and the client document drop (178 sources /
+  50,851 chunks).
+- The EKA review workflow: notes, L/OB tagging, the archive workbook, the
+  Exercise Catalog tab.
+- The My Heart Coach staging-DB fallback, and patient self-registration.
+- Team hub sign-in, and the judge-calibration eval service.
+- `structured_store.py` plus `[Latency]` logging.
+
+All of it is documented in `ARCHITECTURE.md` §6.3 and §27. Status and next
+steps are now kept only in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+Operational finding on 2026-09-28: the weekly full-suite eval cron was
+missing, and the nightly smoke line had lost its `cd` (so it failed silently
+from 09-01). Both are fixed; see ARCHITECTURE §27.7.
+

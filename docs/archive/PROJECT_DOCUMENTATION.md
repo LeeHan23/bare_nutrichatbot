@@ -1,3 +1,5 @@
+> **Archived 2026-09-28. Superseded by [ARCHITECTURE.md](../../ARCHITECTURE.md) and [ROADMAP.md](../ROADMAP.md).** Kept for history only; not maintained.
+
 # NutriChatbot — Project Documentation
 
 ## What This Project Is
@@ -5,7 +7,7 @@
 An AI-powered clinical nutrition chatbot for Malaysian cardiac patients. It is deployed as a REST API that B2B clients (hospitals, clinics) integrate with by passing an API key and a patient ID. The bot retrieves relevant clinical guidelines from a vector database, personalises the answer using the patient's medical profile, and streams a reply back to the patient.
 
 The system runs across two machines:
-- **RTX 3050 Server** — FastAPI application, Postgres + PGVector, Cloudflare tunnel
+- **Han Server** — FastAPI application, Postgres + PGVector, Cloudflare tunnel
 - **Mac Studio** — CLaRa-7B inference (primary RAG model), Ollama qwen2.5:32b (orchestration)
 
 ---

@@ -1,3 +1,5 @@
+> **Archived 2026-09-28. Superseded by [ARCHITECTURE.md](../../ARCHITECTURE.md) and [ROADMAP.md](../ROADMAP.md).** Kept for history only; not maintained.
+
 # NutriChatbot — Full Architecture Document
 
 > Last updated: May 2026

@@ -2,6 +2,8 @@
 
 Written 2026-07-16. This is a forward-looking plan, not a status report — items here are proposed work, not completed work. Cross-reference CLAUDE.md's "Known Issues" and "Pending Work" sections, which this doc extends.
 
+> **2026-09-28:** forward-looking items now live in [ROADMAP.md](ROADMAP.md), the single source for status and timeline. This doc stays as the methodology record. Part E below summarises the eval state as of that date.
+
 ## Why this doc exists
 
 Nutribot has real eval infrastructure (`eval/eval_ragas.py`, `eval/test_rag.py`, `eval/test_extractor.py`) and real fine-tune infrastructure (`finetune/`), but they were built incrementally and have drifted from what's actually in production. The clearest example: `eval/test_rag.py` case id=2 ("CKD+HTN: can I eat bananas?") is marked `passed: true` in `eval/results/rag.json`, but the stored answer text reads *"a small banana is generally fine as an occasional treat"* for a CKD Stage 3 patient — this is precisely the failure mode CLAUDE.md's Known Issues table already warns about ("CLaRa sometimes recommends bananas to CKD patients"). The check passed only because it looks for the words "potassium" and "kidney" appearing somewhere in the answer, not for whether the answer's actual clinical *direction* (permit vs. restrict) is correct. Fixing that gap is the throughline for Part A below.
@@ -29,7 +31,7 @@ Before extending the homegrown eval further, it's worth checking whether an exis
 |---|---|---|
 | **RAGAS** | Retrieval-grounding metrics: faithfulness (does the answer stick to retrieved context), answer relevancy, context precision/recall. Judge LLM is pluggable via `LangchainLLMWrapper` around any LangChain chat model, including `ChatOllama` — no OpenAI dependency required. | Already partially wired (`eval/eval_ragas.py`, fixed in Part A #1 to hit the real pipeline). Keep it scoped to what it measures well — **is the retrieved context being used faithfully** — which is a different axis from clinical correctness. It has no built-in notion of "expected stance"; forcing contraindication checking into a custom RAGAS metric would just re-implement `judge_stance()` inside a heavier framework for no benefit. |
 | **DeepEval** | `G-Eval` — a research-backed LLM-as-judge metric that scores against a natural-language custom criterion via chain-of-thought, essentially a formalized, calibrated version of the `judge_stance()` function already hand-built for this project. Native pytest integration (`assert_test`, `@pytest.mark`) — directly usable given `test_rag.py`/`test_extractor.py` were already made pytest-collectible in Part A #7. Supports a fully local judge via `DeepEvalBaseLLM` (wrap Ollama directly, no LangChain dependency needed). Also ships hallucination, bias, and toxicity metrics, plus a red-teaming/vulnerability scan module. | **Best fit for the actual gap this doc opened with.** Recommend adopting `G-Eval` as the judge implementation behind the `contraindication_check` mechanism (item 2 below) instead of maintaining a bespoke prompt/parsing function — same data shape (`food`, `condition`, `expected_stance`), same test cases, but a maintained, published implementation instead of one this project owns and has to keep correct. The bias metric is also worth a look given Nutribot's patient base spans multiple Malaysian ethnicities (`ethnicity` is a first-class Patient column) — a systematic bias check across ethnicity-varying personas is currently not covered by anything in `test_rag.py`. |
-| **TruLens** | A different category entirely — not a pre-deploy fixed-case test suite but a *production tracing/observability* tool. The "RAG triad" (context relevance, groundedness, answer relevance) scores **live conversations** after the fact via `@instrument`-decorated spans, surfaced in a running dashboard. | Nutribot already persists every real conversation (`chat_messages` table, added for conversation-history persistence). TruLens would be the natural way to continuously score *actual patient traffic* rather than only the fixed 34-case matrix — catching failure modes the hand-authored cases don't anticipate. But it adds a standing dashboard service and dependency footprint on top of an already resource-constrained split-machine setup (RTX 3050's small GPU, the exFAT-drive fragility already noted in Part B). **Recommend as an opt-in Phase 2 item, not part of closing Part A** — valuable for ongoing production monitoring once the core eval-quality gaps here are closed, not required to close them. |
+| **TruLens** | A different category entirely — not a pre-deploy fixed-case test suite but a *production tracing/observability* tool. The "RAG triad" (context relevance, groundedness, answer relevance) scores **live conversations** after the fact via `@instrument`-decorated spans, surfaced in a running dashboard. | Nutribot already persists every real conversation (`chat_messages` table, added for conversation-history persistence). TruLens would be the natural way to continuously score *actual patient traffic* rather than only the fixed 34-case matrix — catching failure modes the hand-authored cases don't anticipate. But it adds a standing dashboard service and dependency footprint on top of an already resource-constrained split-machine setup (Han Server's small GPU, the exFAT-drive fragility already noted in Part B). **Recommend as an opt-in Phase 2 item, not part of closing Part A** — valuable for ongoing production monitoring once the core eval-quality gaps here are closed, not required to close them. |
 
 **Net recommendation**: keep RAGAS scoped to retrieval-grounding metrics (already the plan per item 1), adopt DeepEval's `G-Eval` as the engine behind the directional/clinical-correctness judge (item 2, superseding the bespoke `judge_stance()` prototype once ported over — the case data and matrix in items 2–5 don't change, only the judge implementation does), and defer TruLens to a later phase focused on live-traffic monitoring rather than pre-deploy testing.
 
@@ -51,13 +53,13 @@ Before extending the homegrown eval further, it's worth checking whether an exis
 
 6. **Add result history instead of overwriting.** Append `{date, git_commit, passed, failed, category_breakdown}` to a JSONL log (a small `scripts/eval_history.py` wrapper around the existing `--out` flag) rather than clobbering `results/rag.json`/`results/extractor.json` every run. This is what makes it possible to tell whether a CLaRa/Qwen update or prompt tweak made things better or worse over time.
 
-7. **Make the suites pytest-collectible and run them nightly.** Wrap each `CASES` entry as a `@pytest.mark.parametrize` test; add a cron entry mirroring the existing `content_scheduler.py`/`weekly_eka_scheduler.py` pattern, running `--smoke` against the live Mac Studio models nightly, logging to `logs/eval_nightly.log`. This doesn't need the RTX 3050's Postgres for the CLaRa/Ollama-only smoke cases, so it can run even during an RTX 3050 outage.
+7. **Make the suites pytest-collectible and run them nightly.** Wrap each `CASES` entry as a `@pytest.mark.parametrize` test; add a cron entry mirroring the existing `content_scheduler.py`/`weekly_eka_scheduler.py` pattern, running `--smoke` against the live Mac Studio models nightly, logging to `logs/eval_nightly.log`. This doesn't need the Han Server's Postgres for the CLaRa/Ollama-only smoke cases, so it can run even during an Han Server outage.
 
 8. **Fix the error-leakage bug found alongside this investigation** (`website_chat_router.py`, roughly the exception handler around the streaming response): raw exception text is currently yielded straight into the patient-facing chat on any `get_rag_response` failure. Not an eval item per se, but a safety-adjacent bug worth fixing in the same pass — replace with a generic user-facing message plus server-side logging of the real exception.
 
 ### Live baseline run — 2026-07-16
 
-Items 1–7 above were implemented and verified against synthetic/offline data (no live Mac Studio access from the machine that wrote them, at the time). Separately, `eval/live_pipeline_smoke_test.py` was built as a dependency-free (stdlib-only) harness that exercises the *actual* live CLaRa+Ollama models over their Cloudflare tunnels directly — bypassing `rag.py`/`database.py`/PGVector entirely (hardcoded patient profiles, AST-extracted `CASES`/`CONTEXT_SAMPLES` from the real source files so there's no drift between the harness and the real eval matrix, verbatim-ported `judge_stance()` and prompt-building logic) — for exactly the situation where the RTX 3050's Postgres is unavailable but the Mac Studio isn't.
+Items 1–7 above were implemented and verified against synthetic/offline data (no live Mac Studio access from the machine that wrote them, at the time). Separately, `eval/live_pipeline_smoke_test.py` was built as a dependency-free (stdlib-only) harness that exercises the *actual* live CLaRa+Ollama models over their Cloudflare tunnels directly — bypassing `rag.py`/`database.py`/PGVector entirely (hardcoded patient profiles, AST-extracted `CASES`/`CONTEXT_SAMPLES` from the real source files so there's no drift between the harness and the real eval matrix, verbatim-ported `judge_stance()` and prompt-building logic) — for exactly the situation where the Han Server's Postgres is unavailable but the Mac Studio isn't.
 
 Run against all 25 `contraindication_check`-tagged cases from `eval/test_rag.py`, results saved to `eval/results/rag_live_baseline_2026-07-16.json`:
 
@@ -145,7 +147,7 @@ what a fifth full eval run today turned up:
 The 34-case matrix (Part A #2–#5's contraindication/bilingual/personalization
 coverage) has now been run five times. Today's run went 25/34 → **31/34**
 (the best result yet) after root-causing 3 of the 9 failures as real prompt
-gaps rather than sampling noise — see `eval/results/EVAL_REPORT.md` for the
+gaps rather than sampling noise — see `docs/archive/EVAL_REPORT.md` for the
 full breakdown. Remaining 3 failures, all `personalization_check`:
 
 1. **Coconut milk (santan) in general** and **instant/processed food in
@@ -267,3 +269,49 @@ weekly now catches full-suite drift automatically instead of by accident.
 5. Remaining: the actual LoRA/QLoRA fine-tune run — needs real Mac Studio
    GPU time, deserves its own session rather than being squeezed in
    alongside routine eval maintenance.
+
+---
+
+## Part E — Eval state as of 2026-09-28
+
+**Suites** (`eval/test_rag.py`, 82 cases):
+- contraindication matrix (25, `judge_stance`)
+- myth suite (22, `judge_myth_handling`, see `docs/myth_eval_design.md`)
+- bilingual
+- L0–L3 personalization (`judge_personalization`)
+- Component scope, 20 cases: medication 8, tobacco 6, psychosocial 6 (`judge_scope_adherence`)
+
+`eval/test_extractor.py` has 20 cases. `eval/eval_ragas.py` (RAGAS on 25
+profile-less questions) exists, but no current results file is saved
+(TRIPOD 19g #12).
+
+**Latest results** (`eval/results/*_history.jsonl`):
+
+| Suite | Date | Result |
+|---|---|---|
+| RAG full | 2026-08-29 | 47/60 |
+| RAG full | 2026-08-22 | 51/60 |
+| Myth | 2026-09-02 | 18/22 |
+| Extractor | 2026-08-29 | 20/20 |
+
+The RAG full runs predate the scope cases.
+
+**Cadence:** the weekly full run was lost in the 2026-08-30 crontab wipe.
+The nightly smoke line was reinstalled on 09-01 without `cd` and failed
+silently. Both were restored on 2026-09-28 (ARCHITECTURE §27.7). The first
+new full run is Sun 2026-10-04 04:00.
+
+**Judge calibration:** the eval service at `eval.computationalrd.com`
+(`eval_api.py`, `eval/judge_calibration_app.html`, generated by
+`scripts/build_judge_calibration_app.py`) lets the team label judge verdicts
+for all 4 judges. Status as of 2026-09-28:
+- 50 human reviews in `data/eval_calibration_reviews.json`.
+- Judge agreement: myth 16/22, stance 10/17, personalization 10/11, scope 0.
+- Threshold analysis is in the TRIPOD Item 17 addendum. At threshold 0.5 the
+  myth judge has 16.7% sensitivity (specificity-dominant).
+- `eval/judge_calibration.md`, the earlier markdown labelling sheet, is
+  superseded by the app.
+
+**No tone metric exists.** Clinician review notes already contain tone
+feedback. ROADMAP §3 adds `judge_brand_voice` as the fifth calibrated judge.
+

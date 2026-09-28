@@ -7,7 +7,7 @@ its GEval judge machinery, `eval_history.py` versioning, and
 
 **Status: PROVISIONAL.** Expected stances and rationales need dietitian
 sign-off (`eval/myths_review.md`) and the suite has not yet had a live run
-on the RTX 3050 — see "What must happen before trusting results" below.
+on the Han Server — see "What must happen before trusting results" below.
 
 ---
 
@@ -103,11 +103,17 @@ once judge calibration (below) shows headroom; bundling it now would
 muddy the pass/fail signal of a brand-new judge.
 
 Also deliberately omitted: `personalization_check` on myth cases — it is
-the suite's flakiest check (EVAL_REPORT.md 2026-07-28: 7/9 failures were
+the suite's flakiest check (docs/archive/EVAL_REPORT.md 2026-07-28: 7/9 failures were
 personalization-judge churn) and myth cases should fail only on
 myth/stance signal.
 
-## What must happen before trusting results (RTX 3050)
+## What must happen before trusting results (Han Server)
+
+> **Status 2026-09-28:**
+> - Step 1 is done: live runs since 2026-08-15; latest myth suite 18/22 on 2026-09-02, `eval/results/rag_myth_history.jsonl`.
+> - Step 2 is in progress in the eval service (`eval.computationalrd.com`): 22 human reviews of myth verdicts, 16 agreeing. At `threshold=0.5` the judge is specificity-dominant, with 16.7% sensitivity (TRIPOD Item 17 addendum).
+> - Step 3 is done: dietitian sign-off 2026-08-31 (`eval/myths_review.md`). The set is append-only now.
+> - Open: the BM medication-displacement hedging on cases 102/104/122 (TRIPOD 19g #3). The house-voice myth rule ("refute plainly, then the consequence") in [ROADMAP.md](ROADMAP.md) §3 targets it.
 
 1. **Live run**: `python eval/test_rag.py --tag myth --out eval/results/rag_myth.json`
    (needs Postgres/pgvector + Ollama; this session had neither — code is
