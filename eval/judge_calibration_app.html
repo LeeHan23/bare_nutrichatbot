@@ -600,6 +600,29 @@
     return opts.map(function (o) { return '<option value="' + esc(o) + '">' + esc(o) + "</option>"; }).join("");
   }
 
+  // Dropdown roster — keep in sync with eka_review.html. "Other…" covers
+  // anyone not listed. The pick is a .computationalrd.com cookie so it
+  // carries over to docs-api.computationalrd.com/eka-review too.
+  var REVIEWERS = ["Sazzli Kasim", "Suraya", "Han"];
+  var currentReviewer = decodeURIComponent((document.cookie.match(/(?:^|; )reviewer_name=([^;]*)/) || [])[1] || "");
+
+  function reviewerOptionsHtml() {
+    var names = currentReviewer && REVIEWERS.indexOf(currentReviewer) < 0 ? REVIEWERS.concat(currentReviewer) : REVIEWERS;
+    return '<option value="">Choose your name…</option>' +
+      names.map(function (n) { return "<option" + (n === currentReviewer ? " selected" : "") + ' value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") +
+      '<option value="__other">Other…</option>';
+  }
+
+  function onReviewerChange(ev) {
+    var v = ev.target.value;
+    if (v === "__other") v = (prompt("Your name:") || "").trim();
+    currentReviewer = v;
+    document.cookie = "reviewer_name=" + encodeURIComponent(v) + "; domain=.computationalrd.com; path=/; max-age=31536000; secure; samesite=lax";
+    Array.prototype.forEach.call(document.querySelectorAll('select[name="reviewer"]'), function (sel) {
+      sel.innerHTML = reviewerOptionsHtml();
+    });
+  }
+
   function caseCard(judgeKey, c) {
     var verdictBadge = c.judge_verdict === "PASS"
       ? '<span class="badge good">JUDGE: PASS</span>'
@@ -621,7 +644,7 @@
       '<div class="verdict-row">' + verdictBadge + reasonHtml + "</div>" +
       reviewsBlock(judgeKey, c) +
       '<form class="review-form" data-judge="' + judgeKey + '" data-case-id="' + c.id + '">' +
-        '<div class="field name"><label>Your name</label><input type="text" name="reviewer" required></div>' +
+        '<div class="field name"><label>Your name</label><select name="reviewer" required>' + reviewerOptionsHtml() + "</select></div>" +
         '<div class="field verdict"><label>Your verdict</label><select name="verdict" required><option value="" disabled selected>Choose…</option>' + verdictOptionsHtml(state.judges[judgeKey].verdict_options) + "</select></div>" +
         '<div class="field agree"><label>Agree?</label><select name="agree"><option value="">—</option><option value="YES">Yes</option><option value="NO">No</option></select></div>' +
         '<div class="field notes"><label>Notes</label><input type="text" name="notes" placeholder="Optional — strengthen or amplify your point"></div>' +
@@ -697,6 +720,7 @@
     });
     Array.prototype.forEach.call(document.querySelectorAll(".review-form"), function (form) {
       form.addEventListener("submit", onSubmitReview);
+      form.elements.reviewer.addEventListener("change", onReviewerChange);
     });
   }
 

@@ -139,8 +139,8 @@
   /* ---------- Actions / editing ---------- */
   .reviewer { display: flex; align-items: center; gap: 6px; }
   .reviewer label { font-size: 12.5px; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
-  .reviewer input { font-family: var(--sans); font-size: 12.5px; padding: 6px 9px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 130px; }
-  .reviewer input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .reviewer select { font-family: var(--sans); font-size: 12.5px; padding: 6px 9px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text); width: 150px; }
+  .reviewer select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 4px; border-top: 1px solid var(--border); margin-top: 2px; }
   .abtn { font-family: var(--sans); font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); cursor: pointer; }
@@ -229,7 +229,7 @@
       <div class="row">
         <div class="reviewer">
           <label for="reviewerName">Reviewing as</label>
-          <input type="text" id="reviewerName" placeholder="your name" autocomplete="off" />
+          <select id="reviewerName"></select>
         </div>
       </div>
       <div class="row" id="monthNav"></div>
@@ -256,7 +256,7 @@
       <div class="row">
         <div class="reviewer">
           <label for="exReviewerName">Reviewing as</label>
-          <input type="text" id="exReviewerName" placeholder="your name" autocomplete="off" />
+          <select id="exReviewerName"></select>
         </div>
         <div class="card-msg" id="approveAllMsg"></div>
       </div>
@@ -295,7 +295,6 @@
   var CATEGORIES = ["Exercise", "Knowledge", "Activity"];
   var CAT_COLORS = { Exercise: "var(--cat-exercise)", Knowledge: "var(--cat-knowledge)", Activity: "var(--cat-activity)" };
   var KEY_STORAGE = "eka_review_api_key";
-  var REVIEWER_STORAGE = "eka_review_reviewer_name";
   // Set true when a valid admin_token cookie is found (see /admin/login on
   // the nutribot service) — lets the manual key gate be skipped entirely.
   var cookieAuthed = false;
@@ -411,12 +410,34 @@
   }
 
   // ---------- Reviewer name ----------
+  // Dropdown roster — keep in sync with eval/judge_calibration_app.html.
+  // "Other…" covers anyone not listed. The pick is a .computationalrd.com
+  // cookie so it carries over to eval.computationalrd.com too.
+  var REVIEWERS = ["Sazzli Kasim", "Suraya", "Han"];
+  var currentReviewer = decodeURIComponent((document.cookie.match(/(?:^|; )reviewer_name=([^;]*)/) || [])[1] || "");
   var reviewerInput = document.getElementById("reviewerName");
-  reviewerInput.value = localStorage.getItem(REVIEWER_STORAGE) || "";
-  reviewerInput.addEventListener("input", function (e) {
-    localStorage.setItem(REVIEWER_STORAGE, e.target.value);
-  });
-  function getReviewer() { return reviewerInput.value.trim() || null; }
+  var exReviewerInput = document.getElementById("exReviewerName");
+  function fillReviewerSelects() {
+    var names = currentReviewer && REVIEWERS.indexOf(currentReviewer) < 0 ? REVIEWERS.concat(currentReviewer) : REVIEWERS;
+    [reviewerInput, exReviewerInput].forEach(function (sel) {
+      sel.innerHTML = "";
+      sel.add(new Option("Choose your name…", ""));
+      names.forEach(function (n) { sel.add(new Option(n, n)); });
+      sel.add(new Option("Other…", "__other"));
+      sel.value = currentReviewer;
+    });
+  }
+  function onReviewerChange(e) {
+    var v = e.target.value;
+    if (v === "__other") v = (prompt("Your name:") || "").trim();
+    currentReviewer = v;
+    document.cookie = "reviewer_name=" + encodeURIComponent(v) + "; domain=.computationalrd.com; path=/; max-age=31536000; secure; samesite=lax";
+    fillReviewerSelects();
+  }
+  reviewerInput.addEventListener("change", onReviewerChange);
+  exReviewerInput.addEventListener("change", onReviewerChange);
+  fillReviewerSelects();
+  function getReviewer() { return currentReviewer || null; }
 
   // ---------- Write actions ----------
   function apiPost(path, body) {
@@ -1045,10 +1066,7 @@
   var ALL_EXERCISE_ITEMS = [];
   var exLoaded = false;
 
-  var exReviewerInput = document.getElementById("exReviewerName");
-  exReviewerInput.value = localStorage.getItem(REVIEWER_STORAGE) || "";
-  exReviewerInput.addEventListener("input", function (e) { localStorage.setItem(REVIEWER_STORAGE, e.target.value); });
-  function getExReviewer() { return exReviewerInput.value.trim() || null; }
+  var getExReviewer = getReviewer;
 
   function updateExerciseItemInPlace(updated) {
     for (var i = 0; i < ALL_EXERCISE_ITEMS.length; i++) {
