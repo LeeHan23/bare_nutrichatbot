@@ -42,6 +42,7 @@ class ChatRequest(BaseModel):
     session_id: str
     profile: dict | None = None  # Optional explicit profile dict (legacy path)
     patient_id: int | None = None  # Optional: auto-load profile from DB by patient ID
+    phone_number: str | None = None  # Optional: My Heart Coach app user — profile read live from the staging DB (myheart_db.py)
     is_patient_self: bool | None = (
         None  # True = patient is chatting (second-person). Defaults to True when patient_id is set; pass False explicitly for clinician tools.
     )
@@ -105,13 +106,18 @@ def _resolve_patient_profile(
 ) -> dict | None:
     """
     Resolve the patient profile from the request.
-    Order: explicit profile → patient_id lookup → None.
+    Order: explicit profile → patient_id lookup → My Heart Coach phone_number → None.
     Validates the patient belongs to the calling client.
     """
     if request.profile is not None:
         return request.profile
 
     if request.patient_id is None:
+        if request.phone_number:
+            import myheart_db
+
+            # Fails soft: unknown phone or staging DB down → unpersonalized answer
+            return myheart_db.get_myheart_profile(db.normalise_phone_number(request.phone_number))
         return None
 
     patient = db.get_patient(database, request.patient_id)
@@ -189,14 +195,15 @@ async def get_chat_response(
     Profile resolution order:
       1. Explicit `profile` dict in the request body
       2. `patient_id` → auto-loaded from the database
-      3. Neither — RAG infers the condition from the question
+      3. `phone_number` → read live from the My Heart Coach staging DB
+      4. None of these — RAG infers the condition from the question
     """
     resolved_profile = _resolve_patient_profile(request, client, database)
 
     # Infer is_patient_self
     is_patient_self = request.is_patient_self
     if is_patient_self is None:
-        is_patient_self = request.patient_id is not None
+        is_patient_self = request.patient_id is not None or request.phone_number is not None
 
     # --- PHASE 5: SYNCHRONOUS SAFETY CATCH ---
     if RED_FLAG_PATTERN.search(request.question):
@@ -248,7 +255,7 @@ async def get_chat_response_sync(
 
     is_patient_self = request.is_patient_self
     if is_patient_self is None:
-        is_patient_self = request.patient_id is not None
+        is_patient_self = request.patient_id is not None or request.phone_number is not None
 
     # --- PHASE 5: SYNCHRONOUS SAFETY CATCH ---
     if RED_FLAG_PATTERN.search(request.question):

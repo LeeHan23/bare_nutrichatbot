@@ -23,6 +23,8 @@ What does **not** match — the placeholder guessed wrong:
 
 Other tables of note, not yet consumed anywhere: `eka_sets`/`exercises`/`knowledge_articles` (a real risk-level-gated Exercise/Knowledge/Activity content schema — directly relevant to our weekly EKA pipeline, worth a closer look before more EKA content-generation work), `user_vital_signs` (pulse, BP, blood sugar, SpO2, HbA1c, cholesterol — an actual vitals channel; `docs/component_taxonomy_contract.md` had flagged this as not existing anywhere), `medicine`/`medicine_history` (JSON medicine list per user).
 
+**2026-10-03 — full live profile for unlinked app users.** The DB moved to port **21809** (same host/credentials; `.env` updated). `myheart_db.get_myheart_profile(phone)` builds a complete profile dict (same keys as `database.patient_to_profile_dict`) from `users`, `goals`, `medicine_history` (condition flags → `condition`), `risk_score`, `medicine` (JSON list → `medications`) and the latest `user_vital_signs` row, read live per chat request via `ChatRequest.phone_number` — no local `Patient` row needed, nothing copied. Mapping lives in `build_myheart_profile()` with an assert self-check under `__main__`. Not consumed: `user_weights`, `user_smoking_habits`, `user_symptoms`, `user_daily_diaries`.
+
 ## How to connect
 
 Credentials live in `.env` as `MYHEART_DB_HOST`/`_PORT`/`_NAME`/`_USER`/`_PASSWORD` — never hardcode them elsewhere.

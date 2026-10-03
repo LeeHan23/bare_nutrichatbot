@@ -42,6 +42,7 @@ X-API-Key: <NUTRIBOT_API_KEY>
 - `question` (string, required) — the user's message.
 - `session_id` (string, required) — one per conversation; reused session IDs carry chat history.
 - `patient_id` (int, optional) — loads that patient's clinical profile automatically for personalized answers. Omit both this and `profile` for plain, unpersonalized answers from the same endpoint.
+- `phone_number` (string, optional) — for a My Heart Coach app user with no `patient_id`: their goals, medical history, risk questionnaire, medicines and latest vitals are read live from the My Heart Coach staging DB on every request (nothing is copied or written back). An unknown number, or the staging DB being unreachable, falls back to an unpersonalized answer. Example: `{"question": "...", "phone_number": "+60123456789", "session_id": "..."}`.
 - `profile` (object, optional) — pass an explicit profile dict instead of `patient_id` (legacy path, skip unless needed).
 - `is_patient_self` (bool, optional) — defaults to `true` when `patient_id` is set.
 
