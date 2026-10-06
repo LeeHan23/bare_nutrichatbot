@@ -842,7 +842,8 @@
     return Promise.all([
       fetch("/api/cases").then(function (r) { return r.json(); }),
       fetch("/api/reviews").then(function (r) { return r.json(); }),
-      fetch("/api/rules").then(function (r) { return r.json(); }),
+      // Tolerate an eval service not yet restarted onto /api/rules — judge tabs must still load
+      fetch("/api/rules").then(function (r) { return r.ok ? r.json() : { rules: [] }; }),
     ]).then(function (results) {
       state = results[0];
       var reviewStore = results[1];
