@@ -25,6 +25,8 @@ Other tables of note, not yet consumed anywhere: `eka_sets`/`exercises`/`knowled
 
 **2026-10-03 — full live profile for unlinked app users.** The DB moved to port **21809** (same host/credentials; `.env` updated). `myheart_db.get_myheart_profile(phone)` builds a complete profile dict (same keys as `database.patient_to_profile_dict`) from `users`, `goals`, `medicine_history` (condition flags → `condition`), `risk_score`, `medicine` (JSON list → `medications`) and the latest `user_vital_signs` row, read live per chat request via `ChatRequest.phone_number` — no local `Patient` row needed, nothing copied. Mapping lives in `build_myheart_profile()` with an assert self-check under `__main__`. Not consumed: `user_weights`, `user_smoking_habits`, `user_symptoms`, `user_daily_diaries`.
 
+**2026-10-06 safety defaults** (`myheart_db._LEVEL_FLOOR` / `_DERIVED_RESTRICTIONS`): every staging user came back `risk_level=L0` with no dietary restrictions — including one with heart failure, a recent MI, CKD and warfarin, whom the bot then told bananas were fine. Conditions now set a level floor (HF/MI/stroke/CKD → L3, HTN/diabetes → L2; a higher app level is kept) and derive the restrictions a dietitian would set (CKD → low K + low P, HTN/HF → low sodium, HF → fluid limit per care team, diabetes → low simple carbs, warfarin → consistent vitamin K), worded like our own `Patient.dietary_restrictions` so `rag.py`'s explicit-restriction rule fires. Provisional until the supervising dietitian reviews it.
+
 ## How to connect
 
 Credentials live in `.env` as `MYHEART_DB_HOST`/`_PORT`/`_NAME`/`_USER`/`_PASSWORD` — never hardcode them elsewhere.

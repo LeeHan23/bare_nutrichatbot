@@ -163,6 +163,22 @@ _VITAL_FIELDS = [
 ]
 _UNANSWERED = (None, "", "NOT_SURE", "DONT_KNOW", [])
 
+# Safety defaults (decision 2026-10-06): staging users all came back L0 with no
+# dietary restrictions, even one with HF + recent MI + CKD + warfarin, and the
+# bot told them bananas were fine. Conditions set a level floor and derive the
+# restrictions a dietitian would set; same wording as our own Patient rows so
+# rag.py's explicit-restriction rule fires.
+_LEVEL_FLOOR = {
+    "Heart failure": "L3", "Previous heart attack": "L3", "Previous minor stroke": "L3",
+    "Chronic kidney disease": "L3", "Hypertension": "L2", "Diabetes": "L2",
+}
+_DERIVED_RESTRICTIONS = {
+    "Chronic kidney disease": ["Low potassium", "Low phosphorus"],
+    "Hypertension": ["Low sodium"],
+    "Heart failure": ["Low sodium", "Fluid restriction as advised by care team"],
+    "Diabetes": ["Low simple carbohydrates"],
+}
+
 
 def _value(v):
     """JSON-column strings -> lists; app enums -> readable text ('IMPROVE_FITNESS' -> 'improve fitness')."""
@@ -220,11 +236,19 @@ def build_myheart_profile(user, goals, history, risk, vitals, med_rows) -> dict:
         if facts:
             notes.append(f"{heading}: " + "; ".join(facts))
 
+    restrictions = []
+    for c in conditions:
+        restrictions += [r for r in _DERIVED_RESTRICTIONS.get(c, []) if r not in restrictions]
+    if any("warfarin" in m for m in medications):
+        restrictions.append("Consistent vitamin K intake (on warfarin)")
+    # "L0" < "L3" compares correctly as strings
+    level = max([user.get("risk_level") or "L0"] + [_LEVEL_FLOOR[c] for c in conditions if c in _LEVEL_FLOOR])
+
     exercise = (_value(goals.get("exercise_types")) or [_value(goals.get("exercise_type"))]) if goals else []
     return {
         "condition": conditions,
         "medications": medications,
-        "dietary_restrictions": [],
+        "dietary_restrictions": restrictions,
         "allergies": [],
         "name": user.get("full_name"),
         "gender": (user.get("gender") or "").capitalize() or None,
@@ -232,7 +256,7 @@ def build_myheart_profile(user, goals, history, risk, vitals, med_rows) -> dict:
         "height_cm": _float(goals.get("height")) if goals else None,
         "activity_types": [e for e in exercise if e and e != "none"],
         "notes": "\n".join(notes),
-        "personalization_level": user.get("risk_level"),
+        "personalization_level": level,
         "onboarding_stage": _onboarding_from_flags(
             user.get("is_goals_completed"), user.get("is_risk_score_completed"),
             user.get("is_medicine_completed"), user.get("is_medicine_history_completed"),
@@ -291,7 +315,15 @@ if __name__ == "__main__":
     assert p["condition"] == ["Hypertension", "Diabetes"], p["condition"]
     assert p["medications"] == ["atorvastatin"], p["medications"]
     assert (p["weight_kg"], p["height_cm"], p["gender"]) == (43.0, 157.0, "Female")
-    assert p["onboarding_stage"] == "OB2" and p["personalization_level"] == "L1"
+    assert p["onboarding_stage"] == "OB2" and p["personalization_level"] == "L2"  # L1 raised by HTN floor
+    assert p["dietary_restrictions"] == ["Low sodium", "Low simple carbohydrates"], p["dietary_restrictions"]
+    hf = build_myheart_profile({"risk_level": "L0"}, None, {"is_heart_failure": 1, "is_poor_kidney_function": 1},
+                               None, None, [{"medicines": '["WARFARIN"]', "other_medicines": None}])
+    assert hf["personalization_level"] == "L3"
+    assert hf["dietary_restrictions"] == ["Low potassium", "Low phosphorus", "Low sodium",
+                                          "Fluid restriction as advised by care team",
+                                          "Consistent vitamin K intake (on warfarin)"], hf["dietary_restrictions"]
+    assert build_myheart_profile({"risk_level": "L1"}, None, None, None, None, [])["personalization_level"] == "L1"
     assert p["activity_types"] == ["light"]
     assert "Primary goal: heart health diet" in p["notes"] and "HDL" not in p["notes"]
     assert "Physical problems" not in p["notes"] and "Total cholesterol: 5.2" in p["notes"]
