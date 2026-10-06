@@ -113,3 +113,11 @@ logs/
 
 # DeepEval local telemetry cache (created at runtime, not source)
 .deepeval/
+
+# Local tool caches and scratch output (not project source)
+.playwright-mcp/
+.serena/
+graphify-out/
+full.png
+*.bak_*
+*.stale_bak*
