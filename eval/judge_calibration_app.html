@@ -435,6 +435,16 @@
   .term-row .term-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.55; }
   .term-row .term-desc b { color: var(--ink); font-weight: 500; }
   .badge.neutral { background: var(--surface-2); color: var(--ink-muted); }
+  /* Clinical rule sign-off — deliberately styled apart from the judge tabs */
+  .rule-banner { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 10px; padding: 12px 14px; margin: 0 0 18px; font-size: 13.5px; line-height: 1.5; }
+  .rule-banner b { color: var(--warn); }
+  .rule-group { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--warn); margin-bottom: 6px; }
+  .rule-text { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+  .rule-why { color: var(--ink-muted); font-size: 13px; margin: 0 0 10px; }
+  .evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 0 0 22px; }
+  .evidence blockquote { margin: 4px 0 0; }
+  .rail-tab.rule-tab.active { background: var(--warn-soft); color: var(--warn); }
+  .rail-tab.rule-tab.active .count { color: var(--warn); }
   .example-label {
     font-size: 11px;
     font-weight: 600;
@@ -527,6 +537,11 @@
       '<p>This is separate from your verdict above. The automated judge collapses its classification into a binary <b>JUDGE: PASS</b> / <b>JUDGE: FAIL</b> call, shown as the badge on each case (for the myth judge: REFUTE → PASS, HEDGE or ACCEPT → FAIL). ' +
       '<b>“Agree?” asks whether you agree with that PASS/FAIL call</b> — not whether your verdict label happens to match the judge’s wording. ' +
       'It’s entirely possible to pick a different verdict label than you’d expect and still agree (or disagree) with the resulting pass/fail — that tension is exactly what this exercise is meant to surface, not something to “fix” before submitting.</p>' +
+
+      '<h2>Clinical sign-off — a different job from the judges</h2>' +
+      '<p>The <b>Staging profile rules</b> tab at the bottom of the left rail is <b>not</b> judge calibration. No automated judge is involved and there is no “Agree?” question. ' +
+      'It lists the safety rules Nutribot applies to My Heart Coach app users (minimum risk level, dietary restrictions derived from their conditions). ' +
+      'A clinician marks each rule <b>APPROVE</b>, <b>CHANGE</b> (say what it should be in the notes) or <b>REJECT</b>.</p>' +
 
       '<div class="example-label">Worked example — Myth #101</div>' +
       '<p>Below is the actual case, with the review already submitted for it. The patient (P11, CKD Stage 4 + Heart Failure) said they stopped a kidney medication in favor of misai kucing tea. ' +
@@ -667,6 +682,45 @@
     return { total: total, agree: agree, disagree: disagree, rate: rate, caseCount: cases.length };
   }
 
+  var RULE_DECISIONS = ["APPROVE", "CHANGE", "REJECT"];
+
+  function ruleCard(r) {
+    return '<div class="case-card" data-case-id="' + r.id + '">' +
+      '<span class="rule-group">' + esc(r.group) + "</span>" +
+      '<p class="rule-text">' + esc(r.rule) + "</p>" +
+      '<p class="rule-why">' + esc(r.why) + "</p>" +
+      reviewsBlock("rule", r) +
+      '<form class="review-form" data-judge="rule" data-case-id="' + r.id + '">' +
+        '<div class="field name"><label>Your name</label><select name="reviewer" required>' + reviewerOptionsHtml() + "</select></div>" +
+        '<div class="field verdict"><label>Decision</label><select name="verdict" required><option value="" disabled selected>Choose…</option>' + verdictOptionsHtml(RULE_DECISIONS) + "</select></div>" +
+        '<div class="field notes"><label>Notes</label><input type="text" name="notes" placeholder="For CHANGE / REJECT: what should the rule be instead?"></div>' +
+        '<button type="submit">Submit decision</button>' +
+      "</form>" +
+    "</div>";
+  }
+
+  function rulesHtml() {
+    var decided = state.rules.filter(function (r) { return r.reviews.length; }).length;
+    return "<h1>Staging profile rules — Clinical sign-off</h1>" +
+      '<div class="rule-banner"><b>This is not judge calibration.</b> There is no automated judge on this tab and nothing to agree or disagree with. ' +
+        "These are safety rules Nutribot applies on its own to <b>My Heart Coach app users</b>, because the app’s data gave everyone risk level L0 and no dietary restrictions. " +
+        "They are <b>live now but provisional</b> — please approve, change or reject each one.</div>" +
+      '<div class="stats">' +
+        '<div class="stat-tile"><div class="label">Rules</div><div class="value">' + state.rules.length + "</div></div>" +
+        '<div class="stat-tile"><div class="label">Rules with a decision</div><div class="value">' + decided + "</div></div>" +
+      "</div>" +
+      "<h2>Why these exist — the same question, before and after</h2>" +
+      '<p class="subtitle">App user with heart failure, a heart attack on 2026-08-29, poor kidney function and warfarin, whose app risk level is L0. Question: <b>“Can I eat banana?”</b></p>' +
+      '<div class="evidence">' +
+        '<div class="case-card"><span class="badge bad">BEFORE — app data as-is (L0, no restrictions)</span>' +
+          '<blockquote class="answer">You can eat bananas as part of your diet. They are rich in carbohydrates and provide quick energy, which is beneficial for someone looking to be more active like yourself. However, keep an eye on your portion sizes since they do contain natural sugars.</blockquote></div>' +
+        '<div class="case-card"><span class="badge good">AFTER — with these rules (L3 + low potassium…)</span>' +
+          '<blockquote class="answer">You should avoid eating bananas as they are high in potassium, and your care team has set this limit to manage your chronic kidney disease and heart condition. Instead of bananas, you could opt for fruits like apples or pears that have lower potassium levels.</blockquote></div>' +
+      "</div>" +
+      "<h2>The rules</h2>" +
+      state.rules.map(ruleCard).join("");
+  }
+
   function render() {
     var railHtml =
       '<div class="rail-title guide-title">Guide</div>' +
@@ -677,11 +731,16 @@
         var s = computeStats(k);
         return '<button class="rail-tab' + (!showInstructions && k === activeJudge ? " active" : "") + '" data-tab="' + k + '">' +
           "<span>" + esc(jj.title) + "</span><span class=\"count\">" + s.total + "/" + jj.cases.length + "</span></button>";
-      }).join("");
+      }).join("") +
+      '<div class="rail-title">Clinical sign-off (not a judge)</div>' +
+      '<button class="rail-tab rule-tab' + (!showInstructions && activeJudge === "rules" ? " active" : "") + '" data-tab="rules">' +
+        '<span>Staging profile rules</span><span class="count">' + state.rules.filter(function (r) { return r.reviews.length; }).length + "/" + state.rules.length + "</span></button>";
 
     var mainHtml;
     if (showInstructions) {
       mainHtml = instructionsHtml();
+    } else if (activeJudge === "rules") {
+      mainHtml = rulesHtml();
     } else {
       var j = state.judges[activeJudge];
       var stats = computeStats(activeJudge);
@@ -767,7 +826,8 @@
       if (!resp.ok) throw new Error("Server error (" + resp.status + ")");
       return resp.json();
     }).then(function (review) {
-      var c = state.judges[judgeKey].cases.find(function (x) { return x.id === caseId; });
+      var list = judgeKey === "rule" ? state.rules : state.judges[judgeKey].cases;
+      var c = list.find(function (x) { return x.id === caseId; });
       if (c) c.reviews.push(review);
       render();
       showToast("Saved — visible to your team on refresh.");
@@ -782,9 +842,14 @@
     return Promise.all([
       fetch("/api/cases").then(function (r) { return r.json(); }),
       fetch("/api/reviews").then(function (r) { return r.json(); }),
+      fetch("/api/rules").then(function (r) { return r.json(); }),
     ]).then(function (results) {
       state = results[0];
       var reviewStore = results[1];
+      state.rules = results[2].rules.map(function (r) {
+        r.reviews = reviewStore["rule:" + r.id] || [];
+        return r;
+      });
       order.forEach(function (judgeKey) {
         var j = state.judges[judgeKey];
         if (!j) return;

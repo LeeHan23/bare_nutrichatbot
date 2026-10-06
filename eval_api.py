@@ -83,6 +83,57 @@ def get_reviews() -> dict:
     return eval_review_store.all_reviews()
 
 
+# ---------------------------------------------------------------------------
+# Clinical rule sign-off — NOT judge calibration. These are the safety rules
+# myheart_db.py applies to My Heart Coach app users (2026-10-06); a clinician
+# approves/changes/rejects each one. Rule text is read from myheart_db's own
+# constants so the page always shows what the bot actually does. Reviews share
+# eval_review_store under the "rule:" key prefix. Ids are fixed — append only.
+# ---------------------------------------------------------------------------
+
+def _rule_items() -> list[dict]:
+    import myheart_db as mh
+
+    def floor(level):
+        return ", ".join(c for c, lv in mh._LEVEL_FLOOR.items() if lv == level)
+
+    def restr(cond):
+        return ", ".join(mh._DERIVED_RESTRICTIONS[cond])
+
+    app_says = "The My Heart Coach app's risk_level is L0 for almost every user, including high-risk ones."
+    return [
+        {"id": 1, "group": "Personalization level floor",
+         "rule": f"Any of: {floor('L3')} → level is at least L3 (medical oversight only, emergency education).",
+         "why": app_says + " A higher app level is always kept."},
+        {"id": 2, "group": "Personalization level floor",
+         "rule": f"Any of: {floor('L2')} → level is at least L2 (low intensity, strict stop conditions).",
+         "why": app_says + " A higher app level is always kept."},
+        {"id": 3, "group": "Derived dietary restriction",
+         "rule": f"Chronic kidney disease → {restr('Chronic kidney disease')}",
+         "why": "The app has no dietary-restriction field. Applied to anyone who ticks 'poor kidney function', regardless of stage or serum potassium."},
+        {"id": 4, "group": "Derived dietary restriction",
+         "rule": f"Hypertension → {restr('Hypertension')}",
+         "why": "The app has no dietary-restriction field."},
+        {"id": 5, "group": "Derived dietary restriction",
+         "rule": f"Heart failure → {restr('Heart failure')}",
+         "why": "No fluid volume is set — the bot defers the exact limit to the care team."},
+        {"id": 6, "group": "Derived dietary restriction",
+         "rule": f"Diabetes → {restr('Diabetes')}",
+         "why": "The app has no dietary-restriction field."},
+        {"id": 7, "group": "Derived dietary restriction",
+         "rule": "Warfarin in the medicine list → Consistent vitamin K intake (on warfarin)",
+         "why": "Food–drug interaction: large swings in leafy-green intake change INR."},
+        {"id": 8, "group": "Condition mapping",
+         "rule": "App answer 'poor kidney function' (medicine_history.is_poor_kidney_function) → treated as 'Chronic kidney disease'",
+         "why": "Needed so kidney/potassium guidelines are retrieved. Means a self-report is treated as diagnosed CKD."},
+    ]
+
+
+@app.get("/api/rules", dependencies=[Depends(verify_api_key)])
+def get_rules() -> dict:
+    return {"rules": _rule_items()}
+
+
 @app.post("/api/reviews", dependencies=[Depends(verify_api_key)])
 def post_review(submission: ReviewSubmission) -> dict:
     return eval_review_store.add_review(
