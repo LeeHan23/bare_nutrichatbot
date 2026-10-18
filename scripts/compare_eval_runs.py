@@ -84,10 +84,19 @@ def main():
     )
     parser.add_argument("--baseline", required=True, help="Path to the baseline (pre-fine-tune) results JSON")
     parser.add_argument("--candidate", required=True, help="Path to the candidate (post-fine-tune) results JSON")
+    parser.add_argument("--exclude", default=None,
+                        help="JSON list of case ids to leave out, e.g. finetune/data_mlx_v3/trained_case_ids.json "
+                             "(cases the candidate was trained on a paraphrase of)")
     args = parser.parse_args()
 
     baseline = load_cases(args.baseline)
     candidate = load_cases(args.candidate)
+    if args.exclude:
+        with open(args.exclude) as f:
+            excluded = set(json.load(f))
+        baseline = {k: v for k, v in baseline.items() if k not in excluded}
+        candidate = {k: v for k, v in candidate.items() if k not in excluded}
+        print(f"Excluding {len(excluded)} trained-on case ids")
     result = compare(baseline, candidate)
 
     print("=" * 70)

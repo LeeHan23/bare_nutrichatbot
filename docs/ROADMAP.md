@@ -18,7 +18,7 @@ supplies the examples it learns from.
 
 ---
 
-## 1. Status board (as of 2026-09-28)
+## 1. Status board (as of 2026-09-28; staging-DB rows updated 2026-10-06)
 
 ### Modules (`taxonomy.COMPONENTS`, 11 slugs)
 
@@ -57,8 +57,10 @@ the question routes to its module (see §2, M1).
 | Team hub sign-in | done, committed 2026-09-28 (172a3c3) | `team_router.py` | – | – |
 | Eval service | done, committed 2026-09-28 (172a3c3) | `eval_api.py`, `deploy/eval.service` | label scope + voice judges | – |
 | Patient self-registration | done 2026-09-16 | `POST /patient/register` | – | – |
-| My Heart Coach staging DB fallback | done (read-only: L0-L3, OB flags) | `myheart_db.py` | OB mapping confirmation | MHC team |
-| Fine-tuning (Qwen 32B QLoRA) | in progress: #1 DO NOT PROMOTE; #2 data ready, not run | `finetune/QWEN_FINETUNE.md` | run #2 | Mac Studio GPU time |
+| My Heart Coach staging DB | **live profile done 2026-10-06**: `phone_number` in chat → full profile read live per request from `users`, `goals`, `medicine_history`, `risk_score`, `medicine`, latest `user_vital_signs` (DB moved to port 21809) | `myheart_db.get_myheart_profile`, `ChatRequest.phone_number` | S2 sign-off; MHC team to compute real `risk_level` (every user is L0) | dietitian; MHC team |
+| Staging safety defaults | live, **provisional**: level floor (HF/MI/stroke/CKD → L3, HTN/diabetes → L2) + derived diet restrictions (CKD → low K/P, HTN/HF → low Na, HF → fluid limit, diabetes → low simple carbs, warfarin → consistent vit K) | `myheart_db._LEVEL_FLOOR`, `_DERIVED_RESTRICTIONS` | S2 | dietitian |
+| Clinical rule sign-off (not a judge) | live 2026-10-06, 0/8 decided | eval site → "Staging profile rules" tab, `eval_api._rule_items` | dietitian reviews the 8 rules | reviewer time |
+| Fine-tuning (Qwen 32B QLoRA) | in progress: #1 DO NOT PROMOTE; #2 superseded (its banana+CKD3 target is clinician-disputed); **#3 = #2 minus disputed + eval-site review notes** (`finetune/build_review_data.py`), Mac Studio run 2026-10-19 via `finetune/mac_studio_finetune.sh` | `finetune/QWEN_FINETUNE.md` | run #3, eval gate | Mac Studio GPU time; dietitian rules on 4 disputed stances |
 | Content drip scheduler | running (08:00 daily) | `scripts/content_scheduler.py` | delivery channel | WhatsApp creds |
 | WhatsApp | in progress: code done | `whatsapp_router.py` | creds + webhook + phone links | Twilio/Meta creds |
 | RemotePatientStore | in progress: scaffold + mock | `remote_patient_store.py` | adapt to the real spec | hospital API spec |
@@ -95,10 +97,12 @@ hardware, GPU time, client content).
 | E0 | First fresh full-suite baseline (Sun 4 Oct) | ■ |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | E1 | Brand-voice judge + calibration cases |  | ■ | ■ |  |  |  |  |  |  |  |  |  |  |  |
 | E2 | Voice baseline: chat + one EKA week |  |  | ■ |  |  |  |  |  |  |  |  |  |  |  |
-| FT | Fine-tune attempt #2 (Mac Studio) |  | □ | □ |  |  |  |  |  |  |  |  |  |  |  |
+| FT | Fine-tune attempt #3 (Mac Studio) |  | □ | □ |  |  |  |  |  |  |  |  |  |  |  |
 | E3 | Human labels + threshold sweep |  |  |  |  |  | ■ | ■ | ■ | ■ |  |  |  |  |  |
 | M1 | Scope evals for 7 uncovered modules (28 cases) | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | M2 | Fix module-scope failures from M1 | ■ | ■ | ■ | ■ | ■ |  |  |  |  |  |  |  |  |  |
+| S1 | Staging live profile + safety defaults + sign-off tab |  | ✓ |  |  |  |  |  |  |  |  |  |  |  |  |
+| S2 | Dietitian sign-off on the 8 staging rules |  | ■ | ■ | ■ |  |  |  |  |  |  |  |  |  |  |
 | K1 | EKA groups: weight, tobacco, medication, PA |  |  |  | ■ | ■ |  |  |  |  |  |  |  |  |  |
 | K2 | Chatbot_Chunks re-ingest |  |  |  |  |  | □ | □ | □ | □ |  |  |  |  |  |
 | C0 | Voice spec sign-off (client + dietitian) |  |  | ■ | ■ |  |  |  |  |  |  |  |  |  |  |
@@ -165,6 +169,29 @@ hardware, GPU time, client content).
 - **E:** first fresh full-suite baseline, Sun 2026-10-04 04:00.
 
 ### Phase 1: Define the voice, capture the signal (W41–42, Oct 5 – 18)
+- **S1 (unplanned, done 2026-10-06): My Heart Coach staging users get a full
+  live profile.** The app's users have no local `Patient` row, so a chat
+  request can now send `phone_number` instead of `patient_id`, and
+  `myheart_db.get_myheart_profile()` reads their goals, medical history,
+  risk questionnaire, medicines and latest vitals live from the staging DB on
+  every request (nothing copied, nothing written back; unknown number or DB
+  down → unpersonalized answer). The staging DB moved to port **21809**.
+  Found live: every staging user is `risk_level` L0 with no dietary
+  restrictions, so a user with heart failure, a recent MI, CKD and warfarin
+  was told bananas were fine. Fixed with provisional **safety defaults**
+  (level floor + derived restrictions, see status board) and by mapping
+  "poor kidney function" to "Chronic kidney disease" so the CKD topic boost
+  fires. Verified live: same question now → "avoid or strictly limit
+  bananas… high in potassium". The 8 rules are on the eval site's new
+  **Clinical sign-off (not a judge)** tab for review. Also: EKA review and
+  eval pages now use a reviewer-name dropdown shared across both sites.
+  - **Risk, ties to M2's open item:** staging notes carry the user's own
+    vitals and cholesterol/BP answers, so the "numbers quoted from profile
+    notes" overstep is more likely for app users until that structural fix
+    lands.
+- **S2: dietitian sign-off** on the 8 rules (approve / change / reject on the
+  eval site); apply changes in `myheart_db.py`. Ask the MHC team whether
+  `risk_level` will ever be computed; if so, revisit the floor.
 - **V1: voice spec.** `BRAND_VOICE` + `brand_voice_prompt_block()` in
   `taxonomy.py`, next to `eka_constraints_prompt_block`, as the single source.
   Review copy in `docs/brand_voice.md` for the client and the supervising
@@ -178,8 +205,8 @@ hardware, GPU time, client content).
   calibration app.
 - **E2: voice baseline** on the chat suite and one EKA week, logged via
   `scripts/eval_history.py`.
-- **E (parallel):** fine-tune attempt #2 run, gated by
-  `scripts/compare_eval_runs.py`.
+- **E (parallel):** fine-tune attempt #3 run (2026-10-19, replaces #2), gated by
+  `scripts/compare_eval_runs.py` (also with `--exclude trained_case_ids.json`).
 - **C:** send `docs/brand_voice.md` for client + dietitian sign-off. (The myth set in `eval/myths_review.md` was already signed off 2026-08-31.)
 
 ### Phase 2: Wire the voice everywhere (W43–44, Oct 19 – Nov 1)
@@ -224,7 +251,7 @@ hardware, GPU time, client content).
 | Item | Waiting on |
 |---|---|
 | Hospital API spec → RemotePatientStore read + write paths | Hospital IT |
-| `care_path` / `objective_ids` write path; OB1-3 mapping confirmation | My Heart Coach team |
+| `care_path` / `objective_ids` write path; OB1-3 mapping confirmation; real `users.risk_level` (all L0 today); keeping port 21809 open to `118.100.232.40` | My Heart Coach team |
 | Rehab R1-6 / Dynamic persona tiers; Scoring tab (needs a vitals channel); Personalization_Rules | Client |
 | `CardiovascularScreening` → `Patient` FK (19g #7) | NADI team |
 | LoRA embedding adapter parity across machines (19g #8) | Mac Studio access |

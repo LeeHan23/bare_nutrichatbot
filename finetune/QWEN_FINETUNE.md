@@ -22,6 +22,69 @@ A first run of this exact pipeline already happened, on 2026-08-11 — undocumen
 > persona differs from live `rag._build_qwen_prompt`. ROADMAP V5 aligns both
 > to one house-voice block before any further training data is generated.
 
+## Attempt #3 — the one to run (2026-10-19)
+
+Supersedes #2. The clinicians' eval-site reviews dispute 4 stance targets the
+eval encodes: banana / CKD3 and durian / CKD3 (eval says RESTRICT, both clinicians
+said PERMIT / MODERATE, "stage 3 is still ok", "depends on the potassium
+level"), white rice / PCOS, and fluids / HF ("1L/day is too restrictive,
+guideline allows 1.5L"). Banana / CKD3 is one of #2's three training targets, so
+running #2 would train against the clinicians. Until the dietitian rules on these,
+they're trained in neither direction.
+
+**Data (Han Server, the night before):**
+```bash
+.venv/bin/python finetune/build_review_data.py --dry-run   # what gets used, what's disputed
+.venv/bin/python finetune/build_review_data.py             # ~1h, writes finetune/data_mlx_v3/
+```
+`data_mlx_v3` = `data_focus_v3` minus the 15 disputed banana examples, plus 2
+paraphrased examples per reviewed case: reviewer notes are applied to the
+bot's answer, and approved personalization answers are kept as-is. Each
+example's prompt is the exact live `rag._build_qwen_prompt` output, so training
+matches inference (the old data used `chain_factory`'s prompt, see ROADMAP
+V5). **Read `finetune/data_mlx_v3/review_sheet.md` before training.** The rewrites
+are model-written clinical text. Build with the same `CLARA_COMPRESS_DOC_LIMIT`
+production will run, because the digest is part of the prompt.
+
+Get it to the Mac Studio: commit + push (the setup stage does `git pull`), or
+copy `finetune/data_mlx_v3/` over USB into `~/nutribot-finetune/finetune/`.
+
+**Mac Studio:**
+```bash
+bash finetune/mac_studio_finetune.sh    # setup → train → check → fuse → gguf → ollama
+```
+Copy the script over first, or run `git clone` once and then run it from the
+clone. Each stage resumes if interrupted. Expect roughly 2–3h of training and
+about 1h for fuse/convert. Production keeps serving the whole time but slows
+down. Read `runs/v3/check.txt` before you let fuse run (Ctrl-C after `check`,
+or run the stages one at a time).
+
+**Gate (Han Server):**
+```bash
+# Baseline and candidate need the same CLARA_COMPRESS_DOC_LIMIT, same day if possible.
+.venv/bin/python eval/test_rag.py --out eval/results/rag_baseline.json
+OLLAMA_MODEL=nutribot-qwen-lora-v3 .venv/bin/python eval/test_rag.py --out eval/results/rag_candidate_v3.json
+.venv/bin/python scripts/compare_eval_runs.py --baseline eval/results/rag_baseline.json --candidate eval/results/rag_candidate_v3.json
+.venv/bin/python scripts/compare_eval_runs.py --baseline eval/results/rag_baseline.json --candidate eval/results/rag_candidate_v3.json \
+    --exclude finetune/data_mlx_v3/trained_case_ids.json   # the honest read: cases it didn't train on
+```
+The judge stays on `JUDGE_OLLAMA_MODEL`, so only the answer model changes.
+
+## Upgrading the base model
+
+A LoRA only fits the base it was trained on, so pick the base first. Trying a
+new base needs no Mac visit and no training. Ollama's API is reachable over the
+tunnel, and `qwen3:30b` (30B-A3B Instruct-2507, MoE, ~3B active, 19GB) is
+non-thinking, so it drops in with no code change:
+```bash
+curl https://ollama-internal-x9k2.computationalrd.com/api/pull -H "User-Agent: curl/8.7.1" -d '{"model":"qwen3:30b"}'
+OLLAMA_MODEL=qwen3:30b .venv/bin/python eval/test_rag.py --out eval/results/rag_qwen3_30b.json
+```
+then `compare_eval_runs.py` against the baseline. `qwen3.6:27b` / `qwen3.6:35b`
+(the newest, about two weeks old) are thinking models. `call_ollama_generate` would
+need `"think": false` first. If a new base wins, fine-tune that base instead:
+`BASE_MLX=<mlx-community 4-bit repo of it> BASE_OLLAMA=<its tag> RUN=<name> bash finetune/mac_studio_finetune.sh`.
+
 ## Attempt #2 data — ready (generated 2026-08-18)
 
 Regenerated with the exact same 3 target combos as attempt #1 (banana+CKD3, acar+HTN, instant/processed-food+Pre-HTN — the only variable changed is the ratio, to isolate cause and effect), same `--focus-weight 15`, but `--count` cut from 100 to 45 for a clean 50/50 focus/background split instead of attempt #1's ~31/69:
