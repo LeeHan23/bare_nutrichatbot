@@ -1,6 +1,7 @@
 import os
 import json
 import time
+from functools import lru_cache
 from typing import List, Optional, Set
 
 from dotenv import load_dotenv
@@ -475,6 +476,20 @@ class TopicBoostedRetriever(BaseRetriever):
 # ────────────────────────────────────────────────────────────────────────
 # PUBLIC FACTORY
 # ────────────────────────────────────────────────────────────────────────
+@lru_cache(maxsize=None)
+def _store(collection_name: str) -> PGVector:
+    # One store (= one SQLAlchemy engine + pool) per collection per process.
+    # Building it per request leaked pooled connections: nutribot held 47
+    # after 5 days and Postgres hit max_connections=100 (2026-10-18). Safe to
+    # share: PGVector looks the collection up by name on every query.
+    return PGVector(
+        connection_string=get_connection_string(),
+        embedding_function=get_embedding_function(),
+        collection_name=collection_name,
+        use_jsonb=True,
+    )
+
+
 def get_retriever(
     client_id: str,
     patient_conditions: List[str] = None,
@@ -496,27 +511,11 @@ def get_retriever(
             When set, chunks tagged with a different doc_components list
             are excluded. None (default) = no filtering, current behavior.
     """
-    connection_string = get_connection_string()
-    embedding_function = get_embedding_function()
-
     # Pull a wider candidate pool (k=15 per collection) so the re-ranker
     # has room to actually move things around. Trimmed back to top_k=5
     # in TopicBoostedRetriever.
-    base_db = PGVector(
-        connection_string=connection_string,
-        embedding_function=embedding_function,
-        collection_name="base_knowledge",
-        use_jsonb=True,
-    )
-    base_retriever = base_db.as_retriever(search_kwargs={"k": 15})
-
-    client_db = PGVector(
-        connection_string=connection_string,
-        embedding_function=embedding_function,
-        collection_name=f"client_{client_id}_knowledge",
-        use_jsonb=True,
-    )
-    client_retriever = client_db.as_retriever(search_kwargs={"k": 15})
+    base_retriever = _store("base_knowledge").as_retriever(search_kwargs={"k": 15})
+    client_retriever = _store(f"client_{client_id}_knowledge").as_retriever(search_kwargs={"k": 15})
 
     merged = MergedRetriever(retrievers=[base_retriever, client_retriever])
 
