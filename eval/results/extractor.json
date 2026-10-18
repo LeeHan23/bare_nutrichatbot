@@ -20,7 +20,7 @@
           "palm oil"
         ]
       },
-      "elapsed_s": 5.7
+      "elapsed_s": 5.6
     },
     {
       "id": 2,
@@ -67,7 +67,7 @@
       "result": {
         "medication_compliance": "variable"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.1
     },
     {
       "id": 5,
@@ -93,7 +93,7 @@
       "result": {
         "medication_compliance": "good"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.1
     },
     {
       "id": 7,
@@ -158,7 +158,7 @@
       "result": {
         "tobacco_status": "Current smoker"
       },
-      "elapsed_s": 1.3
+      "elapsed_s": 1.2
     },
     {
       "id": 11,
@@ -187,7 +187,7 @@
           "vitamin D"
         ]
       },
-      "elapsed_s": 1.3
+      "elapsed_s": 1.2
     },
     {
       "id": 13,
@@ -217,7 +217,7 @@
       "result": {
         "medication_compliance": "variable"
       },
-      "elapsed_s": 1.1
+      "elapsed_s": 1.2
     },
     {
       "id": 15,
@@ -279,7 +279,7 @@
           "coconut oil"
         ]
       },
-      "elapsed_s": 1.5
+      "elapsed_s": 1.4
     },
     {
       "id": 19,
@@ -291,7 +291,7 @@
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 1.2
+      "elapsed_s": 0.9
     },
     {
       "id": 20,
@@ -302,7 +302,7 @@
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 0.9
+      "elapsed_s": 0.8
     }
   ]
 }

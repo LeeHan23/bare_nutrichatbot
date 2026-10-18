@@ -74,15 +74,28 @@ The judge stays on `JUDGE_OLLAMA_MODEL`, so only the answer model changes.
 
 A LoRA only fits the base it was trained on, so pick the base first. Trying a
 new base needs no Mac visit and no training. Ollama's API is reachable over the
-tunnel, and `qwen3:30b` (30B-A3B Instruct-2507, MoE, ~3B active, 19GB) is
-non-thinking, so it drops in with no code change:
+tunnel. Use `qwen3:30b-instruct` (30B-A3B-Instruct-2507, MoE, ~3B active, 19GB).
+**Not** `qwen3:30b`: that tag is the Thinking-2507 build, which reasons in plain
+text even with `"think": false` (checked 2026-10-18), so the bot's 800-token
+budget runs out before any answer. The instruct build drops in with no code change:
 ```bash
-curl https://ollama-internal-x9k2.computationalrd.com/api/pull -H "User-Agent: curl/8.7.1" -d '{"model":"qwen3:30b"}'
-OLLAMA_MODEL=qwen3:30b .venv/bin/python eval/test_rag.py --out eval/results/rag_qwen3_30b.json
+curl -N https://ollama-internal-x9k2.computationalrd.com/api/pull -H "User-Agent: curl/8.7.1" -d '{"model":"qwen3:30b-instruct"}'
+OLLAMA_MODEL=qwen3:30b-instruct .venv/bin/python eval/test_rag.py --out eval/results/rag_qwen3_30b_instruct.json
 ```
-then `compare_eval_runs.py` against the baseline. `qwen3.6:27b` / `qwen3.6:35b`
-(the newest, about two weeks old) are thinking models. `call_ollama_generate` would
-need `"think": false` first. If a new base wins, fine-tune that base instead:
+(`-N` and streaming matter: a `"stream":false` pull dies at Cloudflare's 100s timeout.)
+then `compare_eval_runs.py` against the baseline.
+
+**Result (2026-10-18): `qwen3:30b-instruct` loses, 81/110 vs 92/110 — DO NOT PROMOTE.**
+21 regressions, 10 improvements. It is better on myths and CKD (myth 16→18/22,
+pushback 0→2/2, ckd 12→15/16) but much worse on scope (module 26→13/28:
+exercise 0/4, weight 1/4, medication 1/8), where it answers what it should defer.
+Generation averaged ~7s. Run with `CLARA_COMPRESS_TIMEOUT_S=120` because with
+both models loaded the Mac is memory-bound and CLaRa slows to 30s+; unload the
+candidate afterwards (`"keep_alive":0`). Stay on qwen2.5:32b for attempt #3.
+
+ `qwen3.6:27b` / `qwen3.6:35b`
+(the newest, about two weeks old) are thinking models too. Test that `"think": false`
+actually suppresses the reasoning before evaluating them, because on `qwen3:30b` it didn't. If a new base wins, fine-tune that base instead:
 `BASE_MLX=<mlx-community 4-bit repo of it> BASE_OLLAMA=<its tag> RUN=<name> bash finetune/mac_studio_finetune.sh`.
 
 ## Attempt #2 data — ready (generated 2026-08-18)
