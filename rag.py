@@ -393,6 +393,12 @@ def _build_qwen_prompt(
 
     if history_text:
         parts.append(f"\n## Conversation So Far\n{history_text}")
+        parts.append(
+            "\nThis conversation is already under way. Do NOT open your reply with a "
+            "greeting ('hai', 'hi', 'hello', 'salam') or with the person's name — even if "
+            "earlier replies above did. Start directly with the answer. Only greet back if "
+            "their latest message is itself just a greeting."
+        )
 
     if is_patient_self:
         # L3 patients get a slightly larger word budget: the Personalization
