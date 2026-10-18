@@ -64,6 +64,10 @@ async def startup_event():
     """
     db.create_db_and_tables()
 
+    # Load bge-m3 now so the first chat after a restart doesn't pay ~15s for it.
+    from embeddings import get_embedding_function
+    get_embedding_function()
+
     data_dir = "data"
     seed_dir = "/app/data_seed"  # Absolute path in Docker container
 

@@ -1,4 +1,6 @@
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 import database as db
 from image_handler import parse_response_for_image
 from llm import (
@@ -25,8 +27,10 @@ from vector_store import detect_query_component, get_retriever
 # doc count — 5 docs took 35-40s in production, vs 20s for 1 (see [Latency]
 # logs). Retrieval still returns top_k=5 (ranked best-first by
 # TopicBoostedRetriever) for grounding/fallback quality; only the compress
-# call itself gets trimmed to the top 3.
-CLARA_COMPRESS_DOC_LIMIT = 3
+# call itself gets trimmed to the top 3. Set CLARA_COMPRESS_DOC_LIMIT=0 in .env
+# to skip CLaRa entirely: Qwen then gets the raw top-k chunks, the same path as
+# the compress-failed fallback below.
+CLARA_COMPRESS_DOC_LIMIT = int(os.getenv("CLARA_COMPRESS_DOC_LIMIT", "3"))
 
 # Keyword check for "is this question asking to see/demo an exercise" — same
 # style as the food-context detection above. Deliberately separate from
@@ -731,6 +735,11 @@ def get_rag_response(
     if USE_CLARA_COMPRESS:
         print("[DEBUG] Using Option B: CLaRa compress → Qwen generate")
         t0 = time.monotonic()
+        # food_context only needs the question, so run it alongside retrieve +
+        # compress instead of after them.
+        _pool = ThreadPoolExecutor(max_workers=1)
+        food_future = _pool.submit(get_food_context, question)
+        _pool.shutdown(wait=False)
         conditions_list = profile.get("condition", []) if profile else []
         retriever = get_retriever(str(client_id), patient_conditions=conditions_list, component=component)
         # Prefix query with patient conditions so condition-specific guideline
@@ -758,18 +767,21 @@ def get_rag_response(
         print(f"[DEBUG] Structured lookup: {len(structured_rows)} rows matched")
         t_structured = time.monotonic()
 
-        digest = call_clara_compress(doc_texts[:CLARA_COMPRESS_DOC_LIMIT], question, patient_context)
+        digest = (
+            call_clara_compress(doc_texts[:CLARA_COMPRESS_DOC_LIMIT], question, patient_context)
+            if CLARA_COMPRESS_DOC_LIMIT else ""
+        )
         t_compress = time.monotonic()
 
         if not digest:
             # Graceful fallback: join raw chunks so Qwen still has clinical grounding
-            print("[DEBUG] CLaRa compress failed — using raw chunks as fallback digest")
+            print("[DEBUG] No CLaRa digest — using raw chunks")
             digest = "Clinical context from guidelines:\n\n" + "\n\n---\n\n".join(
                 doc_texts
             )
 
         try:
-            food_context = get_food_context(question)
+            food_context = food_future.result()
         except Exception as e:
             print(f"[Food context error] {e}")
             food_context = ""
