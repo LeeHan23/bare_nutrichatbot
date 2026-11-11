@@ -184,6 +184,17 @@ curl "https://nutribot.computationalrd.com/content/weekly-feed?conditions=T2DM,C
 ```
 Query params: `conditions` (required, comma-separated: `T2DM|HTN|CKD|Cardiac|PCOS|Dyslipidaemia|General`), `week_number` (optional, default current ISO week), `is_active` (optional, default `true`).
 
+**No approved content this week?** If you don't pass `week_number` and nothing is approved for the current ISO week, all three feed endpoints serve the latest approved week instead, and `fallback_from_week` in the response holds the week you asked for (`null` otherwise). The cleanup job never deletes that week.
+
+### GET /content/patient-feed?phone_number=... (My Heart Coach app users)
+
+Feed for an MHC app user, using the same live staging-DB profile lookup as chat. Conditions map to groups, and `personalization_level`/`onboarding_stage` (after the safety floors) filter the L0-L3/OB1-3 variants. Only the My Heart Coach API key can call it (`403` otherwise). An unknown phone number returns `404`.
+
+```bash
+curl "https://nutribot.computationalrd.com/content/patient-feed?phone_number=%2B60173362070" \
+  -H "X-API-Key: <MHC_API_KEY>"
+```
+
 ### GET /content/patient-feed/{patient_id}
 
 Same as above, but condition groups are looked up from the patient's own record instead of passed in. Requires the patient to belong to your API client account (`403` otherwise).

@@ -351,7 +351,7 @@ CONDITION_MAP = {
     "T2DM":         ["diabetes", "t2dm", "type 2"],
     "HTN":          ["hypertension"],
     "CKD":          ["kidney disease", "ckd", "renal"],
-    "Cardiac":      ["heart disease", "ischaemic", "ihd", "cabg", "heart failure",
+    "Cardiac":      ["heart disease", "heart attack", "ischaemic", "ihd", "cabg", "heart failure",
                      "dyslipidaemia", "hypercholesterol"],
     "PCOS":         ["pcos", "polycystic ovary", "insulin resistance"],
     "Dyslipidaemia":["dyslipidaemia", "hypercholesterol", "lipid"],

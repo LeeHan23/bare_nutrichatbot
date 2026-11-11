@@ -777,13 +777,23 @@ def cleanup_expired_eka_materials(db_session) -> int:
     Returns the number of rows deleted.
     """
     from datetime import datetime
+    from sqlalchemy import func
 
+    # Keep the latest approved week: content_api_router._feed falls back to it
+    # while newer weeks are still unreviewed, so the app feed never goes empty.
+    latest_approved = (
+        db_session.query(func.max(ContentMaterial.week_number))
+        .filter(ContentMaterial.is_active.is_(True), ContentMaterial.content_type.isnot(None))
+        .scalar()
+    )
     expired = (
         db_session.query(ContentMaterial)
         .filter(
             ContentMaterial.content_type.isnot(None),
             ContentMaterial.expires_at.isnot(None),
             ContentMaterial.expires_at < datetime.utcnow(),
+            # NULL latest_approved -> "!= None" is IS NOT NULL, so nothing is kept back
+            (ContentMaterial.week_number.is_(None)) | (ContentMaterial.week_number != latest_approved),
         )
         .all()
     )
@@ -853,6 +863,7 @@ def get_weekly_feed_for_conditions(
     is_active: bool = True,
     personalization_level: str = None,
     onboarding_stage: str = None,
+    include_expired: bool = False,
 ) -> list:
     """Return this week's E/K/A materials for given condition groups. Expired materials are excluded.
 
@@ -867,9 +878,12 @@ def get_weekly_feed_for_conditions(
         ContentMaterial.week_number == week_number,
         ContentMaterial.condition_group.in_(condition_groups),
         ContentMaterial.content_type.isnot(None),
-        (ContentMaterial.expires_at.is_(None))
-        | (ContentMaterial.expires_at >= datetime.utcnow()),
     )
+    if not include_expired:
+        q = q.filter(
+            (ContentMaterial.expires_at.is_(None))
+            | (ContentMaterial.expires_at >= datetime.utcnow())
+        )
     if content_type:
         q = q.filter(ContentMaterial.content_type == content_type)
     if is_active is not None:

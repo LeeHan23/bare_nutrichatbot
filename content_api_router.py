@@ -24,6 +24,7 @@ from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import database as db
@@ -140,28 +141,85 @@ def weekly_feed(
     Example:
         GET /content/weekly-feed?conditions=T2DM,Cardiac
     """
-    if week_number is None:
-        week_number = date.today().isocalendar()[1]
-
     groups = [g.strip() for g in conditions.split(",") if g.strip()]
     if not groups:
         raise HTTPException(status_code=400, detail="At least one condition group required")
 
-    materials = db.get_weekly_feed_for_conditions(
-        database, condition_groups=groups, week_number=week_number, is_active=is_active
-    )
+    return {"conditions": groups, **_feed(database, groups, week_number, is_active)}
 
+
+def _feed(database, groups, week_number, is_active, personalization_level=None, onboarding_stage=None) -> dict:
+    """E/K/A feed for these groups. With no explicit week and nothing approved
+    for the current ISO week, serves the latest approved week instead
+    (expiry ignored) so app clients keep getting reviewed content while newer
+    weeks wait for review; `fallback_from_week` says when that happened."""
+    week = week_number or date.today().isocalendar()[1]
+    fallback_from = None
+    if week_number is None and is_active:
+        M = db.ContentMaterial
+        if not database.query(M.id).filter(M.week_number == week, M.is_active.is_(True)).first():
+            # ponytail: max(week_number) has no year, so at the Jan rollover week 52
+            # beats week 1; add a year column if content spans years.
+            latest = database.query(func.max(M.week_number)).filter(M.is_active.is_(True)).scalar()
+            if latest:
+                fallback_from, week = week, latest
+
+    materials = db.get_weekly_feed_for_conditions(
+        database,
+        condition_groups=groups,
+        week_number=week,
+        is_active=is_active,
+        personalization_level=personalization_level,
+        onboarding_stage=onboarding_stage,
+        include_expired=fallback_from is not None,
+    )
     feed: dict[str, list] = {"E": [], "K": [], "A": []}
     for mat in materials:
         if mat.content_type in feed:
             feed[mat.content_type].append(_serialize_material(mat))
-
     return {
-        "week_number": week_number,
-        "conditions":  groups,
-        "is_active":   is_active,
-        "feed":        feed,
-        "total":       sum(len(v) for v in feed.values()),
+        "week_number":        week,
+        "fallback_from_week": fallback_from,
+        "is_active":          is_active,
+        "feed":               feed,
+        "total":              sum(len(v) for v in feed.values()),
+    }
+
+
+# ---------------------------------------------------------------------------
+# GET /content/patient-feed?phone_number=...  (My Heart Coach app users)
+# ---------------------------------------------------------------------------
+
+@router.get("/patient-feed")
+def myheart_patient_feed(
+    phone_number: str = Query(..., description="My Heart Coach app user's phone, e.g. +60173362070"),
+    week_number:  Optional[int] = Query(None, description="ISO week (default: current, else latest approved)"),
+    is_active:    bool = Query(True),
+    database: Session = Depends(get_db),
+    client = Depends(get_api_client),
+):
+    """E/K/A feed for a My Heart Coach app user, matched on the conditions and
+    level read live from the MHC staging DB (same lookup as chat). MHC key only."""
+    import myheart_db
+    from website_chat_router import _MYHEART_CLIENT_ID
+    from scripts.generate_content import conditions_to_groups  # type: ignore
+
+    if client.id != _MYHEART_CLIENT_ID:
+        raise HTTPException(status_code=403, detail="Phone lookup is only available to the My Heart Coach account")
+    phone = db.normalise_phone_number(phone_number)
+    profile = myheart_db.get_myheart_profile(phone)
+    if not profile:
+        raise HTTPException(status_code=404, detail="No My Heart Coach user with this phone number")
+
+    groups = conditions_to_groups(profile["condition"])
+    level, stage = profile["personalization_level"], profile["onboarding_stage"]
+    return {
+        "phone_number":     phone,
+        "patient_name":     profile["name"],
+        "condition_groups": groups,
+        "personalization_level": level,
+        "onboarding_stage": stage,
+        **_feed(database, groups, week_number, is_active, level, stage),
     }
 
 
@@ -183,9 +241,6 @@ def patient_feed(
     Looks up the patient's condition list, maps to condition groups, and returns
     the matched weekly materials.
     """
-    if week_number is None:
-        week_number = date.today().isocalendar()[1]
-
     patient = db.get_patient(database, patient_id)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -202,30 +257,13 @@ def patient_feed(
     # risk-stratified, same precedence as taxonomy.resolve_active_role().
     personalization_level = db.get_effective_personalization_level(patient)
     onboarding_stage = db.get_effective_onboarding_stage(patient)
-    materials = db.get_weekly_feed_for_conditions(
-        database,
-        condition_groups=groups,
-        week_number=week_number,
-        is_active=is_active,
-        personalization_level=personalization_level,
-        onboarding_stage=onboarding_stage,
-    )
-
-    feed: dict[str, list] = {"E": [], "K": [], "A": []}
-    for mat in materials:
-        if mat.content_type in feed:
-            feed[mat.content_type].append(_serialize_material(mat))
-
     return {
-        "week_number":       week_number,
         "patient_id":        patient_id,
         "patient_name":      patient.name,
         "condition_groups":  groups,
         "personalization_level": personalization_level,
         "onboarding_stage": onboarding_stage,
-        "is_active":         is_active,
-        "feed":              feed,
-        "total":             sum(len(v) for v in feed.values()),
+        **_feed(database, groups, week_number, is_active, personalization_level, onboarding_stage),
     }
 
 
