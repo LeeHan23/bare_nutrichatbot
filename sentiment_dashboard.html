@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patient Sentiment</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f6f6f4; --surface-1: #fcfcfb; --border: #e3e2de;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #77766f;
+    --accent: #146356;
+    /* valence = diverging pair: blue (positive) / gray midpoint / red (negative) */
+    --pos: #2a78d6; --neu: #a8a79f; --neg: #e34948;
+    --bar: #8a8983;
+    --critical: #d03b3b; --critical-bg: #fdecec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #121211; --surface-1: #1a1a19; --border: #33332f;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #96958c;
+      --accent: #3fb39f;
+      --pos: #3987e5; --neu: #a9a8a0; --neg: #e66767;
+      --bar: #8f8e86;
+      --critical: #e66767; --critical-bg: #3a1f1f;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211; --surface-1: #1a1a19; --border: #33332f;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #96958c;
+    --accent: #3fb39f;
+    --pos: #3987e5; --neu: #a9a8a0; --neg: #e66767;
+    --bar: #8f8e86;
+    --critical: #e66767; --critical-bg: #3a1f1f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+         font: 14px/1.45 'Segoe UI', system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  .sub { color: var(--text-secondary); font-size: 13px; margin: 2px 0 0; }
+  a { color: var(--accent); }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: var(--surface-1); color: var(--text-secondary); padding: 6px 12px; cursor: pointer; font: inherit; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-top: 16px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+  .stat { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat .v { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { color: var(--text-secondary); font-size: 12.5px; }
+  .grid2 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .grid2 > .card { margin-top: 16px; min-width: 0; }
+  .urgent { border-color: var(--critical); }
+  .urgent h2 { color: var(--critical); }
+  .u-item { border-top: 1px solid var(--border); padding: 10px 0; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+  .u-item:first-of-type { border-top: 0; }
+  .u-msg { flex: 1 1 360px; min-width: 0; }
+  .u-msg blockquote { margin: 4px 0; padding: 6px 10px; background: var(--critical-bg); border-radius: 6px; overflow-wrap: anywhere; }
+  .meta { color: var(--text-muted); font-size: 12.5px; }
+  .btns { display: flex; gap: 8px; align-items: flex-start; }
+  button.b { border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary);
+             border-radius: 6px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  button.b.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text-secondary); white-space: nowrap; }
+  .pill.crit { border-color: var(--critical); color: var(--critical); font-weight: 600; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  #chart { width: 100%; height: 220px; display: block; }
+  .tip { position: fixed; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+         border-radius: 6px; padding: 6px 9px; font-size: 12.5px; box-shadow: 0 2px 8px rgba(0,0,0,.15); display: none; z-index: 10; }
+  .hbar { display: grid; grid-template-columns: 90px 1fr 36px; gap: 8px; align-items: center; margin: 5px 0; font-size: 13px; }
+  .hbar .track { height: 10px; }
+  .hbar .fill { height: 10px; background: var(--bar); border-radius: 0 4px 4px 0; min-width: 2px; }
+  .hbar .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-top: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--text-secondary); font-weight: 600; border-top: 0; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .strip { display: inline-flex; gap: 2px; vertical-align: middle; }
+  .strip span { width: 10px; height: 14px; border-radius: 2px; font-size: 9px; line-height: 14px; text-align: center; color: #fff; font-weight: 700; }
+  .empty { color: var(--text-muted); padding: 8px 0; }
+  dialog { border: 1px solid var(--border); border-radius: 10px; background: var(--surface-1); color: var(--text-primary);
+           width: min(720px, calc(100vw - 32px)); max-height: 85vh; padding: 0; }
+  dialog .hd { position: sticky; top: 0; background: var(--surface-1); padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 8px; }
+  dialog .bd { padding: 12px 16px; }
+  .msg { margin: 8px 0; padding: 8px 10px; border-radius: 8px; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .msg.user { background: var(--surface-0); border: 1px solid var(--border); }
+  .msg.assistant { color: var(--text-secondary); }
+  .note { color: var(--text-muted); font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Patient Sentiment</h1>
+      <p class="sub">Read passively from how patients write. The bot never asks how they feel and never contacts anyone; urgent flags are for the team to follow up.</p>
+    </div>
+    <div class="seg" id="range" role="group" aria-label="Time range">
+      <button data-days="7">7 days</button>
+      <button data-days="30" aria-pressed="true">30 days</button>
+      <button data-days="90">90 days</button>
+    </div>
+  </header>
+
+  <section class="card urgent" id="urgentCard" aria-live="polite">
+    <h2>⚠ Needs follow-up</h2>
+    <div id="urgentList" class="empty">Loading…</div>
+  </section>
+
+  <section class="stats" id="stats"></section>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>Daily turns by sentiment</h2>
+      <div class="legend">
+        <span><i style="background:var(--pos)"></i>Positive</span>
+        <span><i style="background:var(--neu)"></i>Neutral</span>
+        <span><i style="background:var(--neg)"></i>Negative</span>
+      </div>
+      <svg id="chart" role="img" aria-label="Stacked bar chart of patient turns per day by sentiment"></svg>
+    </section>
+    <section class="card">
+      <h2>States in range</h2>
+      <div id="states"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Patients</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Patient / session</th><th>Latest</th><th>Recent turns (oldest → newest)</th><th class="num">Turns</th><th class="num">Negative</th><th>Last seen</th><th></th></tr></thead>
+        <tbody id="subjects"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="note">Labels come from an LLM classifier and are provisional until the calibration set (eval/test_sentiment.py) is signed off. My Heart Coach app users have no local patient record and are listed by session.</p>
+</main>
+
+<div class="tip" id="tip"></div>
+
+<dialog id="convo">
+  <div class="hd"><strong id="convoTitle">Conversation</strong><button class="b" onclick="document.getElementById('convo').close()">Close</button></div>
+  <div class="bd" id="convoBody"></div>
+</dialog>
+
+<script>
+const LABEL = { motivated: "Motivated", anxious: "Anxious", frustrated: "Frustrated", low_mood: "Low mood",
+  confused: "Confused", disengaged: "Disengaged", distress: "Distress", neutral: "Neutral" };
+const VALENCE_OF = { motivated: "pos", neutral: "neu", confused: "neu", anxious: "neg", frustrated: "neg",
+  low_mood: "neg", disengaged: "neg", distress: "neg" };
+const ORDER = ["distress", "low_mood", "anxious", "frustrated", "disengaged", "confused", "motivated", "neutral"];
+let days = 30;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const when = iso => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const who = o => o.name ? esc(o.name) : (o.patient_id ? `Patient ${o.patient_id}` : `<span class="meta">session</span> ${esc(o.session_id)}`);
+const tip = document.getElementById("tip");
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = "block";
+  tip.style.left = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (e.clientY + 12) + "px"; }
+function hideTip() { tip.style.display = "none"; }
+
+async function load() {
+  const r = await fetch(`/team/sentiment/data?days=${days}`, { credentials: "include" });
+  if (r.status === 401) { location.href = "/team/login?next=" + encodeURIComponent(location.pathname); return; }
+  const d = await r.json();
+  renderUrgent(d.urgent); renderStats(d); renderChart(d.daily); renderStates(d.state_counts); renderSubjects(d.subjects);
+}
+
+function renderUrgent(items) {
+  const el = document.getElementById("urgentList");
+  if (!items.length) { el.className = "empty"; el.textContent = "Nothing waiting. Distress turns appear here until someone acknowledges them."; return; }
+  el.className = "";
+  el.innerHTML = items.map(u => `
+    <div class="u-item">
+      <div class="u-msg">
+        <div><strong>${who(u)}</strong> · <span class="pill crit">⚠ ${u.source === "crisis_regex" ? "Crisis language" : "Distress"}</span> <span class="meta">${when(u.created_at)}</span></div>
+        <blockquote>${esc(u.message)}</blockquote>
+        ${u.cues && u.source !== "crisis_regex" ? `<div class="meta">Cues: ${esc(u.cues)}</div>` : ""}
+      </div>
+      <div class="btns">
+        <button class="b" data-session="${esc(u.session_id)}">View conversation</button>
+        <button class="b primary" data-ack="${u.id}">Acknowledge</button>
+      </div>
+    </div>`).join("");
+}
+
+function renderStats(d) {
+  const neg = d.subjects.reduce((a, s) => a + s.negative, 0);
+  const tiles = [
+    [d.total, "patient turns analysed"],
+    [d.total ? Math.round(100 * neg / d.total) + "%" : "–", "negative turns"],
+    [d.subjects.length, "patients / sessions"],
+    [d.urgent.length, "awaiting follow-up"],
+  ];
+  document.getElementById("stats").innerHTML = tiles.map(([v, l]) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+}
+
+function renderChart(daily) {
+  const svg = document.getElementById("chart");
+  const W = svg.clientWidth || 600, H = 220, pad = { l: 30, r: 6, t: 8, b: 22 };
+  // Fill every day in the range so gaps show as empty days, not compressed bars.
+  const byDate = Object.fromEntries(daily.map(x => [x.date, x]));
+  const rows = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const dt = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
+    const x = byDate[dt] || {};
+    const sum = ks => ks.reduce((a, k) => a + (x[k] || 0), 0);
+    rows.push({ date: dt, pos: sum(["motivated"]), neu: sum(["neutral", "confused"]),
+      neg: sum(["anxious", "frustrated", "low_mood", "disengaged", "distress"]) });
+  }
+  const max = Math.max(1, ...rows.map(r => r.pos + r.neu + r.neg));
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b, bw = iw / rows.length;
+  const y = v => pad.t + ih - (v / max) * ih;
+  let out = "";
+  [0, Math.ceil(max / 2), max].forEach(t => {
+    out += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--border)"/>`;
+    out += `<text x="${pad.l - 6}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="var(--text-muted)">${t}</text>`;
+  });
+  rows.forEach((r, i) => {
+    const x = pad.l + i * bw + 1, w = Math.max(1, bw - 2);
+    let base = 0;
+    for (const k of ["neg", "neu", "pos"]) {   // negative sits on the baseline
+      const v = r[k]; if (!v) continue;
+      const y0 = y(base), y1 = y(base + v), gap = base ? 2 : 0;
+      out += `<rect x="${x}" y="${y1}" width="${w}" height="${Math.max(0, y0 - y1 - gap)}" fill="var(--${k})" rx="${base + v === r.pos + r.neu + r.neg ? 2 : 0}"/>`;
+      base += v;
+    }
+    out += `<rect class="hit" data-i="${i}" x="${pad.l + i * bw}" y="${pad.t}" width="${bw}" height="${ih}" fill="transparent"/>`;
+    if (i % Math.ceil(rows.length / 6) === 0)
+      out += `<text x="${x + w / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--text-muted)">${r.date.slice(5)}</text>`;
+  });
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = out;
+  svg.querySelectorAll(".hit").forEach(h => {
+    const r = rows[+h.dataset.i];
+    h.addEventListener("mousemove", e => showTip(e, `<strong>${r.date}</strong><br>Negative ${r.neg}<br>Neutral ${r.neu}<br>Positive ${r.pos}`));
+    h.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function renderStates(counts) {
+  const max = Math.max(1, ...Object.values(counts));
+  document.getElementById("states").innerHTML = ORDER.map(k =>
+    `<div class="hbar"><span>${LABEL[k]}</span><div class="track"><div class="fill" style="width:${100 * (counts[k] || 0) / max}%"></div></div><span class="n">${counts[k] || 0}</span></div>`
+  ).join("");
+}
+
+function renderSubjects(subjects) {
+  const tb = document.getElementById("subjects");
+  if (!subjects.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">No patient turns in this range yet.</td></tr>`; return; }
+  tb.innerHTML = subjects.map(s => `
+    <tr>
+      <td>${who(s)}</td>
+      <td>${s.latest_state === "distress" ? `<span class="pill crit">⚠ Distress</span>` : `<span class="pill">${LABEL[s.latest_state]}</span>`}</td>
+      <td><span class="strip">${s.trend.map(t => `<span data-tip="${LABEL[t]}" style="background:var(--${VALENCE_OF[t]})">${t === "distress" ? "!" : ""}</span>`).join("")}</span></td>
+      <td class="num">${s.turns}</td>
+      <td class="num">${Math.round(100 * s.negative / s.turns)}%</td>
+      <td class="meta">${when(s.last_seen)}</td>
+      <td><button class="b" data-session="${esc(s.session_id)}">View</button></td>
+    </tr>`).join("");
+}
+
+async function openConvo(sessionId) {
+  const r = await fetch(`/team/sentiment/session/${encodeURIComponent(sessionId)}`, { credentials: "include" });
+  const d = await r.json();
+  const byText = {};
+  d.labels.forEach(l => { byText[l.message] = l; });
+  document.getElementById("convoTitle").textContent = "Session " + sessionId;
+  document.getElementById("convoBody").innerHTML = d.messages.length ? d.messages.map(m => {
+    const l = m.role === "user" ? byText[m.content.slice(0, 300)] : null;
+    const chip = l ? ` <span class="pill${l.state === "distress" ? " crit" : ""}">${l.state === "distress" ? "⚠ " : ""}${LABEL[l.state]}</span>` : "";
+    return `<div class="msg ${m.role}"><div class="meta">${m.role === "user" ? "Patient" : "Bot"} · ${when(m.created_at)}${chip}</div>${esc(m.content)}</div>`;
+  }).join("") : `<p class="empty">No stored messages for this session.</p>`;
+  document.getElementById("convo").showModal();
+}
+
+document.addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.session) openConvo(b.dataset.session);
+  if (b.dataset.ack) { b.disabled = true; await fetch(`/team/sentiment/${b.dataset.ack}/ack`, { method: "POST", credentials: "include" }); load(); }
+  if (b.dataset.days) {
+    days = +b.dataset.days;
+    document.querySelectorAll("#range button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    load();
+  }
+});
+document.addEventListener("mousemove", e => {
+  const t = e.target.closest(".strip span");
+  if (t) showTip(e, esc(t.dataset.tip)); else if (!e.target.closest(".hit")) hideTip();
+});
+addEventListener("resize", () => load());
+load();
+</script>
+</body>
+</html>

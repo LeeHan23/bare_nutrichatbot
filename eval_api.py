@@ -134,6 +134,59 @@ def get_rules() -> dict:
     return {"rules": _rule_items()}
 
 
+# ---------------------------------------------------------------------------
+# Sentiment sign-off (2026-11-04) — same APPROVE/CHANGE/REJECT flow as the
+# rules above, under the "sentiment:" key prefix. Text is read live from
+# sentiment.py and eval/test_sentiment.py so the page shows what the bot
+# actually does. No patient data: the calibration messages are
+# developer-written. Ids are fixed — append only (calibration case i → 100+i,
+# so eval/test_sentiment.CASES is append-only too).
+# ---------------------------------------------------------------------------
+
+def _sentiment_items() -> list[dict]:
+    import importlib.util
+    import sentiment as s
+
+    spec = importlib.util.spec_from_file_location(
+        "test_sentiment", os.path.join(_APP_DIR, "eval", "test_sentiment.py"))
+    ts = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ts)
+
+    items = [
+        {"id": 1, "group": "Crisis reply (fixed text)", "rule": s.CRISIS_RESPONSE,
+         "why": "Sent word-for-word when a patient uses self-harm or suicide language. Please check the helpline "
+                "numbers are correct and current. The bot never contacts anyone itself. It only gives the patient "
+                "numbers to call and flags the turn for the team on the /team/sentiment dashboard."},
+        {"id": 2, "group": "Crisis trigger phrases",
+         "rule": "Any of these must trigger the crisis reply: " + "; ".join(f"“{t}”" for t in ts.CRISIS_LINES),
+         "why": "Matched by a fixed keyword pattern (English + Malay), not the AI. For CHANGE, list phrases "
+                "that are missing or that should not trigger it."},
+    ]
+    for i, state in enumerate(["distress", "low_mood", "anxious", "frustrated", "disengaged", "confused", "motivated"]):
+        items.append({
+            "id": 10 + i, "group": f"Tone rule: {state.replace('_', ' ')}",
+            "rule": s.TONE_GUIDANCE[state],
+            "why": "Added to the bot's instructions when a patient's message reads as " + state.replace("_", " ")
+                   + ". On every tone rule the bot must not name the feeling or ask how the patient feels.",
+        })
+    for i, (msg, expected, hist) in enumerate(ts.CASES):
+        items.append({
+            "id": 100 + i, "group": "Calibration label",
+            "rule": f"“{msg}” → {expected.replace('_', ' ')}",
+            "why": ("Earlier in the chat: " + " / ".join(
+                        l[len("Patient: "):] for l in hist.splitlines() if l.startswith("Patient: ")) + ". "
+                    if hist else "")
+                   + "Is this the right label? Used to check the classifier (eval/test_sentiment.py). For CHANGE, "
+                     "write the correct label: motivated, anxious, frustrated, low mood, confused, disengaged, distress or neutral.",
+        })
+    return items
+
+
+@app.get("/api/sentiment-signoff", dependencies=[Depends(verify_api_key)])
+def get_sentiment_signoff() -> dict:
+    return {"items": _sentiment_items()}
+
+
 @app.post("/api/reviews", dependencies=[Depends(verify_api_key)])
 def post_review(submission: ReviewSubmission) -> dict:
     return eval_review_store.add_review(

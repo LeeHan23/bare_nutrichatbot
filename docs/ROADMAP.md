@@ -36,7 +36,7 @@ asserts none fall through to `_NO_CONTENT_GUARD`.
 | weight (added 2026-09-07) | 809 | none | 4 scope (new) | in progress |
 | tobacco_nicotine_alcohol | 565 | none | 6 scope | in progress |
 | physical_activity | 400 | none | 4 scope (new) | in progress |
-| psychosocial | 388 | Mental Health, Stress, Sleep | 6 scope | in progress |
+| psychosocial | 388 | Mental Health, Stress, Sleep | 6 scope | in progress; passive sentiment + crisis path + /team/sentiment built 2026-11-04 (ARCHITECTURE §27.8), clinical sign-off pending |
 | medication | 225 | none | 8 scope | in progress (thin by design) |
 
 Chunk counts are `doc_components` tags in `base_knowledge` (DB query

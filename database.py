@@ -434,6 +434,35 @@ class ChatMessage(Base):
     created_at = Column(DateTime, nullable=False, index=True)
 
 
+# --- Patient Sentiment (sentiment.py → /team/sentiment dashboard) ---
+class PatientSentiment(Base):
+    """
+    One row per classified patient turn. patient_id is NULL for My Heart
+    Coach phone users (no local Patient row) — the dashboard groups those by
+    session_id. urgent=True for distress turns; the team clears it with
+    acknowledged_at/by. Internal only: nothing here is ever sent anywhere.
+    """
+
+    __tablename__ = "patient_sentiment"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    patient_id = Column(
+        Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    client_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=False, index=True)
+    valence = Column(String, nullable=False)  # positive | neutral | negative
+    state = Column(String, nullable=False)  # see sentiment.STATES
+    intensity = Column(Integer, nullable=False, default=1)  # 1-3
+    cues = Column(Text)
+    message_excerpt = Column(Text)
+    urgent = Column(Boolean, nullable=False, default=False, index=True)
+    source = Column(String, nullable=False, default="llm")  # llm | crisis_regex
+    acknowledged_at = Column(DateTime, nullable=True)
+    acknowledged_by = Column(String, nullable=True)
+
+
 # Tables are created at app startup (see app.py startup_event).
 # Call create_db_and_tables() explicitly in scripts that need it.
 

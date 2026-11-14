@@ -439,7 +439,7 @@
   .rule-banner { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 10px; padding: 12px 14px; margin: 0 0 18px; font-size: 13.5px; line-height: 1.5; }
   .rule-banner b { color: var(--warn); }
   .rule-group { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--warn); margin-bottom: 6px; }
-  .rule-text { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+  .rule-text { font-size: 15px; font-weight: 600; margin: 0 0 6px; white-space: pre-wrap; }
   .rule-why { color: var(--ink-muted); font-size: 13px; margin: 0 0 10px; }
   .evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 0 0 22px; }
   .evidence blockquote { margin: 4px 0 0; }
@@ -473,6 +473,7 @@
 
   var state = { judges: {} };
   var order = ["myth", "stance", "personalization", "scope"];
+  var reviewTabs = []; // any other judges[] key, e.g. a fine-tune failure set (scripts/add_finetune_review_tab.py)
   var activeJudge = order[0];
   var showInstructions = true; // land on the guide first, before any judge tab
 
@@ -542,6 +543,7 @@
       '<p>The <b>Staging profile rules</b> tab at the bottom of the left rail is <b>not</b> judge calibration. No automated judge is involved and there is no “Agree?” question. ' +
       'It lists the safety rules Nutribot applies to My Heart Coach app users (minimum risk level, dietary restrictions derived from their conditions). ' +
       'A clinician marks each rule <b>APPROVE</b>, <b>CHANGE</b> (say what it should be in the notes) or <b>REJECT</b>.</p>' +
+      '<p>The <b>Patient sentiment</b> tab works the same way. It covers the fixed crisis reply and its helpline numbers, the phrases that trigger it, how the bot adjusts its tone for each mood, and whether each test message has the right mood label.</p>' +
 
       '<div class="example-label">Worked example — Myth #101</div>' +
       '<p>Below is the actual case, with the review already submitted for it. The patient (P11, CKD Stage 4 + Heart Failure) said they stopped a kidney medication in favor of misai kucing tea. ' +
@@ -590,6 +592,9 @@
     if (claim.kind === "personalization") {
       return '<div class="rubric-block"><b>Personalization level:</b> ' + esc(claim.level) +
         '<div style="margin-top:4px"><b>Expected framing:</b> ' + esc(claim.expected_framing) + "</div></div>";
+    }
+    if (claim.kind === "terms") {
+      return '<div class="rubric-block"><b>Automated check:</b> required clinical terms only (no LLM judge). Is the answer clinically adequate?</div>';
     }
     return '<div class="rubric-block"><b>Component:</b> ' + esc(claim.component_label) +
       ' &nbsp; <b>Expected:</b> <span class="stance-pill">' + esc(claim.expected) + "</span>" +
@@ -654,15 +659,16 @@
         '<div class="consistency">' + consistencyDots(c.consistency) + "</div>" +
       "</div>" +
       '<div class="meta-row"><span><b>Patient</b> ' + esc(c.patient) + "</span></div>" +
+      (c.question ? '<div class="meta-row" style="white-space:pre-wrap"><span><b>Question</b> ' + esc(c.question) + "</span></div>" : "") +
       claimBlock(c.claim) +
       '<blockquote class="answer">' + esc(c.answer) + "</blockquote>" +
       '<div class="verdict-row">' + verdictBadge + reasonHtml + "</div>" +
       reviewsBlock(judgeKey, c) +
       '<form class="review-form" data-judge="' + judgeKey + '" data-case-id="' + c.id + '">' +
         '<div class="field name"><label>Your name</label><select name="reviewer" required>' + reviewerOptionsHtml() + "</select></div>" +
-        '<div class="field verdict"><label>Your verdict</label><select name="verdict" required><option value="" disabled selected>Choose…</option>' + verdictOptionsHtml(state.judges[judgeKey].verdict_options) + "</select></div>" +
+        '<div class="field verdict"><label>Your verdict</label><select name="verdict" required><option value="" disabled selected>Choose…</option>' + verdictOptionsHtml(c.verdict_options || state.judges[judgeKey].verdict_options) + "</select></div>" +
         '<div class="field agree"><label>Agree?</label><select name="agree"><option value="">—</option><option value="YES">Yes</option><option value="NO">No</option></select></div>' +
-        '<div class="field notes"><label>Notes</label><input type="text" name="notes" placeholder="Optional — strengthen or amplify your point"></div>' +
+        '<div class="field notes"><label>Notes</label><input type="text" name="notes" placeholder="' + esc(state.judges[judgeKey].notes_hint || "Optional — strengthen or amplify your point") + '"></div>' +
         '<button type="submit">Submit review</button>' +
       "</form>" +
     "</div>";
@@ -684,16 +690,17 @@
 
   var RULE_DECISIONS = ["APPROVE", "CHANGE", "REJECT"];
 
-  function ruleCard(r) {
+  function ruleCard(r, key) {
+    key = key || "rule";
     return '<div class="case-card" data-case-id="' + r.id + '">' +
       '<span class="rule-group">' + esc(r.group) + "</span>" +
       '<p class="rule-text">' + esc(r.rule) + "</p>" +
       '<p class="rule-why">' + esc(r.why) + "</p>" +
-      reviewsBlock("rule", r) +
-      '<form class="review-form" data-judge="rule" data-case-id="' + r.id + '">' +
+      reviewsBlock(key, r) +
+      '<form class="review-form" data-judge="' + key + '" data-case-id="' + r.id + '">' +
         '<div class="field name"><label>Your name</label><select name="reviewer" required>' + reviewerOptionsHtml() + "</select></div>" +
         '<div class="field verdict"><label>Decision</label><select name="verdict" required><option value="" disabled selected>Choose…</option>' + verdictOptionsHtml(RULE_DECISIONS) + "</select></div>" +
-        '<div class="field notes"><label>Notes</label><input type="text" name="notes" placeholder="For CHANGE / REJECT: what should the rule be instead?"></div>' +
+        '<div class="field notes"><label>Notes</label><input type="text" name="notes" placeholder="' + (key === "sentiment" ? "For CHANGE / REJECT: what should it be instead?" : "For CHANGE / REJECT: what should the rule be instead?") + '"></div>' +
         '<button type="submit">Submit decision</button>' +
       "</form>" +
     "</div>";
@@ -718,7 +725,29 @@
           '<blockquote class="answer">You should avoid eating bananas as they are high in potassium, and your care team has set this limit to manage your chronic kidney disease and heart condition. Instead of bananas, you could opt for fruits like apples or pears that have lower potassium levels.</blockquote></div>' +
       "</div>" +
       "<h2>The rules</h2>" +
-      state.rules.map(ruleCard).join("");
+      state.rules.map(function (r) { return ruleCard(r); }).join("");
+  }
+
+  function sentimentHtml() {
+    var items = state.sentiment;
+    var decided = items.filter(function (r) { return r.reviews.length; }).length;
+    var groups = [
+      ["Crisis reply and triggers", function (r) { return r.id < 10; }],
+      ["How the bot adjusts its tone", function (r) { return r.id >= 10 && r.id < 100; }],
+      ["Calibration labels — is each message labelled correctly?", function (r) { return r.id >= 100; }],
+    ];
+    return "<h1>Patient sentiment — Clinical sign-off</h1>" +
+      '<div class="rule-banner"><b>This is not judge calibration.</b> Nutribot quietly reads how a patient is feeling from how they write (it never asks “how are you feeling?”), ' +
+        "adjusts the tone of its reply, and shows the team a sentiment dashboard. Self-harm or suicide messages get the fixed helpline reply below and an urgent flag for the team. " +
+        "<b>The bot never contacts emergency services or anyone else itself.</b> Everything here is <b>live now but provisional</b>. Please approve, change or reject each item.</div>" +
+      '<div class="stats">' +
+        '<div class="stat-tile"><div class="label">Items</div><div class="value">' + items.length + "</div></div>" +
+        '<div class="stat-tile"><div class="label">Items with a decision</div><div class="value">' + decided + "</div></div>" +
+      "</div>" +
+      groups.map(function (g) {
+        var list = items.filter(g[1]);
+        return list.length ? "<h2>" + esc(g[0]) + "</h2>" + list.map(function (r) { return ruleCard(r, "sentiment"); }).join("") : "";
+      }).join("");
   }
 
   function render() {
@@ -732,15 +761,26 @@
         return '<button class="rail-tab' + (!showInstructions && k === activeJudge ? " active" : "") + '" data-tab="' + k + '">' +
           "<span>" + esc(jj.title) + "</span><span class=\"count\">" + s.total + "/" + jj.cases.length + "</span></button>";
       }).join("") +
+      (reviewTabs.length ? '<div class="rail-title">Clinical review</div>' : "") +
+      reviewTabs.map(function (k) {
+        var jj = state.judges[k];
+        var s = computeStats(k);
+        return '<button class="rail-tab' + (!showInstructions && k === activeJudge ? " active" : "") + '" data-tab="' + k + '">' +
+          "<span>" + esc(jj.title) + "</span><span class=\"count\">" + s.total + "/" + jj.cases.length + "</span></button>";
+      }).join("") +
       '<div class="rail-title">Clinical sign-off (not a judge)</div>' +
       '<button class="rail-tab rule-tab' + (!showInstructions && activeJudge === "rules" ? " active" : "") + '" data-tab="rules">' +
-        '<span>Staging profile rules</span><span class="count">' + state.rules.filter(function (r) { return r.reviews.length; }).length + "/" + state.rules.length + "</span></button>";
+        '<span>Staging profile rules</span><span class="count">' + state.rules.filter(function (r) { return r.reviews.length; }).length + "/" + state.rules.length + "</span></button>" +
+      (state.sentiment.length ? '<button class="rail-tab rule-tab' + (!showInstructions && activeJudge === "sentiment" ? " active" : "") + '" data-tab="sentiment">' +
+        '<span>Patient sentiment</span><span class="count">' + state.sentiment.filter(function (r) { return r.reviews.length; }).length + "/" + state.sentiment.length + "</span></button>" : "");
 
     var mainHtml;
     if (showInstructions) {
       mainHtml = instructionsHtml();
     } else if (activeJudge === "rules") {
       mainHtml = rulesHtml();
+    } else if (activeJudge === "sentiment") {
+      mainHtml = sentimentHtml();
     } else {
       var j = state.judges[activeJudge];
       var stats = computeStats(activeJudge);
@@ -752,10 +792,10 @@
         "</div>";
       var casesHtml = j.cases.map(function (c) { return caseCard(activeJudge, c); }).join("");
       mainHtml =
-        "<h1>" + esc(j.title) + " — Judge Calibration</h1>" +
-        '<p class="subtitle">Real answers from the RAG pipeline, graded by <code>' + esc(j.title) + "</code>’s automated judge. " +
+        "<h1>" + esc(j.title) + (j.intro ? "" : " — Judge Calibration") + "</h1>" +
+        (j.intro ? '<p class="subtitle">' + esc(j.intro) + "</p>" : '<p class="subtitle">Real answers from the RAG pipeline, graded by <code>' + esc(j.title) + "</code>’s automated judge. " +
           "Add your own read on each case — verdict, whether you agree with the judge, and notes to strengthen or correct the record. " +
-          'Every submission is saved to this page for the whole team to see. New here? See <a href="#" data-tab="instructions">How to use this</a>.</p>' +
+          'Every submission is saved to this page for the whole team to see. New here? See <a href="#" data-tab="instructions">How to use this</a>.</p>') +
         statsHtml +
         casesHtml;
     }
@@ -826,7 +866,7 @@
       if (!resp.ok) throw new Error("Server error (" + resp.status + ")");
       return resp.json();
     }).then(function (review) {
-      var list = judgeKey === "rule" ? state.rules : state.judges[judgeKey].cases;
+      var list = judgeKey === "rule" ? state.rules : judgeKey === "sentiment" ? state.sentiment : state.judges[judgeKey].cases;
       var c = list.find(function (x) { return x.id === caseId; });
       if (c) c.reviews.push(review);
       render();
@@ -844,14 +884,20 @@
       fetch("/api/reviews").then(function (r) { return r.json(); }),
       // Tolerate an eval service not yet restarted onto /api/rules — judge tabs must still load
       fetch("/api/rules").then(function (r) { return r.ok ? r.json() : { rules: [] }; }),
+      fetch("/api/sentiment-signoff").then(function (r) { return r.ok ? r.json() : { items: [] }; }),
     ]).then(function (results) {
       state = results[0];
+      reviewTabs = Object.keys(state.judges).filter(function (k) { return order.indexOf(k) < 0; });
       var reviewStore = results[1];
       state.rules = results[2].rules.map(function (r) {
         r.reviews = reviewStore["rule:" + r.id] || [];
         return r;
       });
-      order.forEach(function (judgeKey) {
+      state.sentiment = results[3].items.map(function (r) {
+        r.reviews = reviewStore["sentiment:" + r.id] || [];
+        return r;
+      });
+      order.concat(reviewTabs).forEach(function (judgeKey) {
         var j = state.judges[judgeKey];
         if (!j) return;
         j.cases.forEach(function (c) {

@@ -2041,3 +2041,37 @@ The nightly line was reinstalled on 2026-09-01 without its `cd`, so it
 failed silently until 2026-09-28. The weekly line was never reinstalled
 after the 2026-08-30 wipe.
 
+### 27.8 Passive patient sentiment (2026-11-04)
+The bot reads how a patient is doing from how they write. It never asks "how are you feeling?". It uses that reading to adjust the tone of the same reply and logs it for the team.
+
+- **`sentiment.py`.** Two layers:
+  - **`CRISIS_PATTERN`.** A bilingual regex for self-harm and suicide language. A match short-circuits `rag.get_rag_response` with the fixed `CRISIS_RESPONSE` (Befrienders KL 03-7627 2929, Talian HEAL 15555, 999). The clinical team must verify these numbers. The check runs in `rag.py`, not a router, so WhatsApp gets it too.
+  - **`classify()`.** One `qwen2.5:32b` call (temperature 0, `format: json`, 8s timeout). It runs alongside retrieval and takes the last 4 patient lines as context. It returns one of these labels: `motivated`, `anxious`, `frustrated`, `low_mood`, `confused`, `disengaged`, `distress`, `neutral`. Any failure returns `None` and the reply goes ahead unchanged.
+- **Tone.**
+  - `tone_block()` adds `## Patient's Current State` after `## Conversation So Far`, which keeps it outside the cached prompt prefix.
+  - Every block forbids naming the patient's feelings and forbids asking how they feel.
+  - Only the Option B path is wired. Agent and CLaRa-primary are inactive.
+- **Hard rule: the bot never contacts emergency services or anyone else.**
+  - Nothing is ever sent outside the system. The only side effect of a crisis or distress turn is an internal `patient_sentiment` row with `urgent=True`.
+  - Neither `CRISIS_RESPONSE` nor the distress tone block may claim the bot alerted anyone. `sentiment.ACTION_CLAIMS` is checked in `python sentiment.py` and in `eval/test_sentiment.py --live-replies`.
+- **Storage.**
+  - Table `patient_sentiment` (`database.PatientSentiment`, created by `scripts/migrate_sentiment.py`).
+  - `patient_id` is NULL for My Heart Coach phone users, who are grouped by `session_id`.
+  - `keepalive` and `eval-*` sessions are not recorded.
+- **Dashboard.**
+  - `https://nutribot.computationalrd.com/team/sentiment` (`team_router.py` + `sentiment_dashboard.html`), gated by the team cookie.
+  - It shows urgent turns until someone acknowledges them (`acknowledged_by` comes from the `reviewer_name` cookie), daily valence bars, counts per state, and a per-patient trend strip with the transcript.
+  - It lives on the main app because `docs_api` and `eval_api` promise to hold no patient data.
+- **Calibration.** `eval/test_sentiment.py` has 25 hand-labelled EN/BM/Manglish cases (labels **provisional** until clinician sign-off) and 7 crisis lines.
+  - First run: 24/25 exact. The one miss is a confused message read as neutral.
+  - Crisis lines caught: 7/7.
+  - Median classify latency: 2.5s.
+  - Live chat added `sentiment_wait` ≈ 3s on top of generate (~13s).
+- **Clinical sign-off.** eval.computationalrd.com → **Clinical sign-off (not a judge)** → **Patient sentiment**. It has 34 items, each marked APPROVE / CHANGE / REJECT:
+  - the crisis reply and its helpline numbers
+  - the crisis trigger phrases
+  - the 7 tone rules
+  - the 25 calibration labels
+
+  All text comes live from `sentiment.py` and `eval/test_sentiment.py` through `eval_api._sentiment_items()`. Reviews are stored under `sentiment:<id>` in `data/eval_calibration_reviews.json`. Ids are append-only: calibration case *i* is id 100+*i*, so `CASES` is append-only too.
+- **Privacy.** Mental-state data counts as sensitive personal data under PDPA. It stays in the local Postgres behind the team cookie.

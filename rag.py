@@ -13,6 +13,7 @@ from llm import (
     get_direct_llm_response,
 )
 from exercise_lookup import find_exercise_video, list_exercise_samples_for_level
+import sentiment as sentiment_mod
 import structured_store
 from taxonomy import (
     ONBOARDING_STAGE_LABELS,
@@ -298,6 +299,7 @@ def _build_qwen_prompt(
     history_text: str = "",
     component: str | None = None,
     structured_facts: str = "",
+    sentiment: dict | None = None,
 ) -> str:
     """Build the Qwen generation prompt for Option B (CLaRa-compress → Qwen-generate).
 
@@ -471,6 +473,12 @@ def _build_qwen_prompt(
             "their latest message is itself just a greeting."
         )
 
+    # Per-turn tone guidance from sentiment.classify(). Kept after the
+    # history block, out of the fixed prefix Ollama caches.
+    tone = sentiment_mod.tone_block(sentiment)
+    if tone:
+        parts.append(tone)
+
     if is_patient_self:
         # L3 patients get a slightly larger word budget: the Personalization
         # Level L3 instruction requires a brief care-team reference on every
@@ -542,6 +550,19 @@ def get_rag_response(
     patient_id: int | None = None,
 ) -> dict:
     t_entry = time.monotonic()
+
+    # Crisis language (self-harm / suicide, EN + BM): fixed reply with
+    # helplines the patient can choose to call, plus an urgent internal flag
+    # for the team dashboard. The bot never contacts anyone itself. Here
+    # rather than in a router so website and WhatsApp both get it.
+    if is_patient_self and sentiment_mod.is_crisis(question):
+        print(f"[CRISIS] session={chat_session_id} patient={patient_id}")
+        _persist_turn(chat_session_id, patient_id, question, sentiment_mod.CRISIS_RESPONSE)
+        sentiment_mod.record(
+            chat_session_id, patient_id, client_id, question,
+            sentiment_mod.CRISIS_SENTIMENT, source="crisis_regex",
+        )
+        return {"answer": sentiment_mod.CRISIS_RESPONSE, "image_url": None}
 
     patient_context = ""
     if profile:
@@ -758,6 +779,12 @@ def get_rag_response(
             _pool = ThreadPoolExecutor(max_workers=1)
             food_future = _pool.submit(get_food_context, question)
             _pool.shutdown(wait=False)
+        # Passive sentiment (sentiment.py), alongside retrieval like food_context.
+        sentiment_future = None
+        if is_patient_self and chat_session_id != "keepalive":
+            _spool = ThreadPoolExecutor(max_workers=1)
+            sentiment_future = _spool.submit(sentiment_mod.classify, question, history_text)
+            _spool.shutdown(wait=False)
         conditions_list = profile.get("condition", []) if profile else []
         retriever = get_retriever(str(client_id), patient_conditions=conditions_list, component=component)
         # Prefix query with patient conditions so condition-specific guideline
@@ -805,6 +832,11 @@ def get_rag_response(
             food_context = ""
         t_food = time.monotonic()
 
+        # classify() has its own HTTP timeout and never raises, so this wait
+        # is bounded by SENTIMENT_TIMEOUT_S at worst.
+        sentiment = sentiment_future.result() if sentiment_future else None
+        t_sentiment = time.monotonic()
+
         qwen_prompt = _build_qwen_prompt(
             question,
             patient_context,
@@ -815,6 +847,7 @@ def get_rag_response(
             history_text,
             component,
             structured_facts,
+            sentiment,
         )
         print(f"[DEBUG] Qwen prompt length: {len(qwen_prompt)} chars")
 
@@ -827,9 +860,11 @@ def get_rag_response(
         print(
             f"[Latency] pre={t0 - t_entry:.1f}s retrieve={t_retrieve - t0:.1f}s structured={t_structured - t_retrieve:.1f}s "
             f"compress={t_compress - t_structured:.1f}s food_context={t_food - t_compress:.1f}s "
-            f"generate={t_generate - t_food:.1f}s "
+            f"sentiment_wait={t_sentiment - t_food:.1f}s generate={t_generate - t_sentiment:.1f}s "
             f"total={t_generate - t_entry:.1f}s"
         )
+        if sentiment:
+            print(f"[Sentiment] session={chat_session_id} {sentiment['state']}/{sentiment['intensity']} cues={sentiment['cues']!r}")
 
         if not answer:
             answer = (
@@ -838,6 +873,7 @@ def get_rag_response(
             )
 
         _persist_turn(chat_session_id, patient_id, question, answer)
+        sentiment_mod.record(chat_session_id, patient_id, client_id, question, sentiment)
         return _attach_exercise_video(parse_response_for_image(answer), question, component, profile)
 
     # ============================================================
