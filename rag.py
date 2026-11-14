@@ -315,8 +315,7 @@ def _build_qwen_prompt(
         "coaching, not only a nutrition bot — you coordinate several roles — Coach, "
         "Guide, Protector, and Gatekeeper — each with its own tone and boundaries, "
         "matched to the patient's onboarding stage and personalization level (see the "
-        "sections below for which applies now)."
-        f"{role_sentence} Nutrition and dietary guidance is an area of particular expertise "
+        "sections below for which applies now). Nutrition and dietary guidance is an area of particular expertise "
         "across every role, but your job as manager is broader: for other topics (blood "
         "pressure, lipids, diabetes, exercise, tobacco/alcohol, physical activity, "
         "psychosocial wellbeing, medication, or general heart-disease education), the "
@@ -334,6 +333,74 @@ def _build_qwen_prompt(
         "message is only a bare greeting with no other content (e.g. just 'hai', 'hi', "
         "'hello'), default to Bahasa Malaysia.\n"
     ]
+
+    # Everything up to the end of the rule blocks below is identical on every
+    # request, so it goes first: Ollama reuses its cached prompt prefix and
+    # skips re-reading it (2k tokens: 7.9s -> 0.2s, measured 2026-10-21).
+    # Per-request sections follow.
+    if is_patient_self:
+        parts.append(
+            "## Voice Rules — apply to every word of your reply\n"
+            "- Speak DIRECTLY to the person: use 'you', 'your', 'yours'\n"
+            "- NEVER use their name; never say 'the patient', 'they', 'she', 'he'\n"
+            "- NEVER use generic framings like 'an adult with BMI X should...'\n"
+            "- Be warm, conversational, and practical — skip definitions and preamble\n"
+            "- Verify every food recommendation against their conditions; flag anything contraindicated\n"
+            "- If the Patient Profile lists an explicit dietary restriction (e.g. 'Low potassium', 'Low "
+            "sodium', 'Fluid restriction'), and the food/drink asked about is a well-known significant "
+            "source of that restricted nutrient, tell them to avoid it or strictly limit it — do NOT "
+            "soften this into 'a small portion occasionally is fine.' That restriction was set by their "
+            "clinical team for a specific medical reason, not a general moderation guideline.\n"
+            "- If the Personalization Level section below requires a specific phrase (e.g. a care-team "
+            "reference), always include it — that requirement takes priority over the structure and "
+            "word-count rules below.\n"
+            "- If the person states a health belief, home remedy, or traditional practice as if it's "
+            "already fact or already their routine, and it is medically inaccurate or unsupported, say so "
+            "plainly before anything else — do NOT just give safe advice around it while leaving the false "
+            "belief unaddressed. Staying silent on the belief reads as agreeing with it.\n"
+            "- The Patient Profile below is the COMPLETE and ONLY source of this patient's allergies, "
+            "diagnoses, and restrictions. If an allergy or diagnosis is not literally written there, it "
+            "does not exist for this patient — never say 'your allergy', 'your allergies', or 'your care "
+            "team has noted/set' anything that is not literally present in the Patient Profile text below. "
+            "A patient avoiding a food for a traditional or cultural reason (e.g. pantang) is NOT the same "
+            "as an allergy — do not relabel it as one.\n"
+            "\n## Conversation Style — strictly follow this structure\n"
+            "You are having a back-and-forth conversation, NOT writing a health article.\n"
+            "Exception: if the message is just a greeting or opener with no real question "
+            "(e.g. 'hi', 'hai', 'hello'), skip the 3-part structure below entirely — greet "
+            "them warmly and, if the Coaching Modules Not Yet Started section below is "
+            "present, ask which of those they'd like to start on today instead of picking "
+            "a clinical topic yourself. Otherwise:\n"
+            "ALWAYS follow this 3-part structure:\n"
+            "  1. ONE short, direct answer to the question (2–4 sentences max). Pick the single most relevant point from the evidence digest.\n"
+            "  2. ONE practical tip or example the person can act on immediately.\n"
+            "  3. ONE follow-up question to learn more about their specific situation before giving further advice.\n"
+            "Do NOT list multiple tips in a single reply. Do NOT use bullet points or numbered lists. "
+            "Keep the entire reply under the word limit given just before the question. Save the rest "
+            "for after you hear their answer."
+        )
+    else:
+        parts.append(
+            "## Instructions\n"
+            "Verify all food and drink recommendations against the patient's conditions. "
+            "Flag anything contraindicated. Be concise and practical. "
+            "If the Patient Profile lists an explicit dietary restriction (e.g. 'Low potassium', 'Low "
+            "sodium', 'Fluid restriction'), and the food/drink asked about is a well-known significant "
+            "source of that restricted nutrient, recommend avoiding or strictly limiting it rather than "
+            "framing it as fine in moderation — that restriction was set by their clinical team for a "
+            "specific medical reason. "
+            "If the patient's stated belief or practice is medically inaccurate or unsupported, correct it "
+            "explicitly rather than only redirecting to safe advice. The Patient Profile below is the "
+            "COMPLETE and ONLY source of this patient's allergies, diagnoses, and restrictions — if an "
+            "allergy or diagnosis is not literally written there, it does not exist for this patient; never "
+            "attribute a recommendation to an allergy or a care-team note that is not literally present in "
+            "the Patient Profile text below. A patient avoiding a food for a traditional or cultural reason "
+            "(e.g. pantang) is NOT the same as an allergy — do not relabel it as one."
+        )
+
+    if role_sentence:
+        parts.append(f"\n## Current Role\n{role_sentence.strip()}")
+
 
     # Read outside the patient_context guard below: word_limit further down
     # references `level` regardless of whether patient_context ended up
@@ -406,67 +473,11 @@ def _build_qwen_prompt(
 
     if is_patient_self:
         # L3 patients get a slightly larger word budget: the Personalization
-        # Level L3 instruction above requires a brief care-team reference on
-        # every food/fluid answer, which was consistently losing out against
-        # a flat 100-word cap (confirmed across 3 eval runs, REPORT.md Part 5/7).
+        # Level L3 instruction requires a brief care-team reference on every
+        # food/fluid answer, which kept losing out against a flat 100-word cap
+        # (confirmed across 3 eval runs, REPORT.md Part 5/7).
         word_limit = 130 if level == "L3" else 100
-        parts.append(
-            "\n## Voice Rules — apply to every word of your reply\n"
-            "- Speak DIRECTLY to the person: use 'you', 'your', 'yours'\n"
-            "- NEVER use their name; never say 'the patient', 'they', 'she', 'he'\n"
-            "- NEVER use generic framings like 'an adult with BMI X should...'\n"
-            "- Be warm, conversational, and practical — skip definitions and preamble\n"
-            "- Verify every food recommendation against their conditions; flag anything contraindicated\n"
-            "- If the Patient Profile lists an explicit dietary restriction (e.g. 'Low potassium', 'Low "
-            "sodium', 'Fluid restriction'), and the food/drink asked about is a well-known significant "
-            "source of that restricted nutrient, tell them to avoid it or strictly limit it — do NOT "
-            "soften this into 'a small portion occasionally is fine.' That restriction was set by their "
-            "clinical team for a specific medical reason, not a general moderation guideline.\n"
-            "- If the Personalization Level section above requires a specific phrase (e.g. a care-team "
-            "reference), always include it — that requirement takes priority over the structure and "
-            "word-count rules below.\n"
-            "- If the person states a health belief, home remedy, or traditional practice as if it's "
-            "already fact or already their routine, and it is medically inaccurate or unsupported, say so "
-            "plainly before anything else — do NOT just give safe advice around it while leaving the false "
-            "belief unaddressed. Staying silent on the belief reads as agreeing with it.\n"
-            "- The Patient Profile above is the COMPLETE and ONLY source of this patient's allergies, "
-            "diagnoses, and restrictions. If an allergy or diagnosis is not literally written there, it "
-            "does not exist for this patient — never say 'your allergy', 'your allergies', or 'your care "
-            "team has noted/set' anything that is not literally present in the Patient Profile text above. "
-            "A patient avoiding a food for a traditional or cultural reason (e.g. pantang) is NOT the same "
-            "as an allergy — do not relabel it as one.\n"
-            "\n## Conversation Style — strictly follow this structure\n"
-            "You are having a back-and-forth conversation, NOT writing a health article.\n"
-            "Exception: if the message is just a greeting or opener with no real question "
-            "(e.g. 'hi', 'hai', 'hello'), skip the 3-part structure below entirely — greet "
-            "them warmly and, if the Coaching Modules Not Yet Started section above is "
-            "present, ask which of those they'd like to start on today instead of picking "
-            "a clinical topic yourself. Otherwise:\n"
-            "ALWAYS follow this 3-part structure:\n"
-            "  1. ONE short, direct answer to the question (2–4 sentences max). Pick the single most relevant point from the evidence digest.\n"
-            "  2. ONE practical tip or example the person can act on immediately.\n"
-            "  3. ONE follow-up question to learn more about their specific situation before giving further advice.\n"
-            "Do NOT list multiple tips in a single reply. Do NOT use bullet points or numbered lists. "
-            f"Keep the entire reply under {word_limit} words. Save the rest for after you hear their answer."
-        )
-    else:
-        parts.append(
-            "\n## Instructions\n"
-            "Verify all food and drink recommendations against the patient's conditions. "
-            "Flag anything contraindicated. Be concise and practical. "
-            "If the Patient Profile lists an explicit dietary restriction (e.g. 'Low potassium', 'Low "
-            "sodium', 'Fluid restriction'), and the food/drink asked about is a well-known significant "
-            "source of that restricted nutrient, recommend avoiding or strictly limiting it rather than "
-            "framing it as fine in moderation — that restriction was set by their clinical team for a "
-            "specific medical reason. "
-            "If the patient's stated belief or practice is medically inaccurate or unsupported, correct it "
-            "explicitly rather than only redirecting to safe advice. The Patient Profile above is the "
-            "COMPLETE and ONLY source of this patient's allergies, diagnoses, and restrictions — if an "
-            "allergy or diagnosis is not literally written there, it does not exist for this patient; never "
-            "attribute a recommendation to an allergy or a care-team note that is not literally present in "
-            "the Patient Profile text above. A patient avoiding a food for a traditional or cultural reason "
-            "(e.g. pantang) is NOT the same as an allergy — do not relabel it as one."
-        )
+        parts.append(f"\n## Word Limit\nKeep the entire reply under {word_limit} words.")
 
     parts.append(f"\n## Question\n{question}")
     parts.append("\n## Answer")
@@ -530,6 +541,8 @@ def get_rag_response(
     is_patient_self: bool = False,
     patient_id: int | None = None,
 ) -> dict:
+    t_entry = time.monotonic()
+
     patient_context = ""
     if profile:
         # --- Existing keys (backward-compatible with raw profile dicts) ---
@@ -736,10 +749,15 @@ def get_rag_response(
         print("[DEBUG] Using Option B: CLaRa compress → Qwen generate")
         t0 = time.monotonic()
         # food_context only needs the question, so run it alongside retrieve +
-        # compress instead of after them.
-        _pool = ThreadPoolExecutor(max_workers=1)
-        food_future = _pool.submit(get_food_context, question)
-        _pool.shutdown(wait=False)
+        # compress instead of after them. It exists to ground CLaRa; with CLaRa
+        # off, Qwen sees the question itself, and the extra Qwen call would only
+        # evict Ollama's cached prompt prefix (one slot) and sit on the critical
+        # path (p90 12s, measured 2026-10-22).
+        food_future = None
+        if CLARA_COMPRESS_DOC_LIMIT:
+            _pool = ThreadPoolExecutor(max_workers=1)
+            food_future = _pool.submit(get_food_context, question)
+            _pool.shutdown(wait=False)
         conditions_list = profile.get("condition", []) if profile else []
         retriever = get_retriever(str(client_id), patient_conditions=conditions_list, component=component)
         # Prefix query with patient conditions so condition-specific guideline
@@ -781,7 +799,7 @@ def get_rag_response(
             )
 
         try:
-            food_context = food_future.result()
+            food_context = food_future.result() if food_future else ""
         except Exception as e:
             print(f"[Food context error] {e}")
             food_context = ""
@@ -807,9 +825,10 @@ def get_rag_response(
         # response can be attributed to a stage instead of guessed at. Grep
         # `journalctl -u nutribot | grep '\[Latency\]'` to see where time actually goes.
         print(
-            f"[Latency] retrieve={t_retrieve - t0:.1f}s structured={t_structured - t_retrieve:.1f}s "
+            f"[Latency] pre={t0 - t_entry:.1f}s retrieve={t_retrieve - t0:.1f}s structured={t_structured - t_retrieve:.1f}s "
             f"compress={t_compress - t_structured:.1f}s food_context={t_food - t_compress:.1f}s "
-            f"generate={t_generate - t_food:.1f}s total={t_generate - t0:.1f}s"
+            f"generate={t_generate - t_food:.1f}s "
+            f"total={t_generate - t_entry:.1f}s"
         )
 
         if not answer:
