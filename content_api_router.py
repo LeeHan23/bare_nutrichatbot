@@ -201,10 +201,10 @@ def myheart_patient_feed(
     """E/K/A feed for a My Heart Coach app user, matched on the conditions and
     level read live from the MHC staging DB (same lookup as chat). MHC key only."""
     import myheart_db
-    from website_chat_router import _MYHEART_CLIENT_ID
+    from website_chat_router import _MYHEART_CLIENT_IDS
     from scripts.generate_content import conditions_to_groups  # type: ignore
 
-    if client.id != _MYHEART_CLIENT_ID:
+    if client.id not in _MYHEART_CLIENT_IDS:
         raise HTTPException(status_code=403, detail="Phone lookup is only available to the My Heart Coach account")
     phone = db.normalise_phone_number(phone_number)
     profile = myheart_db.get_myheart_profile(phone)

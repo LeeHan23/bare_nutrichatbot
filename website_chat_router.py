@@ -99,6 +99,11 @@ async def stream_rag_response(
         yield "I'm sorry, I encountered an error processing your request. Please try again shortly."
 
 
+# 12 = dedicated MyHeartCoach key (2026-11-12). 4 (test3, shared with our keepalive)
+# stays until MHC confirms they've switched, then remove it.
+_MYHEART_CLIENT_IDS = {4, 12}
+
+
 def _resolve_patient_profile(
     request: ChatRequest,
     client,
@@ -113,7 +118,10 @@ def _resolve_patient_profile(
         return request.profile
 
     if request.patient_id is None:
-        if request.phone_number:
+        # The staging DB is My Heart Coach's own data — only their keys (_MYHEART_CLIENT_IDS)
+        # may look users up in it. Other clients (e.g. MyHeartRisk, client 11)
+        # have a separate DB, not wired in yet, so they get unpersonalized answers.
+        if request.phone_number and client.id in _MYHEART_CLIENT_IDS:
             import myheart_db
 
             # Fails soft: unknown phone or staging DB down → unpersonalized answer
