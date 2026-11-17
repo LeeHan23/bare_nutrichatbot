@@ -24,6 +24,13 @@ logger = logging.getLogger(__name__)
 _CONNECT_TIMEOUT_S = 5
 
 
+def _phone_variants(phone_number: str) -> tuple[str, str]:
+    """Staging stores most numbers as +60..., some as 60... with no plus;
+    match either form."""
+    bare = phone_number.lstrip("+")
+    return ("+" + bare, bare)
+
+
 def _get_connection():
     host = os.getenv("MYHEART_DB_HOST")
     if not host:
@@ -54,8 +61,8 @@ def get_myheart_risk_level(phone_number: str | None) -> str | None:
         with conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT risk_level FROM users WHERE phone_no = %s LIMIT 1",
-                    (phone_number,),
+                    "SELECT risk_level FROM users WHERE phone_no IN (%s, %s) LIMIT 1",
+                    _phone_variants(phone_number),
                 )
                 row = cur.fetchone()
                 return row[0] if row else None
@@ -89,8 +96,8 @@ def get_myheart_onboarding_stage(phone_number: str | None) -> str | None:
                 cur.execute(
                     "SELECT is_goals_completed, is_risk_score_completed, "
                     "is_medicine_completed, is_medicine_history_completed "
-                    "FROM users WHERE phone_no = %s LIMIT 1",
-                    (phone_number,),
+                    "FROM users WHERE phone_no IN (%s, %s) LIMIT 1",
+                    _phone_variants(phone_number),
                 )
                 row = cur.fetchone()
                 return _onboarding_from_flags(*row) if row else None
@@ -277,7 +284,7 @@ def get_myheart_profile(phone_number: str | None) -> dict | None:
 
         with conn:
             with conn.cursor(DictCursor) as cur:
-                cur.execute("SELECT * FROM users WHERE phone_no = %s LIMIT 1", (phone_number,))
+                cur.execute("SELECT * FROM users WHERE phone_no IN (%s, %s) LIMIT 1", _phone_variants(phone_number))
                 user = cur.fetchone()
                 if not user:
                     logger.info("[MyHeartDB] no staging user for %s", phone_number)
