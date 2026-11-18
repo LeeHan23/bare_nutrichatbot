@@ -126,7 +126,8 @@ def _exercise_piece(v):
     return {"key": f"ex:{v['exercise_title']}", "type": "EXERCISE",
             "title": _clean(v["exercise_title"], 255), "video_url": v.get("youtube_link"),
             "duration_minutes": min(255, max(1, math.ceil(secs / 60))),
-            "difficulty": DIFFICULTY.get(v.get("intensity_tier"))}
+            "difficulty": DIFFICULTY.get(v.get("intensity_tier")),
+            "bm_content": _clean(v.get("explanation")) or None}
 
 
 def build_plan(session):
@@ -213,9 +214,44 @@ def translate(plan):
     return cache
 
 
+_EXPLAIN_PROMPT = """Translate this exercise description from Malay into fluent, natural English, as a physiotherapist would write it for a patient. Use complete sentences with "the", "a", "of" and "in" where English needs them. Keep the meaning; add nothing. Reply with the English text only.
+
+Malay: {bm}
+English:"""
+
+
+def translate_explanations(plan, cache):
+    """EN versions of the catalog's BM exercise explanations, cached under "exen:<title>".
+    One plain-text call each: batched JSON came back as broken telegraphic English."""
+    from llm import call_ollama_generate
+    todo = {}
+    for u in plan:
+        for day in u["days"].values():
+            for ex in day["exercises"]:
+                c = cache.get("exen:" + ex["title"])
+                if ex["bm_content"] and (not c or c["hash"] != _hash(ex["bm_content"])):
+                    todo["exen:" + ex["title"]] = ex["bm_content"]
+    for k, bm in todo.items():
+        en = call_ollama_generate(_EXPLAIN_PROMPT.format(bm=bm), 400).strip().strip('"')
+        if en and not re.search(r"\b(pergerakan|melibatkan|badan)\b", en, re.I):  # empty or still Malay: retry next run
+            cache[k] = {"hash": _hash(bm), "en": en}
+    json.dump(cache, open(CACHE_PATH, "w"), ensure_ascii=False, indent=1)
+    print(f"  exercise explanations: {len(todo)} to translate, {sum(1 for k in todo if k in cache)} done")
+    return cache
+
+
 # ---------------------------------------------------------------------------
 # Writes
 # ---------------------------------------------------------------------------
+
+def _sync_exercise_en(cur, cid, en, now):
+    """EN how-to for an EXERCISE item goes in its translation's content column.
+    Left as is when the translation isn't available, so an outage never blanks it."""
+    if en:
+        cur.execute("UPDATE content_item_translations SET content = %s, updated_at = %s "
+                    "WHERE content_item_id = %s AND locale = 'EN' AND NOT (content <=> %s)",
+                    (_clean(en), now, cid, _clean(en)))
+
 
 def _content_item(cur, key, ctype, en_title, en_content, item_map, now):
     if key in item_map:
@@ -233,7 +269,7 @@ _TABLES = {  # plan key -> (table, synced columns, log table, log column)
                   "user_knowledge_logs", "knowledge_id"),
     "activities": ("activities", ("title", "duration_minutes", "content_item_id"),
                    "user_activity_logs", "activity_id"),
-    "exercises": ("exercises", ("title", "duration_minutes", "difficulty", "sets_count", "repetition_count",
+    "exercises": ("exercises", ("title", "content", "duration_minutes", "difficulty", "sets_count", "repetition_count",
                                 "equipment", "video_url", "content_item_id"),
                   "user_exercise_logs", "exercise_id"),
 }
@@ -257,7 +293,8 @@ def _want(items, cache, cur, item_map, now, with_text=True):
         out["activities"].append((_clean(bm["title"], 255), None, cid))
     for ex in items["exercises"]:
         cid = _content_item(cur, ex["key"], "EXERCISE", ex["title"], None, item_map, now)
-        out["exercises"].append((ex["title"], ex["duration_minutes"], ex["difficulty"], None, None, None, ex["video_url"], cid))
+        _sync_exercise_en(cur, cid, cache.get("exen:" + ex["title"], {}).get("en"), now)
+        out["exercises"].append((ex["title"], ex["bm_content"], ex["duration_minutes"], ex["difficulty"], None, None, None, ex["video_url"], cid))
     return out
 
 
@@ -381,7 +418,7 @@ if __name__ == "__main__":
     session = db.SessionLocal()
     plan, week = build_plan(session)
     print(f"{len(plan)} users, content from week {week}")
-    cache = translate(plan)
+    cache = translate_explanations(plan, translate(plan))
     _preview(plan, cache, week)
     missing = {p["key"] for u in plan for d in u["days"].values() for p in d["knowledge"] + d["activities"] if p["key"] not in cache}
     print(f"Preview: {PREVIEW_PATH}  ({len(missing)} pieces untranslated)")
