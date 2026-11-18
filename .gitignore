@@ -130,5 +130,5 @@ pdfs/
 materials/mhc_user_eka_preview.json
 
 # Client-supplied / local exports, not for the public repo
-myheart-content-schema.html
+myheart-content-schema*
 *.docx.
