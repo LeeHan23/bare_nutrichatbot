@@ -2621,7 +2621,7 @@
     "youtube_link": "https://youtu.be/5sVMTeDiPVg",
     "video_duration": "0:30",
     "id": 164,
-    "approved": true
+    "approved": false
   },
   {
     "type": "Strength/Resistance",
@@ -2637,7 +2637,7 @@
     "youtube_link": "https://youtu.be/5sVMTeDiPVg",
     "video_duration": "0:30",
     "id": 165,
-    "approved": true
+    "approved": false
   },
   {
     "type": "Strength/Resistance",
@@ -2653,7 +2653,7 @@
     "youtube_link": "https://youtu.be/5sVMTeDiPVg",
     "video_duration": "0:30",
     "id": 166,
-    "approved": true
+    "approved": false
   },
   {
     "type": "Strength/Resistance",

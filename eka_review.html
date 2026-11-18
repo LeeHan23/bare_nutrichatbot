@@ -707,8 +707,21 @@
       var item = el("div", { class: "lp" });
       item.appendChild(el("div", { class: "lp-point", text: h.title || "" }));
       if (h.why_it_helps) item.appendChild(el("div", { class: "lp-explain", text: h.why_it_helps }));
+      if (h.explanation) {
+        var how = el("div", { class: "lp-why" });
+        how.appendChild(el("b", { text: "How to do it (catalog): " }));
+        how.appendChild(document.createTextNode(h.explanation));
+        item.appendChild(how);
+      }
       var meta = [h.type, h.intensity_tier, h.body_focus, h.video_duration].filter(Boolean).join(" · ");
       if (meta) item.appendChild(el("div", { class: "lp-why", text: meta }));
+      if (h.video_url) {
+        var vid = el("div", { class: "lp-why" });
+        vid.appendChild(renderValue(h.video_url));
+        item.appendChild(vid);
+      } else if (h.title) {
+        item.appendChild(el("div", { class: "lp-why", text: "No video: not in the approved catalog" }));
+      }
       box.appendChild(item);
     });
     return box;

@@ -130,6 +130,29 @@ def list_exercise_samples_for_level(
     return out
 
 
+def pick_level_exercises(level: str | None, seed: int, n: int = 2) -> list[dict]:
+    """n approved catalog entries allowed for `level` (L0-L3 or OB1-3) and
+    within its taxonomy type/intensity limits, distinct titles, rotated by
+    `seed` so items don't all get the same ones. OB stages use L2's catalog
+    allowance: their risk level isn't known yet. Returns raw catalog rows."""
+    import taxonomy
+    rules = (taxonomy.LEVEL_EKA_CONSTRAINTS.get(level or "") or taxonomy.OB_EKA_CONSTRAINTS.get(level or "") or {}).get("exercise")
+    if not rules:
+        return []
+    catalog_level = "L2" if level.startswith("OB") else level
+    pool, seen = [], set()
+    for v in _get_videos():
+        if (v.get("approved", True) and v["exercise_title"] not in seen
+                and catalog_level in _parse_allowed_levels(v.get("allowed_level"))
+                and v.get("type") in rules["types"] and v.get("intensity_tier") in rules["intensity"]):
+            seen.add(v["exercise_title"])
+            pool.append(v)
+    if not pool:
+        return []
+    picks = [pool[(seed + i * 7) % len(pool)] for i in range(min(n, len(pool)))]
+    return list({p["exercise_title"]: p for p in picks}.values())
+
+
 # ---------------------------------------------------------------------------
 # Review/edit CRUD — used by docs_api.py's /eka-review "Exercise Catalog" tab.
 # Unlike find_exercise_video()/list_exercise_samples_for_level() above, these

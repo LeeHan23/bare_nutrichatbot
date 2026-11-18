@@ -37,6 +37,29 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change_me_in_secrets")
 TYPE_LABELS = {"E": "Exercise", "K": "Knowledge", "A": "Activity"}
 
 
+def _level_exercises(level: str | None, seed: int, n: int = 2) -> list[dict]:
+    from exercise_lookup import pick_level_exercises
+    return [{"title": v["exercise_title"], "why_it_helps": v.get("explanation"), "type": v.get("type"),
+             "intensity_tier": v.get("intensity_tier"), "body_focus": v.get("body_focus"),
+             "video_duration": v.get("video_duration"), "auto_filled": True}
+            for v in pick_level_exercises(level, seed, n)]
+
+
+def _with_videos(content, level: str | None, seed: int):
+    """E items store catalog exercise titles only. At serve time: attach each
+    one's YouTube link and how-to explanation from the catalog (both 1:1 with
+    the title), and fill items generated with no highlights with level-matched
+    catalog exercises. Returns a copy."""
+    if not isinstance(content, dict):
+        return content
+    from exercise_lookup import list_all
+    highlights = content.get("catalog_highlights") or _level_exercises(level, seed)
+    cat = {v["exercise_title"]: v for v in list_all() if v.get("approved", True)}
+    return {**content, "catalog_highlights": [
+        {**h, "video_url": cat.get(h.get("title"), {}).get("youtube_link"),
+         "explanation": cat.get(h.get("title"), {}).get("explanation")} for h in highlights]}
+
+
 def _serialize_material(mat) -> dict:
     from datetime import datetime
     expires_at = mat.expires_at.isoformat() if mat.expires_at else None
@@ -54,7 +77,7 @@ def _serialize_material(mat) -> dict:
         "topic":            mat.topic,
         "title":            mat.title,
         "is_active":        mat.is_active,
-        "content":          mat.raw_tips,
+        "content":          _with_videos(mat.raw_tips, mat.personalization_level or mat.onboarding_stage, mat.id) if mat.content_type == "E" else mat.raw_tips,
         "review_notes":     mat.review_notes or [],
         "created_at":       mat.created_at.isoformat() if mat.created_at else None,
         "expires_at":       expires_at,
