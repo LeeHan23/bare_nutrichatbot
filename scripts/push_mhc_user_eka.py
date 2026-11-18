@@ -12,11 +12,14 @@ Per user per weekday (max 3 of each, rotating across their condition groups):
   exercises  = catalog exercises from matched E items + level-allowed catalog picks
 
     python scripts/push_mhc_user_eka.py                 # dry run: translate + preview only
-    python scripts/push_mhc_user_eka.py --apply         # write to MHC staging
+    python scripts/push_mhc_user_eka.py --apply         # create/update in MHC staging (cron: daily)
     python scripts/push_mhc_user_eka.py --remove 12 34  # delete those users' own sets (cascades their logs)
 
-Users who already have own sets are skipped; --replace deletes and rewrites
-them, which also deletes their logs of the old items.
+--apply edits existing rows in place, so it is safe to run every day: a user
+whose level changed (e.g. L2 -> L3 after an MI) gets level-appropriate
+exercises by the next run, and a newly approved week replaces the content,
+without deleting anyone's logs (myheart-content-schema.html: "Edit items in
+place ... avoid hard deletes once users logged them").
 """
 import argparse
 import hashlib
@@ -225,10 +228,76 @@ def _content_item(cur, key, ctype, en_title, en_content, item_map, now):
     return cid
 
 
-def apply(plan, cache, replace):
+_TABLES = {  # plan key -> (table, synced columns, log table, log column)
+    "knowledge": ("knowledge_articles", ("title", "publisher", "content", "content_item_id"),
+                  "user_knowledge_logs", "knowledge_id"),
+    "activities": ("activities", ("title", "duration_minutes", "content_item_id"),
+                   "user_activity_logs", "activity_id"),
+    "exercises": ("exercises", ("title", "duration_minutes", "difficulty", "sets_count", "repetition_count",
+                                "equipment", "video_url", "content_item_id"),
+                  "user_exercise_logs", "exercise_id"),
+}
+
+
+def _want(items, cache, cur, item_map, now, with_text=True):
+    """One day's desired column values per table, in display order. Without
+    text, only exercises (catalog titles, no translation needed)."""
+    out = {"exercises": []}
+    if not with_text:
+        items = {**items, "knowledge": [], "activities": []}
+    else:
+        out.update(knowledge=[], activities=[])
+    for p in items["knowledge"]:
+        bm = cache[p["key"]]["bm"]
+        cid = _content_item(cur, p["key"], "KNOWLEDGE", p["en"]["title"], p["en"]["content"], item_map, now)
+        out["knowledge"].append((_clean(bm["title"], 255), None, _clean(bm["content"]), cid))
+    for p in items["activities"]:
+        bm = cache[p["key"]]["bm"]
+        cid = _content_item(cur, p["key"], "ACTIVITY", p["en"]["title"], None, item_map, now)
+        out["activities"].append((_clean(bm["title"], 255), None, cid))
+    for ex in items["exercises"]:
+        cid = _content_item(cur, ex["key"], "EXERCISE", ex["title"], None, item_map, now)
+        out["exercises"].append((ex["title"], ex["duration_minutes"], ex["difficulty"], None, None, None, ex["video_url"], cid))
+    return out
+
+
+def _sync_table(cur, key, set_id, want, now):
+    """Make one set's rows in one table match `want`, editing rows in place by
+    position so row ids (and the users' logs pointing at them) survive.
+    Returns (rows changed, logs lost to surplus-row deletes)."""
+    table, cols, log_table, log_col = _TABLES[key]
+    cur.execute(f"SELECT id, {', '.join(cols)}, sort_order FROM {table} WHERE eka_set_id = %s ORDER BY sort_order, id", (set_id,))
+    have = cur.fetchall()
+    changed = 0
+    for i, vals in enumerate(want):
+        row = (*vals, (i + 1) * 10)
+        if i < len(have):
+            if tuple(have[i][1:]) != row:
+                cur.execute(f"UPDATE {table} SET {', '.join(c + ' = %s' for c in cols)}, sort_order = %s, updated_at = %s WHERE id = %s",
+                            (*row, now, have[i][0]))
+                changed += 1
+        else:
+            cur.execute(f"INSERT INTO {table} (eka_set_id, {', '.join(cols)}, sort_order, created_at, updated_at) "
+                        f"VALUES (%s, {', '.join(['%s'] * len(cols))}, %s, %s, %s)", (set_id, *row, now, now))
+            changed += 1
+    extra = [r[0] for r in have[len(want):]]
+    lost = 0
+    if extra:  # only when a day now has fewer items than before; deleting cascades logs
+        marks = ",".join(["%s"] * len(extra))
+        cur.execute(f"SELECT COUNT(*) FROM {log_table} WHERE {log_col} IN ({marks})", extra)
+        lost = cur.fetchone()[0]
+        cur.execute(f"DELETE FROM {table} WHERE id IN ({marks})", extra)
+        changed += len(extra)
+    return changed, lost
+
+
+def apply(plan, cache):
+    """Create or update each user's own sets in place. Safe to re-run daily:
+    unchanged rows aren't touched, and a level change or a newly approved week
+    rewrites the affected rows without deleting the user's logs."""
     item_map = json.load(open(MAP_PATH)) if os.path.exists(MAP_PATH) else {}
     conn = myheart_db._get_connection()
-    written = skipped = 0
+    created = updated = unchanged = skipped = lost_total = 0
     with conn:
         cur = conn.cursor()
         if item_map:  # drop mappings whose content_items row was deleted on their side
@@ -236,44 +305,47 @@ def apply(plan, cache, replace):
             alive = {r[0] for r in cur.fetchall()}
             item_map = {k: v for k, v in item_map.items() if v in alive}
         for u in plan:
-            cur.execute("SELECT COUNT(*) FROM eka_sets WHERE user_id = %s", (u["user_id"],))
-            if cur.fetchone()[0]:
-                if not replace:
-                    skipped += 1
-                    continue
-                cur.execute("DELETE FROM eka_sets WHERE user_id = %s", (u["user_id"],))
+            pieces = [p for d in u["days"].values() for p in d["knowledge"] + d["activities"]]
+            with_text = all(p["key"] in cache for p in pieces)
+            if not with_text:
+                # A translation outage must not shrink sets (and delete logged rows): keep their
+                # articles and activities, but still sync exercises, which carry the level safety.
+                print(f"  user {u['user_id']}: untranslated pieces, articles/activities left as is")
+                skipped += 1
             now = int(time.time())
             try:
+                cur.execute("SELECT day_of_week, id FROM eka_sets WHERE user_id = %s", (u["user_id"],))
+                sets = dict(cur.fetchall())
+                is_new = not sets
+                changed = 0
                 for day, items in u["days"].items():
-                    cur.execute("INSERT INTO eka_sets (user_id, day_of_week, risk_level, created_at, updated_at) VALUES (%s,%s,NULL,%s,%s)",
-                                (u["user_id"], day, now, now))
-                    set_id = cur.lastrowid
-                    for i, piece in enumerate(p for p in items["knowledge"] if p["key"] in cache):
-                        bm = cache[piece["key"]]["bm"]
-                        cid = _content_item(cur, piece["key"], "KNOWLEDGE", piece["en"]["title"], piece["en"]["content"], item_map, now)
-                        cur.execute("INSERT INTO knowledge_articles (eka_set_id, title, publisher, content, sort_order, created_at, updated_at, content_item_id) "
-                                    "VALUES (%s,%s,NULL,%s,%s,%s,%s,%s)",
-                                    (set_id, _clean(bm["title"], 255), _clean(bm["content"]), (i + 1) * 10, now, now, cid))
-                    for i, piece in enumerate(p for p in items["activities"] if p["key"] in cache):
-                        bm = cache[piece["key"]]["bm"]
-                        cid = _content_item(cur, piece["key"], "ACTIVITY", piece["en"]["title"], None, item_map, now)
-                        cur.execute("INSERT INTO activities (eka_set_id, title, duration_minutes, sort_order, created_at, updated_at, content_item_id) "
-                                    "VALUES (%s,%s,NULL,%s,%s,%s,%s)", (set_id, _clean(bm["title"], 255), (i + 1) * 10, now, now, cid))
-                    for i, ex in enumerate(items["exercises"]):
-                        cid = _content_item(cur, ex["key"], "EXERCISE", ex["title"], None, item_map, now)
-                        cur.execute("INSERT INTO exercises (eka_set_id, title, duration_minutes, difficulty, sets_count, repetition_count, "
-                                    "equipment, video_url, sort_order, created_at, updated_at, content_item_id) "
-                                    "VALUES (%s,%s,%s,%s,NULL,NULL,NULL,%s,%s,%s,%s,%s)",
-                                    (set_id, ex["title"], ex["duration_minutes"], ex["difficulty"], ex["video_url"],
-                                     (i + 1) * 10, now, now, cid))
+                    if day not in sets:
+                        cur.execute("INSERT INTO eka_sets (user_id, day_of_week, risk_level, created_at, updated_at) "
+                                    "VALUES (%s,%s,NULL,%s,%s)", (u["user_id"], day, now, now))
+                        sets[day] = cur.lastrowid
+                    day_changed = 0
+                    for key, want in _want(items, cache, cur, item_map, now, with_text).items():
+                        c, lost = _sync_table(cur, key, sets[day], want, now)
+                        day_changed += c
+                        lost_total += lost
+                    if day_changed:
+                        cur.execute("UPDATE eka_sets SET updated_at = %s WHERE id = %s", (now, sets[day]))
+                    changed += day_changed
                 conn.commit()
-                written += 1
+                if is_new:
+                    created += 1
+                elif changed:
+                    updated += 1
+                    print(f"  user {u['user_id']} ({u['level']}): {changed} rows updated")
+                else:
+                    unchanged += 1
             except Exception:
                 conn.rollback()
                 raise
             finally:
                 json.dump(item_map, open(MAP_PATH, "w"), indent=1)
-    print(f"Wrote own sets for {written} users; skipped {skipped} that already had them.")
+    print(f"Own sets: {created} users created, {updated} updated, {unchanged} unchanged, {skipped} with text left as is"
+          + (f"; {lost_total} logs removed with surplus rows" if lost_total else ""))
 
 
 def remove(user_ids):
@@ -301,7 +373,6 @@ def _preview(plan, cache, week):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
-    ap.add_argument("--replace", action="store_true")
     ap.add_argument("--remove", type=int, nargs="+", metavar="USER_ID")
     a = ap.parse_args()
     if a.remove:
@@ -315,4 +386,4 @@ if __name__ == "__main__":
     missing = {p["key"] for u in plan for d in u["days"].values() for p in d["knowledge"] + d["activities"] if p["key"] not in cache}
     print(f"Preview: {PREVIEW_PATH}  ({len(missing)} pieces untranslated)")
     if a.apply:
-        apply(plan, cache, a.replace)
+        apply(plan, cache)
