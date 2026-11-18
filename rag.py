@@ -14,6 +14,7 @@ from llm import (
 )
 from exercise_lookup import find_exercise_video, list_exercise_samples_for_level
 import sentiment as sentiment_mod
+import bm_normalise
 import structured_store
 from taxonomy import (
     ONBOARDING_STAGE_LABELS,
@@ -334,6 +335,15 @@ def _build_qwen_prompt(
         "greeting word — 'hai' or 'hi' alone does not make the message English. If the "
         "message is only a bare greeting with no other content (e.g. just 'hai', 'hi', "
         "'hello'), default to Bahasa Malaysia.\n"
+        "Bahasa Malaysia means Malaysian Malay as written by the Malaysian Ministry of "
+        "Health, NOT Bahasa Indonesia. Use Malaysian words: 'anda' (never 'kamu'/'-mu'), "
+        "'rasa' not 'merasa', 'mula' not 'mulai', 'elakkan' not 'hindari', 'kesan' not "
+        "'efek', 'pelan' not 'rencana', 'tabiat' not 'kebiasaan', 'rutin' not 'rutinitas', "
+        "'bertenaga' not 'berenergi', 'gembira' not 'senang' (for happy), 'boleh' not "
+        "'bisa', 'sangat'/'betul-betul' not 'banget', 'ubat yang dipreskripsi' not "
+        "'diresepkan', 'kerap' not 'sering-sering', 'secara berkala' not 'secara regular', "
+        "'terbeban' not 'terbebani', 'sahaja' not 'saja', 'pukul' not 'jam' (for time), "
+        "'kenderaan' not 'kendaraan', 'percuma' not 'gratis', 'kerana' not 'karena'.\n"
     ]
 
     # Everything up to the end of the rule blocks below is identical on every
@@ -488,6 +498,25 @@ def _build_qwen_prompt(
         parts.append(f"\n## Word Limit\nKeep the entire reply under {word_limit} words.")
 
     parts.append(f"\n## Question\n{question}")
+    # Placed last because qwen2.5 drifts into Bahasa Indonesia on BM questions
+    # despite the LANGUAGE rule up top (seen in chat_messages, 2026-11-17).
+    # Only for Malay questions: on English ones this list made it answer in Malay.
+    if bm_normalise.looks_malay(question):
+        parts.append(
+            "\n(The Question is in Malay: reply in Malaysian Malay, never Indonesian: "
+            "kesihatan not kesehatan, aktiviti fizikal not aktivitas fisik, cuba not coba, "
+            "boleh not dapat/bisa, masa not waktu, badan not tubuh, elakkan not hindari, "
+            "kerana not karena, rasa not merasa, mula not mulai, kesan sampingan not efek "
+            "samping, tabiat makan not pola makan, buah pinggang not ginjal, kalium not "
+            "potassium, anda not kamu.)"
+        )
+    elif bm_normalise.looks_english(question):
+        # Without this the model follows the conversation's earlier language,
+        # so a patient switching from BM to English still got BM replies.
+        parts.append(
+            "\n(The Question is in English: reply in English, even if earlier "
+            "messages in the conversation were in Malay.)"
+        )
     parts.append("\n## Answer")
 
     return "\n".join(parts)
@@ -647,6 +676,7 @@ def get_rag_response(
                 "I'm sorry, I couldn't generate a response right now. "
                 "Please try again shortly."
             )
+        answer = bm_normalise.fix(answer)
         _persist_turn(chat_session_id, patient_id, question, answer)
         return _attach_exercise_video(parse_response_for_image(answer), question, component, profile)
 
@@ -758,6 +788,7 @@ def get_rag_response(
                 "The nutrition assistant may be temporarily unavailable. Please try again shortly."
             )
 
+        answer = bm_normalise.fix(answer)
         _persist_turn(chat_session_id, patient_id, question, answer)
         return _attach_exercise_video(parse_response_for_image(answer), question, component, profile)
 
@@ -872,6 +903,7 @@ def get_rag_response(
                 "Please try again shortly."
             )
 
+        answer = bm_normalise.fix(answer)
         _persist_turn(chat_session_id, patient_id, question, answer)
         sentiment_mod.record(chat_session_id, patient_id, client_id, question, sentiment)
         return _attach_exercise_video(parse_response_for_image(answer), question, component, profile)
