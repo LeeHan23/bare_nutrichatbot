@@ -40,7 +40,29 @@
   "week_topic": "gentle stretching and balance exercises addressing peripheral neuropathy risk in T2DM, with foot inspection reminder as part of cool-down",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: '0041 – Ankle sliding (Strength/Resistance, Light, Lower Body (Ankle))'"
+   "title": "0041 – Ankle sliding",
+   "description": "This exercise involves gently sliding your feet forward and backward while seated. It helps improve ankle flexibility and circulation, which can be beneficial for managing peripheral neuropathy associated with T2DM.",
+   "exercise_type": "Strength/Resistance",
+   "intensity": "Light",
+   "duration": "0:30-1:00",
+   "frequency": "1-2 loops of the video per session",
+   "instructions": [
+    "Sit on a chair with both feet flat on the floor.",
+    "Slowly slide one foot forward as far as is comfortable without pain.",
+    "Return to starting position and repeat with the other foot."
+   ],
+   "stop_conditions": [
+    "If you experience sudden sharp pain in your ankle or foot.",
+    "If you feel dizzy or lightheaded during the exercise.",
+    "If you notice any numbness or tingling that worsens while exercising."
+   ],
+   "contraindications": [
+    "Do not perform this exercise if you have an injury to your ankles or feet.",
+    "Avoid if you are experiencing acute illness or unstable chest pain."
+   ],
+   "safety_note": "Maintain good posture, breathe normally throughout the exercise, and ensure you stay hydrated.",
+   "progression": "Once comfortable with the movement, try sliding your foot slightly farther each time.",
+   "video_url": "https://youtu.be/lCvIbHlUEqY"
   }
  },
  {
@@ -149,7 +171,29 @@
   "week_topic": "gentle stretching and balance exercises addressing peripheral neuropathy risk in T2DM, with foot inspection reminder as part of cool-down",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: '0091 – Seated side-to-side groin stretch (Strength/Resistance, Light, Lower Body (Groin))'"
+   "title": "0094 – Seated wrist curl",
+   "description": "This seated wrist curl exercise helps improve strength and flexibility in your forearms gently. It can be beneficial for those with peripheral neuropathy risk by promoting better circulation without straining the feet or legs.",
+   "exercise_type": "Strength/Resistance",
+   "intensity": "Light",
+   "duration": "0:30-1:00",
+   "frequency": "1-2 loops of the video a day (no more than 2 loops a day)",
+   "instructions": [
+    "Sit comfortably on a chair.",
+    "Hold your arms straight out in front of you, palms facing up.",
+    "Slowly curl your wrists upward as far as is comfortable, then return to starting position."
+   ],
+   "stop_conditions": [
+    "If you feel dizziness or lightheadedness during the exercise.",
+    "If you experience chest pain or shortness of breath.",
+    "If you notice any numbness or tingling in your arms that feels unusual."
+   ],
+   "contraindications": [
+    "Do not perform this exercise if you have a recent injury to your wrist or forearm.",
+    "Avoid if you are experiencing an acute illness or unstable medical condition."
+   ],
+   "safety_note": "Ensure your back is straight and your breathing is steady throughout the exercise. Remember to stay hydrated before and after exercising.",
+   "progression": "Once comfortable with the movement, you may consider holding light weights in each hand to gently increase resistance.",
+   "video_url": "https://youtu.be/8xPnNDTJDeQ"
   }
  },
  {
@@ -767,7 +811,31 @@
   "week_topic": "balance exercises to reduce fall risk in CKD (tandem stand, single-leg stand with support), footwear and home safety tips",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: '0099 – Isometric squat (Strength/Resistance, Light, Lower Body)'"
+   "title": "Senaman menyejukkan badan 1",
+   "description": "This cooling down and stretching exercise helps improve balance by gradually moving your body through various positions. It is beneficial for reducing fall risk in individuals with CKD.",
+   "exercise_type": "Cooling Down/Stretching",
+   "intensity": "Light",
+   "duration": "2:53",
+   "frequency": "1 loop of the video per session",
+   "instructions": [
+    "Change your body position sequentially, involving movements of upper and lower limbs.",
+    "Include a combination of arm, leg, and torso movements with weight shifting and direction changes.",
+    "Engage multiple joints including shoulders, elbows, hips, knees, and ankles during the transition of body positions."
+   ],
+   "stop_conditions": [
+    "If you feel dizzy or lightheaded",
+    "If you experience chest pain or shortness of breath",
+    "If you have any discomfort in your joints"
+   ],
+   "contraindications": [
+    "Recent cardiac event not yet cleared by a doctor",
+    "Unstable chest pain",
+    "Acute illness",
+    "Injury to the body parts involved in the exercise"
+   ],
+   "safety_note": "Maintain proper posture, breathe steadily throughout the movements, and ensure you are well hydrated.",
+   "progression": "You may try holding each position for a few seconds longer as your balance improves.",
+   "video_url": "https://youtu.be/FLz2Xt0Xh08"
   }
  },
  {
@@ -1553,7 +1621,28 @@
   "week_topic": "yoga sequences to lower cortisol and improve hormonal balance in PCOS: restorative poses, breathwork, and pelvic-focused stretches",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: '0069 – Assisted chair squat (Strength/Resistance, Light, Lower Body)'"
+   "title": "0080 – Side plank",
+   "description": "Side plank helps strengthen core muscles and can improve posture. This exercise supports overall hormonal balance by promoting a healthy body structure.",
+   "exercise_type": "Strength/Resistance",
+   "intensity": "Light",
+   "duration": "0:30",
+   "frequency": "1 loop of the video per session",
+   "instructions": [
+    "Stand on one side with your feet stacked.",
+    "Support yourself on one elbow directly under the shoulder while lifting your hips off the ground.",
+    "Hold this position, keeping your body straight."
+   ],
+   "stop_conditions": [
+    "If you feel sharp pain in any part of your body",
+    "If you experience dizziness or lightheadedness"
+   ],
+   "contraindications": [
+    "Recent surgery or injury to the lower back or shoulders",
+    "Severe joint pain that worsens with movement"
+   ],
+   "safety_note": "Ensure proper posture throughout the exercise, maintain steady breathing, and stay hydrated.",
+   "progression": "Hold the side plank position for a few seconds longer each time you do it.",
+   "video_url": "https://youtu.be/WOyphZ9ZYSg"
   }
  },
  {
@@ -1564,7 +1653,28 @@
   "week_topic": "yoga sequences to lower cortisol and improve hormonal balance in PCOS: restorative poses, breathwork, and pelvic-focused stretches",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: '0080 – Side plank (Strength/Resistance, Light, Core)'"
+   "title": "0074 – Alternate knee extension with weight",
+   "description": "This light strength exercise focuses on the quadriceps and can support overall muscle tone. Improved muscle health may indirectly contribute to hormonal balance by supporting metabolic functions.",
+   "exercise_type": "Strength/Resistance",
+   "intensity": "Light",
+   "duration": "0:30-1:00",
+   "frequency": "1-2 loops of the video per session",
+   "instructions": [
+    "Sit comfortably in a chair with your feet flat on the floor.",
+    "Hold a dumbbell in one hand and bend that knee, bringing your foot towards your buttocks.",
+    "Straighten the leg slowly while holding the weight, then return to the bent position."
+   ],
+   "stop_conditions": [
+    "If you feel sharp pain in your knees or legs, stop immediately.",
+    "If you experience dizziness or shortness of breath, pause and rest."
+   ],
+   "contraindications": [
+    "Do not perform this exercise if you have a recent knee injury that has not been cleared by your doctor.",
+    "Avoid this exercise during an acute illness or fever."
+   ],
+   "safety_note": "Maintain good posture while performing the exercise. Focus on deep, steady breathing and ensure you are well hydrated before starting.",
+   "progression": "Once comfortable with the movement, you can gradually increase the weight of the dumbbell used.",
+   "video_url": "https://youtu.be/8RwV3Ani_Bg"
   }
  },
  {
@@ -1642,7 +1752,29 @@
   "week_topic": "yoga sequences to lower cortisol and improve hormonal balance in PCOS: restorative poses, breathwork, and pelvic-focused stretches",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: 'Seated side-to-side groin stretch (Strength/Resistance, Light, Lower Body (Groin))'"
+   "title": "Cardio 19 – Marching forward & backward",
+   "description": "Marching forward and backward is a gentle aerobic exercise that can help improve cardiovascular health. It involves moving your body in different directions, which can support overall well-being without being too strenuous.",
+   "exercise_type": "Cardio/Aerobic",
+   "intensity": "Light",
+   "duration": "2:08-4:16",
+   "frequency": "1-2 loops of the video a day (no more than 2 loops a day)",
+   "instructions": [
+    "Stand with feet hip-width apart.",
+    "Lift one knee towards the chest while shifting weight to the other foot.",
+    "Step forward or backward and repeat on the opposite side."
+   ],
+   "stop_conditions": [
+    "If you feel dizzy or lightheaded, stop immediately.",
+    "Stop if you experience any sharp pain during the exercise.",
+    "Pause if your breathing becomes too labored."
+   ],
+   "contraindications": [
+    "Avoid this exercise if you have a recent cardiac event not yet cleared by your doctor.",
+    "Do not perform if you have unstable chest pain or an acute illness."
+   ],
+   "safety_note": "Maintain good posture, breathe steadily throughout the movements, and stay hydrated.",
+   "progression": "To make it slightly more challenging, try increasing the speed of your steps while maintaining control.",
+   "video_url": "https://youtu.be/-OfU0nwG4u0"
   }
  },
  {
@@ -3135,7 +3267,30 @@
   "week_topic": "moderate-intensity activity (cycling, swimming, brisk walking) as an active stress-release outlet, and matching intensity to how stressed you feel",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: 'Senaman menyejukkan badan 1 (Cooling Down/Stretching, Light, Full Body)'"
+   "title": "Senaman menyejukkan badan 1",
+   "description": "This full-body cooling down stretch helps release stress through gentle body movements that promote relaxation and ease tension.",
+   "exercise_type": "Cooling Down/Stretching",
+   "intensity": "Light",
+   "duration": "2:53",
+   "frequency": "1 loop of the video per session",
+   "instructions": [
+    "Change your body position sequentially to cover upper and lower body movements.",
+    "Include a combination of arm, leg, and torso movements with weight shifting.",
+    "Involve multiple joints including shoulders, elbows, hips, knees, and ankles during positional transitions."
+   ],
+   "stop_conditions": [
+    "If you feel chest pain or discomfort",
+    "If you experience shortness of breath that does not improve",
+    "If you have dizziness or lightheadedness"
+   ],
+   "contraindications": [
+    "Recent cardiac event not cleared by a doctor",
+    "Unstable chest pain",
+    "Acute illness or injury affecting the body parts used in this exercise"
+   ],
+   "safety_note": "Maintain good posture, breathe naturally throughout the exercise, and stay hydrated. If you experience any unusual symptoms, stop immediately and consult your healthcare provider.",
+   "progression": "Not allowed at this level.",
+   "video_url": "https://youtu.be/FLz2Xt0Xh08"
   }
  },
  {
@@ -3584,7 +3739,27 @@
   "week_topic": "why keeping activity and wake times consistent on weekends helps stabilise sleep, avoiding 'social jet lag'",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: 'Cardio 27 – Marching & lateral leg raise (Cardio/Aerobic, Light, Lower Body (Hip Abductor))'"
+   "title": "Senaman menyejukkan badan 2",
+   "description": "This full-body stretching exercise helps cool down your body after activity and can contribute to better sleep quality by reducing physical tension, which is beneficial for maintaining consistent wake times on weekends.",
+   "exercise_type": "Cooling Down/Stretching",
+   "intensity": "Light",
+   "duration": "2:11",
+   "frequency": "1 loop of the video a day (no more than 2 loops a day)",
+   "instructions": [
+    "Perform movements involving changes in body position with a combination of upper, lower body, and torso movements in various directions and ranges.",
+    "Include weight shifting as well as repeated movement and holding positions at different joints including shoulders, elbows, hips, knees, and ankles."
+   ],
+   "stop_conditions": [
+    "If you experience sharp pain or dizziness during the exercise",
+    "Stop if you feel any chest discomfort or shortness of breath"
+   ],
+   "contraindications": [
+    "Do not perform this exercise if you have a recent cardiac event that has not been cleared by your doctor.",
+    "Avoid if you are experiencing acute illness or unstable chest pain."
+   ],
+   "safety_note": "Maintain proper posture, breathe steadily throughout the movements, and stay hydrated before starting.",
+   "progression": "After mastering the basic movements, try holding each stretch for a few seconds longer to increase flexibility within your comfort level.",
+   "video_url": "https://youtu.be/_o4Frf7tTFI"
   }
  },
  {
@@ -4708,7 +4883,31 @@
   "week_topic": "how exercise intensity should be matched to individual risk profile, and general safe-progression principles",
   "task": {
    "type": "exercise",
-   "error": "model chose a title not in the catalog: 'Senaman menyejukkan badan 1 (Cooling Down/Stretching, Light, Full Body)'"
+   "title": "Senaman menyejukkan badan 2",
+   "description": "This cooling down and stretching exercise involves changing body positions with combined movements of upper limbs, lower limbs, and the torso. It helps in safely reducing heart rate and muscle tension after activity.",
+   "exercise_type": "Cooling Down/Stretching",
+   "intensity": "Light",
+   "duration": "2:11",
+   "frequency": "1 loop of the video per session",
+   "instructions": [
+    "Change your body position sequentially involving movements of upper and lower limbs.",
+    "Combine arm, leg, and torso movements while shifting weight.",
+    "Include repeated movements and hold positions at various joints including shoulders, elbows, hips, knees, and ankles."
+   ],
+   "stop_conditions": [
+    "If you experience chest pain or discomfort",
+    "If you feel dizzy or lightheaded",
+    "If you have shortness of breath"
+   ],
+   "contraindications": [
+    "Recent cardiac event not cleared by a doctor",
+    "Unstable chest pain",
+    "Acute illness",
+    "Injury to any joint used in the exercise"
+   ],
+   "safety_note": "Maintain proper posture, breathe normally throughout the movements, and stay hydrated. Always consult your healthcare provider before starting any new physical activity.",
+   "progression": "Not allowed at this level.",
+   "video_url": "https://youtu.be/_o4Frf7tTFI"
   }
  },
  {

@@ -223,16 +223,26 @@ def _write_excel(items, path):
     wb.save(path)
 
 
-def main(week, group=None, ctype=None, client_id=4):
+def _failed(task):
+    return bool(task.get("parse_error") or task.get("error"))
+
+
+def main(week, group=None, ctype=None, client_id=4, retry_failed=False):
     cases = [c for c in build_eka_cases(week)
              if (not group or c["group"] == group) and (not ctype or c["content_type"] == ctype)]
     variants = [v for c in cases for v in _expand_variants(c)]
     out_dir = os.path.join(ROOT, "materials", "samples")
     os.makedirs(out_dir, exist_ok=True)
     stem = os.path.join(out_dir, f"eka_week{week}_rulespolicy" + (f"_{group}" if group else "") + (f"_{ctype}" if ctype else ""))
+    # --retry-failed keeps the good tasks of an earlier run and redoes only the failed
+    # ones (same variant order, same seeds).
+    prev = json.load(open(stem + ".json")) if retry_failed and os.path.exists(stem + ".json") else []
     items = []
     for i, v in enumerate(variants, 1):
         level = v["personalization_level"] or v["onboarding_stage"]
+        if i <= len(prev) and not _failed(prev[i - 1]["task"]):
+            items.append(prev[i - 1])
+            continue
         print(f"[{i}/{len(variants)}] {v['group']} / {v['content_type']} / {level}", flush=True)
         try:
             if v["content_type"] == "E":
@@ -246,8 +256,9 @@ def main(week, group=None, ctype=None, client_id=4):
         items.append({"group": v["group"], "content_type": v["content_type"], "level": level,
                       "week_number": week, "week_topic": v["prompt_topic"], "task": task})
         json.dump(items, open(stem + ".json", "w"), ensure_ascii=False, indent=1)  # save as we go
+    json.dump(items, open(stem + ".json", "w"), ensure_ascii=False, indent=1)  # in case the tail was skipped tasks
     _write_excel(items, stem + ".xlsx")
-    bad = sum(1 for it in items if it["task"].get("parse_error") or it["task"].get("error"))
+    bad = sum(1 for it in items if _failed(it["task"]))
     print(f"Done: {len(items)} tasks, {bad} failed -> {stem}.json / .xlsx")
 
 
@@ -256,5 +267,6 @@ if __name__ == "__main__":
     p.add_argument("--week", type=int, required=True)
     p.add_argument("--group")
     p.add_argument("--type", dest="ctype", choices=["E", "K", "A"])
+    p.add_argument("--retry-failed", action="store_true", help="redo only the failed tasks of the existing output")
     a = p.parse_args()
-    main(a.week, a.group, a.ctype)
+    main(a.week, a.group, a.ctype, retry_failed=a.retry_failed)
