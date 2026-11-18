@@ -58,7 +58,7 @@ if want setup; then
   for f in --max-seq-length --mask-prompt --grad-checkpoint; do
     mlx_lm.lora --help | grep -q -- "$f" || { echo "mlx_lm.lora has no $f — check mlx_lm.lora --help"; exit 1; }
   done
-  mlx_lm.fuse --help | grep -q -- --de-quantize || { echo "mlx_lm.fuse has no --de-quantize"; exit 1; }
+  mlx_lm.fuse --help | grep -q -- --dequantize || { echo "mlx_lm.fuse has no --dequantize"; exit 1; }
 
   # Peak disk: ~20GB base download + ~65GB fused fp16 + ~65GB f16 GGUF + ~20GB Q4.
   free_gb=$(df -g "$HOME" | awk 'NR==2 {print $4}')
@@ -111,7 +111,7 @@ fi
 if want fuse; then
   say "fuse (de-quantized, so llama.cpp can read it)"
   if [[ -f $OUT/fused/config.json ]]; then skip "$OUT/fused"
-  else mlx_lm.fuse --model "$BASE_MLX" --adapter-path "$OUT/adapter" --save-path "$OUT/fused" --de-quantize; fi
+  else mlx_lm.fuse --model "$BASE_MLX" --adapter-path "$OUT/adapter" --save-path "$OUT/fused" --dequantize; fi
 fi
 
 if want gguf; then
