@@ -128,3 +128,7 @@ Exercise Video Intensity.xlsx
 MyHeartCoach_RulesPolicyTables_v2*.xlsx
 pdfs/
 materials/mhc_user_eka_preview.json
+
+# Client-supplied / local exports, not for the public repo
+myheart-content-schema.html
+*.docx.
