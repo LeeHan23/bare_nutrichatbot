@@ -1,0 +1,38 @@
+{
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1
+  },
+  "cases": [
+    {
+      "id": 21,
+      "desc": "Dyslipidaemia+Obesity: santan/coconut milk (saturated fat)",
+      "tags": [
+        "cholesterol",
+        "contraindication",
+        "personalization"
+      ],
+      "patient_id": 4,
+      "passed": false,
+      "failures": [
+        "Personalization: L1 patient answer doesn't demonstrate expected caution framing (a clear moderation boundary for any higher-risk food or activity \u2014 a concrete portion size or frequency limit, not a plain yes/no) per LLM judge"
+      ],
+      "answer": "No, you should avoid coconut milk as it is high in saturated fat, which can worsen your dyslipidaemia. Try using low-fat alternatives like skimmed milk or unsweetened almond milk for cooking instead.\n\nHave you tried any recipes with these alternatives yet? How do they work out for you?",
+      "elapsed_s": 36.2,
+      "contraindication_check": {
+        "food": "coconut milk (santan)",
+        "condition": "Dyslipidaemia",
+        "acceptable_stances": [
+          "restrict",
+          "moderate"
+        ]
+      },
+      "myth_check": null,
+      "harm_tier": null,
+      "myth_id": null,
+      "framing": null,
+      "scope_check": null
+    }
+  ]
+}

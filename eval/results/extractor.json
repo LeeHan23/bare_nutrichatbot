@@ -20,7 +20,7 @@
           "palm oil"
         ]
       },
-      "elapsed_s": 5.6
+      "elapsed_s": 11.6
     },
     {
       "id": 2,
@@ -36,7 +36,7 @@
           "olive oil"
         ]
       },
-      "elapsed_s": 1.5
+      "elapsed_s": 1.9
     },
     {
       "id": 3,
@@ -80,7 +80,7 @@
       "result": {
         "medication_compliance": "poor"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.3
     },
     {
       "id": 6,
@@ -129,7 +129,7 @@
         ],
         "activity_freq": "daily"
       },
-      "elapsed_s": 1.5
+      "elapsed_s": 1.6
     },
     {
       "id": 9,
@@ -158,7 +158,7 @@
       "result": {
         "tobacco_status": "Current smoker"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.4
     },
     {
       "id": 11,
@@ -187,7 +187,7 @@
           "vitamin D"
         ]
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.3
     },
     {
       "id": 13,
@@ -204,7 +204,7 @@
           "coconut milk"
         ]
       },
-      "elapsed_s": 1.5
+      "elapsed_s": 1.4
     },
     {
       "id": 14,
@@ -217,7 +217,7 @@
       "result": {
         "medication_compliance": "variable"
       },
-      "elapsed_s": 1.2
+      "elapsed_s": 1.1
     },
     {
       "id": 15,
@@ -279,7 +279,7 @@
           "coconut oil"
         ]
       },
-      "elapsed_s": 1.4
+      "elapsed_s": 1.5
     },
     {
       "id": 19,
@@ -291,7 +291,7 @@
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 0.9
+      "elapsed_s": 0.8
     },
     {
       "id": 20,
@@ -302,7 +302,7 @@
       "passed": true,
       "failures": [],
       "result": {},
-      "elapsed_s": 0.8
+      "elapsed_s": 0.9
     }
   ]
 }
