@@ -153,16 +153,23 @@ def call_ollama_generate(prompt: str, max_tokens: int = 800) -> str:
         "model": OLLAMA_MODEL,
         "prompt": prompt,
         "stream": False,
+        "keep_alive": -1,  # top-level, not an option — Ollama ignores it inside "options"
         "options": {
             "temperature": 0.5,
             "num_predict": max_tokens,
-            "keep_alive": -1,
         },
     }
     try:
         resp = requests.post(f"{OLLAMA_BASE_URL}/api/generate", json=payload, timeout=OLLAMA_GENERATE_TIMEOUT_S)
         resp.raise_for_status()
-        return resp.json().get("response", "")
+        data = resp.json()
+        # A small prompt_tokens on a long prompt means Ollama reused its cached prefix.
+        print(
+            f"[Ollama timing] prompt_tokens={data.get('prompt_eval_count', 0)} "
+            f"prompt_eval={data.get('prompt_eval_duration', 0) / 1e9:.1f}s "
+            f"out_tokens={data.get('eval_count', 0)} eval={data.get('eval_duration', 0) / 1e9:.1f}s"
+        )
+        return data.get("response", "")
     except Exception as e:
         print(f"[Ollama generate error] {e}")
         return ""
@@ -176,10 +183,10 @@ def call_judge_llm(prompt: str, max_tokens: int = 10) -> str:
         "model": JUDGE_OLLAMA_MODEL,
         "prompt": prompt,
         "stream": False,
+        "keep_alive": -1,
         "options": {
             "temperature": 0.0,
             "num_predict": max_tokens,
-            "keep_alive": -1,
         },
     }
     try:
